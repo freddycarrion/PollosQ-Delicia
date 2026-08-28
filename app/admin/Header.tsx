@@ -109,8 +109,11 @@ export default function AdminHeader({ nombreUsuario }: Props) {
           padding: 8px;
           cursor: pointer;
         }
+        @media (max-width: 1024px) {
+          .mobile-menu-btn { display: flex; }
+        }
         @media (max-width: 768px) {
-          .admin-header { padding: 0 16px; }
+          .admin-header { padding: 12px 16px; min-height: var(--header-h); }
           .mobile-menu-btn { display: flex; }
           .admin-header-date { display: none; }
           .admin-header-greeting { display: none; }
@@ -121,6 +124,12 @@ export default function AdminHeader({ nombreUsuario }: Props) {
           color: #ffffff;
           line-height: 1.1;
           letter-spacing: -0.02em;
+        }
+        @media (max-width: 768px) {
+          .admin-header-title { font-size: 1.4rem; }
+        }
+        @media (max-width: 480px) {
+          .admin-header-title { font-size: 1.2rem; }
         }
         .admin-header-title {
           margin-bottom: 2px;

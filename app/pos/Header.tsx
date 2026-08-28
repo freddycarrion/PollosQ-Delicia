@@ -262,6 +262,14 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           overflow: hidden;
         }
 
+        @media (max-width: 1024px) {
+          .pos-store-info {
+            display: none;
+          }
+          .pos-user-name {
+            display: none;
+          }
+        }
         @media (max-width: 768px) {
           .pos-header {
             padding: 0 12px;

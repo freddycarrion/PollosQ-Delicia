@@ -250,6 +250,8 @@ export default async function DashboardPage() {
           gap: 16px;
         }
         @media (max-width: 1200px) { .dashboard-kpis { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px)  { .dashboard-kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+        @media (max-width: 400px)  { .dashboard-kpis { grid-template-columns: 1fr; } }
 
         /* Métodos */
         .section-title {
@@ -277,6 +279,7 @@ export default async function DashboardPage() {
           gap: 14px;
         }
         @media (max-width: 1100px) { .metodos-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px)  { .metodos-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 
         .metodo-card {
           display: flex;
@@ -328,6 +331,11 @@ export default async function DashboardPage() {
         }
         @media (max-width: 1100px) {
           .dashboard-bottom { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+          .dashboard { gap: 16px; }
+          .section-title { font-size: 0.85rem; }
+          .dashboard-bottom { gap: 12px; }
         }
 
         .ticket-num {

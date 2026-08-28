@@ -190,6 +190,11 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
       <style>{`
         .search-box input:focus { border-color: var(--yellow) !important; color: var(--text-100); }
         .compra-card:hover { border-color: var(--text-400) !important; }
+        @media (max-width: 640px) {
+          .toolbar { flex-direction: column; align-items: stretch !important; }
+          .search-box { max-width: 100% !important; }
+          .compra-card { flex-direction: column !important; }
+        }
       `}</style>
     </div>
   )

@@ -65,6 +65,7 @@ export default function PosClient({
   );
   const [busqueda, setBusqueda] = useState("");
   const [pedido, setPedido] = useState<ItemPedido[]>([]);
+  const [tabActivo, setTabActivo] = useState<'catalogo' | 'carrito'>('catalogo');
 
   const supabase = createClient();
 
@@ -152,6 +153,11 @@ export default function PosClient({
       }
       return [...prev, { producto, cantidad: 1, subtotal: precioUnitario }];
     });
+    // En móvil: feedback visual al agregar
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      // vibración leve si el dispositivo lo soporta
+      if ('vibrate' in navigator) navigator.vibrate(30);
+    }
   };
 
   const actualizarCantidad = (id: string, delta: number) => {
@@ -274,8 +280,31 @@ export default function PosClient({
   return (
     <>
       <div className="pos-client animate-fade-in no-print">
+        {/* TAB BAR MÓVIL */}
+        <div className="pos-tab-bar">
+          <button
+            className={`pos-tab-btn ${tabActivo === 'catalogo' ? 'active' : ''}`}
+            onClick={() => setTabActivo('catalogo')}
+          >
+            <span className="pos-tab-icon">🍽️</span>
+            Catálogo
+          </button>
+          <button
+            className={`pos-tab-btn ${tabActivo === 'carrito' ? 'active' : ''}`}
+            onClick={() => setTabActivo('carrito')}
+          >
+            <span className="pos-tab-icon">🛒</span>
+            Carrito
+            {pedido.length > 0 && (
+              <span className="pos-tab-badge">{pedido.reduce((s, i) => s + i.cantidad, 0)}</span>
+            )}
+            {pedido.length > 0 && (
+              <span className="pos-tab-total">Bs. {fmt(totalPedido)}</span>
+            )}
+          </button>
+        </div>
         {/* LADO IZQUIERDO: MENÚ (65%) */}
-        <div className="pos-menu">
+        <div className={`pos-menu ${tabActivo === 'carrito' ? 'pos-hidden-mobile' : ''}` }>
           {/* Barra de Búsqueda */}
           <div className="pos-search-bar">
             <div className="input-icon-wrap w-full">
@@ -385,7 +414,7 @@ export default function PosClient({
         </div>
 
         {/* LADO DERECHO: TICKET (35%) */}
-        <div className="pos-ticket">
+        <div className={`pos-ticket ${tabActivo === 'catalogo' ? 'pos-hidden-mobile' : ''}`}>
           <div className="ticket-header">
             <h2 className="ticket-title">Pedido Actual</h2>
             <span className="badge badge-gray">{pedido.length} items</span>
@@ -490,14 +519,6 @@ export default function PosClient({
         />
 
         <style>{`
-        .pos-client {
-          display: flex;
-          width: 100%;
-          height: 100%;
-          gap: 0;
-          background: var(--bg-900);
-        }
-
         /* ----- LADO IZQUIERDO (MENÚ) ----- */
         .pos-menu {
           flex: 0 0 65%;
@@ -687,6 +708,15 @@ export default function PosClient({
           display: flex; flex-direction: column;
           position: relative;
         }
+        @media (max-width: 1024px) {
+          .pos-ticket { flex: 0 0 40%; }
+        }
+        @media (max-width: 768px) {
+          .pos-ticket {
+            flex: 1;
+            min-height: 0;
+          }
+        }
 
         .ticket-header {
           padding: 24px;
@@ -782,53 +812,116 @@ export default function PosClient({
 
         .disable-dbl-tap-zoom { touch-action: manipulation; }
 
-        @media (max-width: 900px) {
-          .pos-client {
-            flex-direction: column;
+        /* TAB BAR MÓVIL */
+        .pos-tab-bar {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .pos-tab-bar {
+            display: flex;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-800);
+            border-bottom: 2px solid var(--border);
+            flex-shrink: 0;
           }
+          .pos-tab-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-400);
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            position: relative;
+          }
+          .pos-tab-btn.active {
+            color: var(--red);
+            border-bottom-color: var(--red);
+          }
+          .pos-tab-icon { font-size: 1.1rem; }
+          .pos-tab-badge {
+            background: var(--red);
+            color: #fff;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            min-width: 20px;
+            text-align: center;
+          }
+          .pos-tab-total {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--yellow);
+            margin-left: 2px;
+          }
+          .pos-hidden-mobile {
+            display: none !important;
+          }
+        }
+
+        .pos-client {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          height: 100%;
+          gap: 0;
+          background: var(--bg-900);
+        }
+        @media (min-width: 769px) {
+          .pos-client {
+            flex-direction: row;
+          }
+        }
+        /* ----- LADO IZQUIERDO (MENÚ) ----- */
+        .pos-menu {
+          flex: 0 0 65%;
+          display: flex;
+          flex-direction: column;
+          padding: 24px;
+          gap: 20px;
+          border-right: 1px solid var(--border);
+          overflow: hidden;
+        }
+        @media (max-width: 1024px) {
+          .pos-menu {
+            flex: 0 0 60%;
+            padding: 16px;
+            gap: 14px;
+          }
+        }
+        @media (max-width: 768px) {
           .pos-menu {
             flex: 1;
             padding: 12px;
             border-right: none;
-            border-bottom: 2px solid var(--border);
-          }
-          .pos-ticket {
-            flex: 0 0 320px;
+            overflow: auto;
+            min-height: 0;
           }
           .pos-productos-grid {
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 10px;
           }
-          .pos-product-card {
-            padding: 8px;
-            gap: 8px;
-          }
-          .pos-product-name {
-            font-size: 0.85rem;
-          }
-          .pos-product-price {
-            font-size: 1rem;
-          }
-          .pos-product-add {
-            bottom: 8px; right: 8px;
-            width: 28px; height: 28px;
-          }
-          .ticket-header {
-            padding: 15px;
-          }
-          .ticket-footer {
-            padding: 15px;
-          }
-          .ticket-cobrar-btn {
-            height: 50px;
-            font-size: 1.1rem;
-          }
+          .pos-product-card { padding: 8px; gap: 8px; }
+          .pos-product-name { font-size: 0.85rem; }
+          .pos-product-price { font-size: 1rem; }
+          .pos-product-add { bottom: 8px; right: 8px; width: 28px; height: 28px; }
+          .ticket-header { padding: 14px 16px; }
+          .ticket-footer { padding: 14px 16px; }
+          .ticket-cobrar-btn { height: 52px; font-size: 1.05rem; }
+          .ticket-item { padding: 12px 16px; gap: 8px; }
         }
 
       `}</style>
       </div>
-
-      {/* ZONA DE IMPRESIÓN OCULTA HASTA EL WINDOW.PRINT */}
       <div className="print-area">
         <TicketVenta data={ticketData} />
       </div>

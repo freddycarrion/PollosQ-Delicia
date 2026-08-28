@@ -247,6 +247,16 @@ export default async function CajaAdminPage() {
         .font-semibold { font-weight: 600; }
         .font-bold { font-weight: 800; }
         .text-yellow { color: var(--yellow); }
+
+        @media (max-width: 768px) {
+          .page-header { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
+          .page-title { font-size: 1.4rem; gap: 8px; }
+          .stats-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 20px; }
+          .stat-card { padding: 16px; }
+          .stat-value { font-size: 1.4rem; }
+          .table-container { border-radius: var(--radius-lg); }
+          .admin-table th, .admin-table td { padding: 10px 12px; font-size: 0.82rem; }
+        }
       `}</style>
     </div>
   )

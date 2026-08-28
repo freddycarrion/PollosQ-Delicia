@@ -88,7 +88,7 @@ export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }
   return (
     <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
       <Toaster position="top-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
-      <div className="modal-content" style={{ background: 'var(--bg-800)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: 'translateY(10px)', animation: 'slideUp 0.3s forwards ease-out' }}>
+      <div className="modal-content" style={{ background: 'var(--bg-800)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', width: '100%', maxWidth: '500px', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: 'translateY(10px)', animation: 'slideUp 0.3s forwards ease-out' }}>
         
         {/* Header Modal */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-900)' }}>
@@ -102,9 +102,9 @@ export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }
         </div>
 
         {/* Formulario */}
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
           
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>NOMBRE <span style={{ color: 'red' }}>*</span></label>
               <input type="text" value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej. Juan" style={inputStyle} />

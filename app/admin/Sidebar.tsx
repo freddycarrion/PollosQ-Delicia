@@ -223,7 +223,7 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             transition: opacity 0.3s ease;
           }
 
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
             .sidebar-overlay.show {
@@ -240,7 +240,7 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             padding: 8px;
           }
 
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .mobile-close-btn { display: block; }
           }
 

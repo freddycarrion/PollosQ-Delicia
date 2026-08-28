@@ -68,8 +68,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           position: relative;
           z-index: 1;
         }
+        @media (max-width: 1024px) {
+          .admin-main { margin-left: 0; }
+        }
         @media (max-width: 768px) {
           .admin-main { margin-left: 0; }
+          .admin-content { padding: 16px; }
+        }
+        @media (max-width: 480px) {
+          .admin-content { padding: 12px; }
         }
       `}</style>
     </div>

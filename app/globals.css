@@ -67,6 +67,11 @@
   /* Sidebar */
   --sidebar-w: 256px;
   --header-h:  64px;
+
+  /* Responsive breakpoints como referencia */
+  --bp-mobile: 480px;
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
 }
 
 :root.dark {
@@ -454,6 +459,18 @@ ul, ol {
   animation: fadeIn 0.25s ease forwards;
   min-width: 280px;
 }
+
+@media (max-width: 600px) {
+  .toast-container {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+  }
+  .toast {
+    min-width: unset;
+    width: 100%;
+  }
+}
 .toast-success { border-left: 3px solid var(--success-light); }
 .toast-error   { border-left: 3px solid var(--red-light); }
 .toast-warning { border-left: 3px solid var(--warning-light); }
@@ -482,8 +499,23 @@ ul, ol {
   padding: 28px;
   width: 100%;
   max-width: 520px;
+  max-height: 90dvh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg);
   animation: fadeInScale 0.25s ease forwards;
+}
+
+@media (max-width: 600px) {
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal {
+    padding: 20px 16px;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-width: 100%;
+    max-height: 92dvh;
+  }
 }
 
 .modal-header {
@@ -581,6 +613,64 @@ ul, ol {
   border: none;
   font-weight: 700;
   border-radius: var(--radius-md);
+}
+
+/* ============================================================
+   RESPONSIVE — ADMIN PAGES COMUNES
+   ============================================================ */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .admin-page {
+    gap: 16px;
+  }
+  /* Títulos de página */
+  .page-title {
+    font-size: 1.4rem !important;
+  }
+  /* Botones de acción en header de página */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px;
+    margin-bottom: 20px !important;
+  }
+  /* Tablas con scroll horizontal */
+  .table-wrap,
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* KPI cards en 2 col en tablet */
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* En móvil pequeño, tablas con mínimo razonable */
+  .table {
+    font-size: 0.82rem;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+  }
+  .btn {
+    padding: 9px 16px;
+    font-size: 0.85rem;
+  }
+  .kpi-card {
+    padding: 16px;
+  }
+  .kpi-value {
+    font-size: 1.4rem;
+  }
 }
 
 
