@@ -28,7 +28,7 @@ export default async function SucursalesAdminPage() {
             <Store className="text-yellow" size={32} style={{ color: 'var(--yellow)' }} /> 
             Gestión de Sucursales
           </h1>
-          <p className="page-subtitle" style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+          <p className="page-subtitle" style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
             Administra tus locales, agrega nuevas franquicias y entra a sus paneles de control.
           </p>
         </div>

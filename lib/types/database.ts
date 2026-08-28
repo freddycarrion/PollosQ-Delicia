@@ -1,5 +1,5 @@
 // ============================================================
-// Tipos de la base de datos — Tía Sarita
+// Tipos de la base de datos — Pollos Q' Delicia
 // Versión: 2.0.0 — incluye RBAC
 // ============================================================
 

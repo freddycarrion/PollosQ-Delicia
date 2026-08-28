@@ -52,7 +52,7 @@ export default async function VentasAdminPage() {
             <ShoppingCart className="text-red" size={32} style={{ color: 'var(--red)' }} /> 
             Historial de Ventas
           </h1>
-          <p className="page-subtitle" style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+          <p className="page-subtitle" style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
             Registro detallado de todos los tickets y pedidos procesados.
           </p>
         </div>

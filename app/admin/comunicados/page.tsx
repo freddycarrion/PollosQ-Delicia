@@ -20,7 +20,7 @@ export default async function ComunicadosPage() {
           <Bell className="text-yellow" size={32} style={{ color: 'var(--yellow)' }} /> 
           Avisos Generales
         </h1>
-        <p className="page-subtitle" style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+        <p className="page-subtitle" style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
           Publica comunicados para el personal operativo (Meseros, Cocineros, etc) para que lo vean en su portal al ingresar.
         </p>
       </div>

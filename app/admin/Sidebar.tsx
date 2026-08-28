@@ -97,10 +97,10 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
           <div className="sidebar-logo-wrap">
             <div className="sidebar-logo-ring" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/log.png" alt="Tía Sarita" className="sidebar-logo" />
+            <img src="/logo.png" alt="Pollos Q' Delicia" className="sidebar-logo" />
           </div>
           <div className="flex-1">
-            <span className="sidebar-brand-name">Tía Sarita</span>
+            <span className="sidebar-brand-name">Pollos Q' Delicia</span>
             <span className="sidebar-brand-sub">Gestión</span>
           </div>
           <button 
@@ -201,8 +201,8 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
           .sidebar {
             width: var(--sidebar-w);
             height: 100dvh;
-            background: var(--bg-800);
-            border-right: 1px solid var(--border);
+            background: linear-gradient(180deg, #B71C1C 0%, #D32F2F 100%);
+            border-right: none;
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -210,6 +210,7 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             z-index: 1000;
             overflow: hidden;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 24px rgba(183, 28, 28, 0.3);
           }
 
           .sidebar-overlay {
@@ -235,7 +236,7 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             display: none;
             background: transparent;
             border: none;
-            color: var(--text-400);
+            color: #5A2D00;
             padding: 8px;
           }
 
@@ -248,109 +249,111 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 20px 16px;
+            padding: 18px 24px;
             flex-shrink: 0;
+            background: transparent;
+            border-bottom: none;
           }
           .sidebar-logo-wrap {
             position: relative;
-            width: 44px; height: 44px;
+            width: 48px; height: 48px;
             flex-shrink: 0;
           }
           .sidebar-logo-ring {
             position: absolute;
             inset: -3px;
             border-radius: 50%;
-            background: conic-gradient(var(--red), var(--yellow), var(--red));
+            background: conic-gradient(#ffffff, #FDD835, #ffffff);
             animation: spin 6s linear infinite;
-            opacity: 0.7;
           }
           @keyframes spin { to { transform: rotate(360deg); } }
           .sidebar-logo {
-            width: 44px; height: 44px;
+            width: 48px; height: 48px;
             border-radius: 50%;
             position: relative;
             z-index: 1;
             object-fit: cover;
-            border: 2px solid var(--bg-800);
+            border: 2px solid #fff;
           }
           .sidebar-brand-name {
             display: block;
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--text-100);
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #fff;
             line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
           }
           .sidebar-brand-sub {
             display: block;
-            font-size: 0.7rem;
-            color: var(--text-600);
-            letter-spacing: 0.1em;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 0.15em;
             text-transform: uppercase;
+            font-weight: 600;
           }
 
           .sidebar-divider {
             height: 1px;
-            background: var(--border);
-            margin: 0 12px 8px;
+            background: rgba(255,255,255,0.2);
+            margin: 0 16px 12px;
           }
 
           /* Nav */
           .sidebar-nav {
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            padding: 0 8px;
+            gap: 2px;
+            padding: 8px 8px;
             flex: 1;
             overflow-y: auto;
           }
-          /* Custom scrollbar for sidebar nav */
-          .sidebar-nav::-webkit-scrollbar {
-            width: 4px;
-          }
+          .sidebar-nav::-webkit-scrollbar { width: 4px; }
           .sidebar-nav::-webkit-scrollbar-thumb {
-            background: var(--border);
+            background: rgba(0,0,0,0.2);
             border-radius: 4px;
           }
           .sidebar-nav-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: var(--radius-md);
-            color: var(--text-500);
-            font-size: 0.875rem;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: var(--radius-full);
+            color: rgba(255,255,255,0.8);
+            font-size: 0.95rem;
             font-weight: 500;
             transition: var(--transition);
             position: relative;
             text-decoration: none;
-            width: 100%;
+            width: calc(100% - 16px);
+            margin: 0 8px;
             border: none;
             background: transparent;
             cursor: pointer;
             text-align: left;
           }
           .sidebar-nav-item:hover {
-            background: var(--bg-600);
-            color: var(--text-200);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
           }
           .sidebar-nav-item.active {
-            background: rgba(211, 47, 47, 0.12);
-            color: var(--text-100);
-            font-weight: 600;
+            background: #FBC02D;
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
           }
-          .sidebar-nav-item.active .sidebar-nav-icon {
-            color: var(--red);
-          }
+          .sidebar-nav-item.active .sidebar-nav-icon { color: #ffffff; }
           .sidebar-nav-icon {
             display: flex;
             align-items: center;
             flex-shrink: 0;
             transition: var(--transition);
+            color: currentColor;
           }
           .sidebar-nav-label { flex: 1; }
           .sidebar-nav-badge {
-            background: var(--red);
-            color: #fff;
+            background: #FBC02D;
+            color: #ffffff;
             font-size: 0.7rem;
             font-weight: 700;
             padding: 1px 6px;
@@ -359,12 +362,10 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             text-align: center;
           }
           .sidebar-nav-arrow {
-            color: var(--text-400);
+            color: rgba(255,255,255,0.5);
             transition: transform 0.2s;
           }
-          .sidebar-nav-item.active .sidebar-nav-arrow {
-            color: var(--red);
-          }
+          .sidebar-nav-item.active .sidebar-nav-arrow { color: #ffffff; }
 
           /* Submenu */
           .submenu-container {
@@ -384,41 +385,41 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 12px;
+            padding: 7px 12px;
             border-radius: var(--radius-md);
-            color: var(--text-500);
+            color: rgba(255,255,255,0.8);
             font-size: 0.85rem;
+            font-weight: 500;
             text-decoration: none;
             transition: var(--transition);
           }
           .submenu-dot {
             width: 5px; height: 5px;
             border-radius: 50%;
-            background: var(--border);
+            background: rgba(255,255,255,0.4);
             transition: var(--transition);
           }
           .submenu-item:hover {
-            color: var(--text-200);
-            background: var(--bg-600);
+            color: #ffffff;
+            background: rgba(255,255,255,0.1);
           }
-          .submenu-item:hover .submenu-dot { background: var(--text-400); }
-          .submenu-item.active {
-            color: var(--red-light);
-            font-weight: 600;
-          }
+          .submenu-item:hover .submenu-dot { background: #ffffff; }
+          .submenu-item.active { color: #FBC02D; font-weight: 700; }
           .submenu-item.active .submenu-dot {
-            background: var(--red);
-            box-shadow: 0 0 8px var(--red);
+            background: #FBC02D;
+            box-shadow: 0 0 6px #FBC02D;
           }
 
           /* Footer */
           .sidebar-footer {
-            padding: 12px 12px 16px;
-            border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            border-top: none;
+            background: transparent;
             display: flex;
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
+            margin-bottom: 8px;
           }
           .sidebar-user {
             display: flex;
@@ -430,14 +431,15 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
           .sidebar-avatar {
             width: 36px; height: 36px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--red-dark), var(--red));
-            color: #fff;
+            background: #ffffff;
+            color: #B71C1C;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 0.95rem;
+            font-weight: 800;
+            font-size: 1.1rem;
             flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           }
           .sidebar-user-info {
             display: flex;
@@ -447,17 +449,18 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
           }
           .sidebar-user-name {
             font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-200);
+            font-weight: 700;
+            color: #fff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
           }
           .sidebar-logout {
-            background: transparent;
-            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: var(--radius-md);
-            color: var(--text-500);
+            color: #fff;
             padding: 7px;
             display: flex;
             align-items: center;
@@ -466,9 +469,9 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
             cursor: pointer;
           }
           .sidebar-logout:hover {
-            background: rgba(211,47,47,0.12);
-            border-color: rgba(211,47,47,0.3);
-            color: var(--red-light);
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.3);
+            color: #fff;
           }
         `}</style>
       </aside>

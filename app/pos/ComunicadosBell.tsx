@@ -21,19 +21,19 @@ export default function ComunicadosBell({ rol }: Props) {
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
       <button
-        className="btn btn-ghost btn-icon"
+        className="btn btn-icon"
         onClick={handleOpen}
-        style={{ position: 'relative', color: 'var(--text-300)', padding: '8px', cursor: 'pointer', background: 'transparent', border: 'none' }}
+        style={{ position: 'relative', color: '#fff', padding: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 'var(--radius-md)', backdropFilter: 'blur(4px)' }}
         title="Comunicados del Administrador"
       >
         <Bell size={20} />
         {unseenCount > 0 && (
           <span className="animate-pulse" style={{
-            position: 'absolute', top: '0px', right: '0px',
+            position: 'absolute', top: '-4px', right: '-4px',
             background: 'var(--yellow)', color: '#000',
             borderRadius: '50%', width: '18px', height: '18px',
             fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: '900', border: '2px solid var(--bg-800)'
+            fontWeight: '900', border: '2px solid transparent'
           }}>
             {unseenCount > 9 ? '+9' : unseenCount}
           </span>

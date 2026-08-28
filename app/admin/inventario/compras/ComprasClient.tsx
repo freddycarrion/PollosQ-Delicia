@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Search, FileText, Calendar, Building2, User, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import NuevaCompraModal from './NuevaCompraModal'
@@ -40,13 +40,19 @@ interface Props {
 
 export default function ComprasClient({ initialData, sucursales, proveedores, insumos }: Props) {
   const router = useRouter()
-  const compras = initialData || []
+  const [compras, setCompras] = useState<Compra[]>(initialData || [])
+
+  useEffect(() => {
+    setCompras(initialData || [])
+  }, [initialData])
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const handleSuccess = () => {
-    router.refresh()
+  const handleSuccess = (nuevaCompra: any) => {
+    // Optimistic UI: agregamos la nueva compra al instante
+    setCompras([nuevaCompra, ...compras])
+    router.refresh() // refresca los datos en segundo plano
   }
 
   const handleVerDetalles = (c: Compra) => {

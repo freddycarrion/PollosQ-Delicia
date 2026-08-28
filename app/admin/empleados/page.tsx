@@ -26,7 +26,7 @@ export default async function EmpleadosPage() {
           <UsersIcon className="text-yellow" size={32} style={{ color: 'var(--yellow)' }} /> 
           Gestión de Personal
         </h1>
-        <p className="page-subtitle" style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+        <p className="page-subtitle" style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
           Administra los cajeros y supervisores, asigna sus sucursales y controla sus roles de acceso al sistema.
         </p>
       </div>

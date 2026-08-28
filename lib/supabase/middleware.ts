@@ -38,10 +38,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && pathname === '/login') {
-    url.pathname = '/admin/dashboard'
-    return NextResponse.redirect(url)
-  }
+
 
   return supabaseResponse
 }

@@ -33,10 +33,10 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
       <header className="pos-header">
         <div className="pos-header-left">
           <div className="pos-logo-wrap">
-            <Image src="/log.png" alt="Tía Sarita" width={40} height={40} className="pos-logo" />
+            <Image src="/logo.png" alt="Pollos Q' Delicia" width={40} height={40} className="pos-logo" />
           </div>
           <div className="pos-brand">
-            <h1 className="pos-title">Tía Sarita</h1>
+            <h1 className="pos-title">Pollos Q' Delicia</h1>
             <span className="pos-subtitle">Punto de Venta</span>
           </div>
         </div>
@@ -48,8 +48,8 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
 
           {turnoId ? (
             <button 
-              className="pos-shift-status badge-green badge animate-fade-in" 
-              style={{ cursor: 'pointer', border: '1px solid #4CAF50', background: 'rgba(76, 175, 80, 0.1)' }}
+              className="pos-shift-status animate-fade-in" 
+              style={{ cursor: 'pointer', border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.15)', color: '#fff', backdropFilter: 'blur(4px)', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 700 }}
               onClick={() => setIsCerrarModalOpen(true)}
               title="Cerrar Turno"
             >
@@ -57,7 +57,7 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
               <span>Turno Abierto</span>
             </button>
           ) : (
-            <div className="pos-shift-status badge-red badge">
+            <div className="pos-shift-status" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 700, background: 'rgba(0,0,0,0.2)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.15)' }}>
               <Clock size={14} />
               <span>Caja Cerrada</span>
             </div>
@@ -74,7 +74,7 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           <div className="pos-actions">
             <ComunicadosBell rol={rol} />
             {esAdmin && (
-              <button onClick={() => router.push('/admin/dashboard')} className="btn btn-ghost btn-sm" title="Volver al Admin">
+              <button onClick={() => router.push('/admin/dashboard')} className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(4px)' }} title="Volver al Admin">
                 <ArrowLeft size={16} /> Admin
               </button>
             )}
@@ -105,20 +105,21 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           display: flex;
           flex-direction: column;
           height: 100dvh;
-          background: #0f0f0f; /* very dark background for contrast */
+          background: var(--bg-900);
           overflow: hidden;
         }
 
         .pos-header {
-          height: 64px;
-          background: var(--bg-800);
-          border-bottom: 1px solid var(--border);
+          height: 68px;
+          background: linear-gradient(135deg, #B71C1C 0%, #E65100 55%, #FBC02D 100%);
+          border-bottom: none;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 20px;
+          padding: 0 24px;
           flex-shrink: 0;
           z-index: 50;
+          box-shadow: 0 4px 20px rgba(183,28,28,0.35);
         }
 
         .pos-header-left {
@@ -128,12 +129,13 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
         }
 
         .pos-logo-wrap {
-          width: 40px; height: 40px;
+          width: 42px; height: 42px;
           border-radius: 50%;
           overflow: hidden;
-          background: var(--bg-900);
+          background: rgba(255,255,255,0.15);
           display: flex; align-items: center; justify-content: center;
-          border: 2px solid var(--red);
+          border: 2px solid rgba(255,255,255,0.4);
+          backdrop-filter: blur(4px);
         }
 
         .pos-logo {
@@ -148,35 +150,37 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
         .pos-title {
           font-size: 1.1rem;
           font-weight: 800;
-          color: var(--text-100);
+          color: #fff;
           line-height: 1.1;
           letter-spacing: -0.02em;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .pos-subtitle {
-          font-size: 0.75rem;
-          color: var(--text-500);
+          font-size: 0.7rem;
+          color: rgba(255,255,255,0.75);
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.07em;
+          font-weight: 600;
         }
 
         .pos-header-right {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
         }
 
         .pos-store-info {
           display: flex;
           align-items: center;
-          padding-right: 15px;
-          border-right: 1px solid var(--border);
+          padding-right: 16px;
+          border-right: 1px solid rgba(255,255,255,0.25);
         }
 
         .pos-store-name {
           font-size: 0.8rem;
-          color: var(--text-400);
-          font-weight: 600;
+          color: rgba(255,255,255,0.85);
+          font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
@@ -188,22 +192,23 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
         .pos-user {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding-left: 15px;
-          border-left: 1px solid var(--border);
+          gap: 10px;
+          padding-left: 16px;
+          border-left: 1px solid rgba(255,255,255,0.25);
         }
 
         .pos-avatar {
           width: 36px; height: 36px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--red-dark), var(--red));
+          background: rgba(255,255,255,0.2);
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 700;
-          font-size: 0.9rem;
-          box-shadow: var(--shadow-sm);
+          font-weight: 800;
+          font-size: 0.95rem;
+          border: 2px solid rgba(255,255,255,0.4);
+          backdrop-filter: blur(4px);
         }
 
         .pos-user-details {
@@ -215,14 +220,16 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
         .pos-user-name {
           font-size: 0.85rem;
           font-weight: 700;
-          color: var(--text-100);
+          color: #fff;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
         
         .pos-user-role {
-          font-size: 0.7rem;
-          color: var(--yellow);
+          font-size: 0.68rem;
+          color: rgba(255,255,255,0.75);
           font-weight: 600;
           text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .pos-actions {
@@ -237,15 +244,16 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           justify-content: center;
           width: 36px; height: 36px;
           border-radius: var(--radius-md);
-          background: rgba(211,47,47,0.1);
-          color: var(--red-light);
-          border: 1px solid rgba(211,47,47,0.2);
+          background: rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.9);
+          border: 1px solid rgba(255,255,255,0.2);
           transition: var(--transition);
+          backdrop-filter: blur(4px);
         }
         .btn-pos-logout:hover {
-          background: var(--red);
+          background: rgba(255,255,255,0.25);
           color: #fff;
-          border-color: var(--red);
+          border-color: rgba(255,255,255,0.4);
         }
 
         .pos-main {
@@ -256,7 +264,7 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
 
         @media (max-width: 768px) {
           .pos-header {
-            padding: 0 10px;
+            padding: 0 12px;
           }
           .pos-store-info {
             display: none;

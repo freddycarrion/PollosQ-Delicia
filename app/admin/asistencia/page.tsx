@@ -80,7 +80,7 @@ export default function AsistenciaPage() {
           <Clock size={32} style={{ color: 'var(--yellow)' }} />
           Historial de Asistencia
         </h1>
-        <p style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+        <p style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
           Control diario del personal. Filtra por fecha o busca por nombre.
         </p>
       </div>
@@ -126,7 +126,7 @@ export default function AsistenciaPage() {
       <div style={{ background: 'var(--bg-800)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', overflowX: 'auto' }}>
         <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ background: 'var(--bg-900)', color: 'var(--text-400)', fontSize: '0.85rem', textTransform: 'uppercase' }}>
+            <tr style={{ background: 'var(--bg-900)', color: '#ffffff', fontSize: '0.85rem', textTransform: 'uppercase' }}>
               <th style={{ padding: '16px 20px', fontWeight: 700 }}>Fecha</th>
               <th style={{ padding: '16px 20px', fontWeight: 700 }}>Personal</th>
               <th style={{ padding: '16px 20px', fontWeight: 700 }}>Rol / Sucursal</th>
@@ -200,7 +200,7 @@ export default function AsistenciaPage() {
             <ChevronLeft size={16} /> Anterior
           </button>
 
-          <span style={{ color: 'var(--text-400)', fontSize: '0.9rem' }}>
+          <span style={{ color: '#ffffff', fontSize: '0.9rem' }}>
             Página {pagina + 1} de {totalPaginas}
           </span>
 

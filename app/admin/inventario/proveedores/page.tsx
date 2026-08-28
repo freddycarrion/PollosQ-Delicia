@@ -24,8 +24,8 @@ export default async function ProveedoresAdminPage() {
             <Briefcase className="text-yellow" size={32} style={{ color: 'var(--yellow)' }} /> 
             Proveedores de Insumos
           </h1>
-          <p className="page-subtitle" style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
-            Gestiona las empresas o contactos comerciales que suministran productos para Tía Sarita.
+          <p className="page-subtitle" style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
+            Gestiona las empresas o contactos comerciales que suministran productos para el negocio.
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import PerfilClient from './PerfilClient'
 
 export const metadata = {
-  title: 'Mi Perfil | Tía Sarita',
+  title: "Mi Perfil | Pollos Q' Delicia",
 }
 
 export default async function PerfilPage() {

@@ -40,3 +40,37 @@ export async function crearUsuarioAuth(email: string, password: string): Promise
 
   return { userId: data.user.id }
 }
+
+/**
+ * Server Action: Guarda (crea o actualiza) el perfil de un empleado.
+ * Usa service_role para bypassear RLS completamente.
+ */
+export async function guardarPerfil(perfilData: {
+  id: string
+  nombre: string
+  apellido: string
+  telefono?: string
+  rol: string
+  sucursal_id?: string | null
+  activo: boolean
+}): Promise<{ data: any; error?: never } | { data?: never; error: string }> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceKey) {
+    return { error: 'Faltan variables de entorno del servidor.' }
+  }
+
+  const adminClient = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+
+  const { data, error } = await adminClient
+    .from('perfiles')
+    .upsert(perfilData)
+    .select('*, sucursales(nombre)')
+    .single()
+
+  if (error) return { error: error.message }
+  return { data }
+}

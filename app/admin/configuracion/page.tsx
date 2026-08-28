@@ -114,7 +114,7 @@ export default function ConfiguracionPage() {
           <Settings size={32} style={{ color: 'var(--yellow)' }} />
           Configuración del Sistema
         </h1>
-        <p style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+        <p style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
           Ajusta los parámetros generales del restaurante. Cada campo se guarda individualmente.
         </p>
       </div>

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Tía Sarita — Sistema de Gestión',
-  description: 'Sistema de compra y venta para restaurante Tía Sarita. Sabor que une familias.',
+  title: "Pollos Q' Delicia — Sistema de Gestión",
+  description: "Sistema de compra y venta para Pollos Q' Delicia. El sabor que conquista.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,11 +14,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const isLight = localStorage.getItem('theme') === 'light' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: light)').matches);
-                if (isLight) {
-                  document.documentElement.classList.add('light');
+                const isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) {
+                  document.documentElement.classList.add('dark');
                 } else {
-                  document.documentElement.classList.remove('light');
+                  document.documentElement.classList.remove('dark');
                 }
               } catch (_) {}
             `,

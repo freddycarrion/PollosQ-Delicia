@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Check, Search, Plus, Trash2, ShoppingCart } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { X, Check, ShoppingCart, Trash2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { registrarCompraAccion } from './actions'
 
 interface Proveedor { id: string, nombre: string }
 interface Insumo { id: string, nombre: string, unidad: string, sucursal_id: string }
@@ -18,15 +18,14 @@ interface CartItem {
 interface Props {
   isOpen: boolean
   onClose: () => void
-  sucursales: Sucursal[]
-  proveedores: Proveedor[]
+  sucursales: any[]
+  proveedores: any[]
   insumos: Insumo[]
-  onSuccess: () => void
+  onSuccess: (compra: any) => void
 }
 
 export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedores, insumos, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
-  const [currentUser, setCurrentUser] = useState<string | null>(null)
   
   const [sucursalId, setSucursalId] = useState('')
   const [proveedorId, setProveedorId] = useState('')
@@ -41,20 +40,20 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
   // Carrito de compras
   const [cart, setCart] = useState<CartItem[]>([])
 
+  const handleReset = () => {
+    setProveedorId('')
+    setFactura('')
+    setObservaciones('')
+    setCart([])
+    setSelectedInsumoId('')
+    setCantidad(1)
+    setPrecioUnidad(0)
+  }
+
   useEffect(() => {
     if (isOpen) {
       if (sucursales.length > 0) setSucursalId(sucursales[0].id)
-      setProveedorId('')
-      setFactura('')
-      setObservaciones('')
-      setCart([])
-      setSelectedInsumoId('')
-      setCantidad(1)
-      setPrecioUnidad(0)
-
-      createClient().auth.getUser().then(({ data }) => {
-        if (data.user) setCurrentUser(data.user.id)
-      })
+      handleReset()
     }
   }, [isOpen, sucursales])
 
@@ -95,49 +94,47 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!currentUser) return toast.error('No se pudo identificar tu usuario')
-    if (!sucursalId) return toast.error('Debes seleccionar una sucursal')
     if (cart.length === 0) return toast.error('Debes agregar al menos un insumo a la compra')
+    if (!sucursalId) return toast.error('Debes seleccionar una sucursal')
 
     setLoading(true)
-    const supabase = createClient()
 
     try {
-      // 1. Crear la Compra
-      const { data: compra, error: errorCompra } = await supabase
-        .from('compras')
-        .insert([{
-          sucursal_id: sucursalId,
-          proveedor_id: proveedorId || null,
-          registrado_por: currentUser,
-          numero_factura: factura || null,
-          total: total,
-          observaciones: observaciones || null
-        }])
-        .select()
-        .single()
+      const total = cart.reduce((acc, item) => acc + (item.cantidad * item.precio_unitario), 0)
 
-      if (errorCompra) throw errorCompra
+      const compraData = {
+        sucursal_id: sucursalId,
+        proveedor_id: proveedorId || null,
+        numero_factura: factura || null,
+        total: total,
+        observaciones: observaciones || null
+      }
 
-      // 2. Insertar Detalle
-      const detalles = cart.map(item => ({
-        compra_id: compra.id,
+      const detallesData = cart.map(item => ({
         insumo_id: item.insumo.id,
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
         subtotal: item.cantidad * item.precio_unitario
       }))
 
-      const { error: errorDetalle } = await supabase
-        .from('detalle_compras')
-        .insert(detalles)
+      const nuevaCompraBackend = await registrarCompraAccion(compraData, detallesData)
 
-      if (errorDetalle) throw errorDetalle
+      // Optimistic UI: Preparamos el objeto completo para la tabla inmediatamente
+      const sucursalSelec = sucursales.find(s => s.id === sucursalId)
+      const proveedorSelec = proveedores.find(p => p.id === proveedorId)
+      
+      const compraCompleta = {
+        ...nuevaCompraBackend,
+        sucursales: sucursalSelec ? { nombre: sucursalSelec.nombre } : undefined,
+        proveedores: proveedorSelec ? { nombre: proveedorSelec.nombre } : undefined,
+      }
 
-      toast.success('Compra registrada con éxito. ¡El stock fue actualizado automáticamente!')
-      onSuccess()
+      toast.success('¡Compra registrada exitosamente!\nEl stock fue actualizado.')
+      handleReset()
+      onSuccess(compraCompleta)
       onClose()
     } catch (error: any) {
+      console.error(error)
       toast.error('Error: ' + error.message)
     } finally {
       setLoading(false)

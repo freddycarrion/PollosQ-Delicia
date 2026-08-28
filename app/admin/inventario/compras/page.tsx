@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import ComprasClient from './ComprasClient'
 import { ShoppingCart } from 'lucide-react'
 
@@ -28,8 +29,16 @@ export default async function ComprasAdminPage() {
     .eq('activo', true)
     .order('nombre', { ascending: true })
 
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: perfil } = await adminClient.from('perfiles').select('rol, sucursal_id').eq('id', user?.id).single()
+
   // 4. Historial de compras resumido
-  const { data: compras, error } = await supabase
+  let query = adminClient
     .from('compras')
     .select(`
       *,
@@ -39,6 +48,12 @@ export default async function ComprasAdminPage() {
     `)
     .order('fecha_compra', { ascending: false })
     .order('created_at', { ascending: false })
+
+  if (perfil?.rol === 'supervisor') {
+    query = query.eq('sucursal_id', perfil.sucursal_id)
+  }
+
+  const { data: compras, error } = await query
 
   if (error) {
     console.error("Error cargando historial de compras:", error)
@@ -52,7 +67,7 @@ export default async function ComprasAdminPage() {
             <ShoppingCart className="text-yellow" size={32} style={{ color: 'var(--yellow)' }} /> 
             Registro de Compras
           </h1>
-          <p className="page-subtitle" style={{ color: 'var(--text-400)', fontSize: '0.95rem', marginTop: '4px' }}>
+          <p className="page-subtitle" style={{ color: '#ffffff', fontSize: '0.95rem', marginTop: '4px' }}>
             Registra y visualiza el historial de reabastecimiento. El stock de tu inventario aumentará automáticamente al guardar.
           </p>
         </div>

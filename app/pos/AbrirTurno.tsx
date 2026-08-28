@@ -106,40 +106,61 @@ export default function AbrirTurno({ cajeroId, sucursalId, cajeroNombre, cajeroR
           justify-content: center;
           background: var(--bg-900);
           padding: 20px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .abrir-turno-container::before {
+          content: '';
+          position: absolute;
+          top: -80px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 600px;
+          height: 300px;
+          background: linear-gradient(135deg, #B71C1C 0%, #E65100 55%, #FBC02D 100%);
+          border-radius: 50%;
+          opacity: 0.08;
+          filter: blur(40px);
+          pointer-events: none;
         }
 
         .abrir-turno-card {
           background: var(--bg-800);
           border: 1px solid var(--border);
           border-radius: var(--radius-xl);
-          padding: 40px;
-          max-width: 450px;
+          padding: 44px;
+          max-width: 460px;
           width: 100%;
           text-align: center;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 20px rgba(183,28,28,0.08);
+          position: relative;
+          z-index: 1;
         }
 
         .card-icon {
-          width: 80px; height: 80px;
+          width: 88px; height: 88px;
           border-radius: 50%;
-          background: rgba(253, 216, 53, 0.1);
-          color: var(--yellow);
+          background: linear-gradient(135deg, rgba(183,28,28,0.12) 0%, rgba(230,81,0,0.12) 100%);
+          color: var(--red);
           display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 20px;
+          margin: 0 auto 24px;
+          border: 2px solid rgba(230,81,0,0.15);
         }
 
         .title {
-          font-size: 1.7rem;
+          font-size: 1.8rem;
           font-weight: 800;
           color: var(--text-100);
           margin-bottom: 10px;
+          letter-spacing: -0.02em;
         }
 
         .subtitle {
           font-size: 0.95rem;
           color: var(--text-400);
-          margin-bottom: 30px;
-          line-height: 1.5;
+          margin-bottom: 32px;
+          line-height: 1.6;
         }
 
         .form-abrir {
@@ -151,10 +172,12 @@ export default function AbrirTurno({ cajeroId, sucursalId, cajeroNombre, cajeroR
 
         .input-group label {
           display: block;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           font-weight: 700;
           color: var(--text-300);
           margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .input-wrapper {
@@ -168,46 +191,50 @@ export default function AbrirTurno({ cajeroId, sucursalId, cajeroNombre, cajeroR
           left: 16px;
           color: var(--text-500);
           font-weight: 700;
+          font-size: 1.1rem;
         }
 
         .input-wrapper input {
           width: 100%;
-          background: var(--bg-900);
+          background: var(--bg-600);
           border: 2px solid var(--border);
           border-radius: var(--radius-lg);
-          padding: 16px 16px 16px 48px;
-          font-size: 1.2rem;
-          font-weight: 700;
+          padding: 16px 16px 16px 52px;
+          font-size: 1.4rem;
+          font-weight: 800;
           color: var(--text-100);
           transition: var(--transition);
+          text-align: right;
         }
 
         .input-wrapper input:focus {
           outline: none;
           border-color: var(--red);
-          box-shadow: 0 0 0 3px rgba(211,47,47,0.2);
+          box-shadow: 0 0 0 3px rgba(211,47,47,0.15);
+          background: var(--bg-500);
         }
 
         .alert-box {
           display: flex;
           align-items: flex-start;
           gap: 10px;
-          background: rgba(255,255,255,0.03);
-          padding: 12px;
+          background: rgba(230,81,0,0.06);
+          border: 1px solid rgba(230,81,0,0.15);
+          padding: 12px 14px;
           border-radius: var(--radius-md);
-          color: var(--text-500);
-          font-size: 0.8rem;
-          line-height: 1.4;
+          color: var(--text-400);
+          font-size: 0.82rem;
+          line-height: 1.5;
         }
-        .alert-box svg { flex-shrink: 0; margin-top: 2px; }
+        .alert-box svg { flex-shrink: 0; margin-top: 2px; color: #E65100; }
 
         .btn-abrir {
-          background: var(--red);
+          background: linear-gradient(135deg, #B71C1C 0%, #E65100 60%, #FBC02D 100%);
           color: white;
           border: none;
           padding: 16px;
           border-radius: var(--radius-lg);
-          font-weight: 700;
+          font-weight: 800;
           font-size: 1.1rem;
           display: flex;
           align-items: center;
@@ -215,17 +242,20 @@ export default function AbrirTurno({ cajeroId, sucursalId, cajeroNombre, cajeroR
           gap: 10px;
           cursor: pointer;
           transition: var(--transition);
+          box-shadow: 0 4px 20px rgba(183,28,28,0.3);
+          letter-spacing: 0.01em;
         }
 
         .btn-abrir:hover:not(:disabled) {
-          background: var(--red-light);
+          filter: brightness(1.08);
           transform: translateY(-2px);
-          box-shadow: var(--shadow-red);
+          box-shadow: 0 8px 28px rgba(183,28,28,0.4);
         }
 
         .btn-abrir:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+          filter: grayscale(0.3);
         }
       `}</style>
     </div>

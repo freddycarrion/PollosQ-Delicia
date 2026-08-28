@@ -170,7 +170,7 @@ export default async function CajaAdminPage() {
           gap: 12px;
         }
         .page-subtitle {
-          color: var(--text-400);
+          color: #ffffff;
           font-size: 0.95rem;
           margin-top: 4px;
         }

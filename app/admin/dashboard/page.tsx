@@ -98,8 +98,8 @@ export default async function DashboardPage() {
 
         <div className="kpi-card yellow">
           <span className="kpi-label">Ticket promedio</span>
-          <span className="kpi-value" style={{ color: '#1A1A1A' }}>Bs. {fmt(ticketPromedio)}</span>
-          <span className="kpi-sub" style={{ color: '#555' }}>Por venta completada</span>
+          <span className="kpi-value">Bs. {fmt(ticketPromedio)}</span>
+          <span className="kpi-sub">Por venta completada</span>
           <ShoppingCart size={48} className="kpi-icon" />
         </div>
 
@@ -211,7 +211,7 @@ export default async function DashboardPage() {
           <div className="top-productos">
             {topProductos && topProductos.length > 0 ? (
               topProductos.map((p, i) => (
-                <div key={p.nombre_producto} className="top-producto-item">
+                <div key={i} className="top-producto-item">
                   <span className="top-num">{i + 1}</span>
                   <div className="top-info">
                     <span className="top-nombre">
@@ -254,9 +254,14 @@ export default async function DashboardPage() {
         /* Métodos */
         .section-title {
           font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--text-200);
+          font-weight: 800;
+          color: #B71C1C;
           margin-bottom: 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .card .section-title {
+          color: #ffffff; /* Letras blancas dentro de las tarjetas oscuras */
         }
         .section-header {
           display: flex;

@@ -66,8 +66,8 @@ export default function LoginPage() {
         <div className="login-logo-wrap">
           <div className="login-logo-glow" />
           <Image
-            src="/log.png"
-            alt="Tía Sarita"
+            src="/logo.png"
+            alt="Pollos Q' Delicia"
             width={130}
             height={130}
             priority
@@ -76,7 +76,7 @@ export default function LoginPage() {
         </div>
 
         <div className="login-titles">
-          <h1 className="login-title">Tía <span>Sarita</span></h1>
+          <h1 className="login-title">Pollos Q' <span>Delicia</span></h1>
           <p className="login-subtitle">Sistema de Gestión Interno</p>
         </div>
 
@@ -155,7 +155,7 @@ export default function LoginPage() {
         </form>
 
         <p className="login-footer">
-          🍗 Sabor que une familias
+          🍗 El sabor que conquista
         </p>
       </div>
 

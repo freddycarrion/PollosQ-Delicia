@@ -48,11 +48,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           display: flex;
           flex-direction: column;
           min-width: 0;
+          position: relative;
+        }
+        .admin-main::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 280px;
+          background: linear-gradient(135deg, #B71C1C 0%, #E65100 50%, #FBC02D 100%);
+          border-bottom-left-radius: 40% 15%;
+          border-bottom-right-radius: 60% 25%;
+          z-index: 0;
+          opacity: 0.95;
         }
         .admin-content {
           flex: 1;
           padding: 28px 32px;
           overflow-y: auto;
+          position: relative;
+          z-index: 1;
         }
         @media (max-width: 768px) {
           .admin-main { margin-left: 0; }

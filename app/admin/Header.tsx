@@ -1,7 +1,8 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Menu } from 'lucide-react'
+import { Menu, Sun, Moon } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import NotificacionesBell from './NotificacionesBell'
 
 const pageNames: Record<string, string> = {
@@ -29,6 +30,24 @@ export default function AdminHeader({ nombreUsuario }: Props) {
   const hora = now.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })
   const fecha = now.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' })
 
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'))
+  }, [])
+
+  const toggleTheme = () => {
+    const next = !isDark
+    setIsDark(next)
+    if (next) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }
+
   function handleOpenSidebar() {
     window.dispatchEvent(new Event('toggle-sidebar'))
   }
@@ -50,6 +69,9 @@ export default function AdminHeader({ nombreUsuario }: Props) {
       </div>
 
       <div className="admin-header-right">
+        <button className="theme-toggle" onClick={toggleTheme} title="Cambiar tema">
+          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
         <NotificacionesBell />
         <div className="admin-header-user">
           <span className="admin-header-greeting">Hola, <strong>{nombreUsuario}</strong></span>
@@ -61,15 +83,15 @@ export default function AdminHeader({ nombreUsuario }: Props) {
 
       <style>{`
         .admin-header {
-          height: var(--header-h);
-          background: var(--bg-800);
-          border-bottom: 1px solid var(--border);
+          height: auto;
+          min-height: var(--header-h);
+          background: transparent;
+          border-bottom: none;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          padding: 0 32px;
-          position: sticky;
-          top: 0;
+          padding: 24px 32px 12px;
+          position: relative;
           z-index: 50;
           gap: 16px;
         }
@@ -94,18 +116,20 @@ export default function AdminHeader({ nombreUsuario }: Props) {
           .admin-header-greeting { display: none; }
         }
         .admin-header-title {
-          font-size: 1.2rem;
-          font-weight: 700;
-          color: var(--text-100);
-          line-height: 1;
+          font-size: 2rem;
+          font-weight: 800;
+          color: #ffffff;
+          line-height: 1.1;
+          letter-spacing: -0.02em;
         }
         .admin-header-title {
           margin-bottom: 2px;
         }
         .admin-header-date {
-          font-size: 0.75rem;
-          color: var(--text-600);
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.95);
           text-transform: capitalize;
+          font-weight: 500;
         }
         .admin-header-right {
           display: flex;
@@ -119,23 +143,38 @@ export default function AdminHeader({ nombreUsuario }: Props) {
         }
         .admin-header-greeting {
           font-size: 0.875rem;
-          color: var(--text-400);
+          color: rgba(255, 255, 255, 0.9);
         }
         .admin-header-greeting strong {
-          color: var(--text-100);
-          font-weight: 600;
+          color: #ffffff;
+          font-weight: 700;
         }
-        .admin-header-avatar {
-          width: 36px; height: 36px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--red-dark), var(--red));
-          color: #fff;
+        .theme-toggle {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #ffffff;
+          padding: 8px;
+          border-radius: var(--radius-md);
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 700;
-          font-size: 0.875rem;
-          border: 2px solid var(--border);
+          transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+          background: rgba(255,255,255,0.2);
+        }
+        .admin-header-avatar {
+          width: 40px; height: 40px;
+          border-radius: 50%;
+          background: #ffffff;
+          color: #F05B17;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 1.1rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
       `}</style>
     </header>

@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { X, Save, User as UserIcon, Lock, Mail } from 'lucide-react'
-import { crearUsuarioAuth } from './actions'
+import { crearUsuarioAuth, guardarPerfil } from './actions'
 
 interface Props {
   empleado: any | null
@@ -14,7 +13,6 @@ interface Props {
 }
 
 export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }: Props) {
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   
   // Campos
@@ -32,10 +30,15 @@ export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }
   const isEditing = !!empleado
 
   useEffect(() => {
-    if (!empleado && sucursales.length > 0) {
-      setSucursalId(sucursales[0].id) // Default a principal
-    }
-  }, [empleado, sucursales])
+    setNombre(empleado?.nombre || '')
+    setApellido(empleado?.apellido || '')
+    setTelefono(empleado?.telefono || '')
+    setRol(empleado?.rol || 'cajero')
+    setActivo(empleado ? empleado.activo : true)
+    // Pre-selecciona la sucursal asignada, o la primera disponible si no tiene
+    setSucursalId(empleado?.sucursal_id || (sucursales[0]?.id ?? ''))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleGuardar = async () => {
     if (!nombre || !apellido || !rol) return toast.error('Rellena los campos obligatorios.')
@@ -60,30 +63,24 @@ export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }
       finalId = result.userId
     }
 
-    // Upsert a la tabla Perfiles local
-    const perfilData = {
-        id: finalId,
+    // Upsert a la tabla Perfiles (via Server Action con service_role)
+    const result = await guardarPerfil({
+        id: finalId!,
         nombre,
         apellido,
         telefono,
         rol,
         sucursal_id: sucursalId || null,
         activo
-    }
-
-    const { data: savedData, error: dbError } = await supabase
-        .from('perfiles')
-        .upsert(perfilData)
-        .select('*, sucursales(nombre)')
-        .single()
+    })
 
     setLoading(false)
 
-    if (dbError) {
-        toast.error("Error al vincular el perfil: " + dbError.message)
+    if (result.error) {
+        toast.error('Error al vincular el perfil: ' + result.error)
     } else {
         toast.success(isEditing ? 'Empleado actualizado correctamente' : '¡Cajero/Supervisor Creado!')
-        onSaved(savedData)
+        onSaved(result.data)
         onClose()
     }
   }
@@ -124,12 +121,14 @@ export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }
           </div>
 
           <div style={{ display: 'flex', gap: '16px' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>SUCURSAL ASIGNADA</label>
-               <select value={sucursalId} onChange={e=>setSucursalId(e.target.value)} style={inputStyle}>
+            {isEditing && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>SUCURSAL ASIGNADA</label>
+                <select value={sucursalId} onChange={e=>setSucursalId(e.target.value)} style={inputStyle}>
                   {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-               </select>
-            </div>
+                </select>
+              </div>
+            )}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>ROL EN SISTEMA <span style={{ color: 'red' }}>*</span></label>
                <select value={rol} onChange={e=>setRol(e.target.value)} style={inputStyle}>

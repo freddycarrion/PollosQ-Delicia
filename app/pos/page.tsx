@@ -72,7 +72,7 @@ export default async function PosPage() {
   const safeProductos  = productos  || []
 
   const cajeroNombre = `${perfil.nombre} ${perfil.apellido}`
-  const sucursalNombre = (perfil.sucursales as any)?.nombre || 'Tía Sarita'
+  const sucursalNombre = (perfil.sucursales as any)?.nombre || "Pollos Q' Delicia"
 
   return (
     <PosClient 
