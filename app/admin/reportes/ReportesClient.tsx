@@ -6,6 +6,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import { TrendingUp, Package, Users, DollarSign, Calendar as CalIcon, Printer } from 'lucide-react'
+import EstadoResultadosPrint from './EstadoResultadosPrint'
 
 interface Props {
   ventasDiarias: any[]
@@ -336,6 +337,13 @@ export default function ReportesClient({ ventasDiarias, topProductos, desempenoC
           table td { border-bottom: 1px solid #eee !important; color: #333 !important; }
         }
       `}</style>
+      
+      {/* COMPONENTE DE IMPRESIÓN (Oculto en pantalla, visible al imprimir) */}
+      <EstadoResultadosPrint 
+        desde={desde}
+        hasta={hasta}
+        ingresosTotales={totalIngresos}
+      />
     </div>
   )
 }
