@@ -80,8 +80,9 @@ export default function ReportesClient({ ventasDiarias, topProductos, desempenoC
   return (
     <div className="reportes-client animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
-      {/* TOOLBAR FECHAS */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'var(--bg-800)', padding: '16px 20px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
+      <div className="dashboard-content no-print" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        {/* TOOLBAR FECHAS */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'var(--bg-800)', padding: '16px 20px', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-400)' }}>
           <CalIcon size={20} />
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filtro de Fechas:</span>
@@ -264,6 +265,7 @@ export default function ReportesClient({ ventasDiarias, topProductos, desempenoC
         </div>
 
       </div>
+      </div>
 
       <style>{`
         .kpi-card {
@@ -313,7 +315,7 @@ export default function ReportesClient({ ventasDiarias, topProductos, desempenoC
           }
           .admin-main { margin-left: 0 !important; }
           .admin-content { padding: 0 !important; overflow: visible !important; }
-          .reportes-client { gap: 16px !important; }
+          .reportes-client { gap: 0 !important; }
           
           .kpi-card { 
             border: 1px solid #ddd !important; 

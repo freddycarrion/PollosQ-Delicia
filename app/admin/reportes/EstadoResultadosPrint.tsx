@@ -256,11 +256,6 @@ export default function EstadoResultadosPrint({ desde, hasta, ingresosTotales, u
             display: block;
             padding: 0;
           }
-          /* Esconder dashboard */
-          .admin-page > :not(.print-estado-resultados),
-          .reportes-client > :not(.print-estado-resultados) {
-            display: none !important;
-          }
         }
 
         /* Variables */
