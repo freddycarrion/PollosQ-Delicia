@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   BarChart3, Wallet, ShoppingBag, Settings,
   ChevronRight, ChevronDown, LogOut, Store, X,
-  Clock, Bell, User
+  Clock, Bell, User, HandCoins
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -37,6 +37,7 @@ const navItems: NavItem[] = [
     ]
   },
   { label: 'Reportes',    href: '/admin/reportes',     icon: <BarChart3 size={18} /> },
+  { label: 'Pagos Personal', href: '/admin/pagos-personal', icon: <HandCoins size={18} /> },
   { label: 'Sucursales',  href: '/admin/sucursales',   icon: <Store size={18} /> },
   { label: 'Mi Perfil',   href: '/admin/perfil',       icon: <User size={18} /> },
   { label: 'Configuración', href: '/admin/configuracion', icon: <Settings size={18} /> },

@@ -321,3 +321,27 @@ export interface StockBajo {
   unidad: UnidadMedida
   deficit: number
 }
+
+// ============================================================
+// Módulo: Pagos al Personal
+// ============================================================
+
+export type PeriodoPago = 'diario' | 'semanal' | 'mensual'
+
+export interface PagoPersonal {
+  id:              string
+  sucursal_id:     string
+  empleado_id:     string | null
+  registrado_por:  string
+  nombre_empleado: string
+  concepto:        string
+  periodo:         PeriodoPago
+  monto:           number
+  fecha_pago:      string       // DATE: 'YYYY-MM-DD'
+  observaciones:   string | null
+  created_at:      string
+  // Relaciones opcionales
+  sucursales?:     { nombre: string }
+  perfiles?:       { nombre: string; apellido: string }
+}
+
