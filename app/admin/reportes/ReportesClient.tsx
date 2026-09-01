@@ -133,7 +133,7 @@ export default function ReportesClient({
           TAB 1: RESUMEN GENERAL
       ═══════════════════════════════════════════════════════════ */}
       {activeTab === 'resumen' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* KPIs */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
             {[
@@ -238,7 +238,7 @@ export default function ReportesClient({
           TAB 2: VENTAS MENSUALES
       ═══════════════════════════════════════════════════════════ */}
       {activeTab === 'mensual' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* KPIs mensuales */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {[
@@ -315,7 +315,7 @@ export default function ReportesClient({
           TAB 3: POR CATEGORÍA
       ═══════════════════════════════════════════════════════════ */}
       {activeTab === 'categorias' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {[
               { label: 'Total Ingresos (período)', value: `${fmt(totalCatBs)} Bs.`, icon: <DollarSign size={24}/>, color: 'var(--yellow)' },
@@ -409,7 +409,7 @@ export default function ReportesClient({
           TAB 4: COMPRAS
       ═══════════════════════════════════════════════════════════ */}
       {activeTab === 'compras' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {[
               { label: 'Total Invertido (período)', value: `${fmt(compras.reduce((a, c) => a + Number(c.total), 0))} Bs.`, icon: <ShoppingBag size={24}/>, color: '#F44336' },
@@ -512,13 +512,9 @@ export default function ReportesClient({
         }
         @media print {
           body { background: white !important; color: black !important; }
-          .admin-sidebar, .admin-header, .no-print, .reportes-tabs { display: none !important; }
+          .admin-sidebar, .admin-header, .no-print, .reportes-tabs, .page-header { display: none !important; }
           .admin-main { margin-left: 0 !important; }
           .admin-content { padding: 0 !important; overflow: visible !important; }
-          .kpi-card, .chart-panel { border: 1px solid #ddd !important; background: #f9f9f9 !important; break-inside: avoid; }
-          .kpi-label, .kpi-value, .panel-title { color: #000 !important; }
-          table th { background: #eee !important; color: #000 !important; }
-          table td { color: #333 !important; border-bottom: 1px solid #eee !important; }
         }
       `}</style>
 
