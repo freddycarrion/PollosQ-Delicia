@@ -110,6 +110,27 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
     onReimprimir(ticket)
   }
 
+  const handleAnular = async (ventaId: string, ticketNum: number) => {
+    const confirmar = window.confirm(`¿Estás seguro que deseas ANULAR el ticket #${String(ticketNum).padStart(4, '0')}? Esta acción no se puede deshacer.`)
+    if (!confirmar) return
+
+    try {
+      const { error } = await supabase
+        .from('ventas')
+        .update({ estado: 'anulada' })
+        .eq('id', ventaId)
+
+      if (error) throw error
+      
+      // Actualizar estado localmente sin recargar todo
+      setVentas(prev => prev.map(v => v.id === ventaId ? { ...v, estado: 'anulada' } : v))
+      alert('Venta anulada correctamente.')
+    } catch (err) {
+      console.error(err)
+      alert('Error al anular la venta.')
+    }
+  }
+
   const ventasFiltradas = ventas.filter(v =>
     filtroEstado === 'todos' ? true : v.estado === filtroEstado
   )
@@ -210,13 +231,22 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                       {completada ? `Bs. ${fmt(venta.total)}` : 'Anulado'}
                     </span>
                     {completada && (
-                      <button
-                        className="pedido-reimprimir-btn"
-                        onClick={(e) => { e.stopPropagation(); handleReimprimir(venta) }}
-                        title="Reimprimir ticket"
-                      >
-                        <Printer size={14} />
-                      </button>
+                      <>
+                        <button
+                          className="pedido-action-btn print"
+                          onClick={(e) => { e.stopPropagation(); handleReimprimir(venta) }}
+                          title="Reimprimir ticket"
+                        >
+                          <Printer size={14} />
+                        </button>
+                        <button
+                          className="pedido-action-btn cancel"
+                          onClick={(e) => { e.stopPropagation(); handleAnular(venta.id, venta.numero_ticket) }}
+                          title="Anular venta"
+                        >
+                          <XCircle size={14} />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -439,22 +469,29 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           font-family: monospace;
           color: var(--text-300);
         }
-        .pedido-reimprimir-btn {
+        .pedido-action-btn {
           width: 28px;
           height: 28px;
           border-radius: 50%;
-          background: rgba(253,216,53,0.1);
-          border: 1px solid rgba(253,216,53,0.2);
-          color: var(--yellow);
           display: flex;
           align-items: center;
           justify-content: center;
           transition: var(--transition);
+          border: 1px solid transparent;
         }
-        .pedido-reimprimir-btn:hover {
-          background: var(--yellow);
-          color: #000;
+        .pedido-action-btn.print {
+          background: rgba(253,216,53,0.1);
+          border-color: rgba(253,216,53,0.2);
+          color: var(--yellow);
         }
+        .pedido-action-btn.print:hover { background: var(--yellow); color: #000; }
+        
+        .pedido-action-btn.cancel {
+          background: rgba(211,47,47,0.1);
+          border-color: rgba(211,47,47,0.2);
+          color: var(--red);
+        }
+        .pedido-action-btn.cancel:hover { background: var(--red); color: #fff; }
 
         .pedido-detalle {
           padding: 0 16px 14px;

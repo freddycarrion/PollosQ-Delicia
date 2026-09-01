@@ -482,10 +482,10 @@ export default function PosClient({
                     <button
                       className="ticket-cancel-btn"
                       onClick={() => setIsCancelModalOpen(true)}
-                      title="Cancelar pedido"
+                      title="Vaciar carrito"
                     >
                       <XCircle size={18} />
-                      <span>Cancelar</span>
+                      <span>Vaciar</span>
                     </button>
                   )}
                 </div>
@@ -610,14 +610,14 @@ export default function PosClient({
           cargando={isProcessing}
         />
 
-        {/* Modal Cancelar Pedido */}
+        {/* Modal Vaciar Carrito */}
         {isCancelModalOpen && (
           <div className="cancel-overlay">
             <div className="cancel-modal animate-fade-in-scale">
               <div className="cancel-icon">🗑️</div>
-              <h3 className="cancel-title">¿Cancelar el pedido?</h3>
+              <h3 className="cancel-title">¿Vaciar el carrito?</h3>
               <p className="cancel-text">
-                Se eliminarán los {totalItems} items del pedido actual.
+                Se eliminarán los {totalItems} items del carrito actual.
                 Esta acción no se puede deshacer.
               </p>
               <div className="cancel-actions">
@@ -632,7 +632,7 @@ export default function PosClient({
                   onClick={handleCancelarPedido}
                 >
                   <XCircle size={16} />
-                  Sí, cancelar
+                  Sí, vaciar
                 </button>
               </div>
             </div>
