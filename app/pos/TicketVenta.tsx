@@ -4,6 +4,8 @@ export interface TicketData {
   numeroTicket: string
   tipoPedido: string
   metodoPago: string
+  metodoPago2?: string          // Segundo método en pago mixto
+  montoPago2?: number           // Monto del segundo método
   total: number
   recibido: number
   vuelto: number
@@ -12,26 +14,36 @@ export interface TicketData {
     cantidad: number
     precio: number
     subtotal: number
+    notas?: string              // Presas y acompañamientos seleccionados
   }[]
   fecha: string
+  esReimpresion?: boolean       // Marca la reimpresión en el ticket de cocina
 }
 
 // ─── DATOS DEL NEGOCIO (edita aquí) ───────────────────────────
 const NEGOCIO = {
   nombre:     "POLLOS Q' DELICIA",
-  slogan:     '',                               // ← slogan opcional
-  direccion:  'Av. Principal s/n, Tu Ciudad',   // ← cambia esto
-  telefono:   '+591 7XX-XXXXX',                  // ← cambia esto
-  whatsapp:   '+591 7XX-XXXXX',                  // ← cambia esto
-  despedida:  '¡Buen provecho y gracias por su visita!',
+  slogan:     '',
+  direccion:  'Av. Principal s/n, Tu Ciudad',
+  telefono:   '+591 7XX-XXXXX',
+  whatsapp:   '+591 7XX-XXXXX',
+  despedida:  'Gracias por su visita!',
 }
 // ──────────────────────────────────────────────────────────────
+
+// Ancho fijo 72mm para impresora termica de 8cm
+// (8cm - margenes fisicos de ~4mm = ~72mm imprimibles)
+const TICKET_WIDTH = '72mm'
 
 export default function TicketVenta({ data }: { data: TicketData | null }) {
   if (!data) return null
 
-  const fmt = (n: number) => 'Bs. ' + n.toFixed(2)
-  const esParaLlevar = data.tipoPedido === 'para_llevar'
+  const fmt  = (n: number) => 'Bs.' + n.toFixed(2)
+  const esParaLlevar = data.tipoPedido === 'para_llevar' || data.tipoPedido === 'para_llevar'
+  const esMixto = !!data.metodoPago2
+  const metodoLabel = esMixto
+    ? `${data.metodoPago.toUpperCase()} + ${data.metodoPago2!.toUpperCase()}`
+    : data.metodoPago.toUpperCase()
 
   return (
     <>
@@ -40,9 +52,10 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           ════════════════════════════════════════ */}
       <div className="ticket-cocina">
         <div className="tk-header-cocina">
-          <div className="tk-tipo-cocina">{esParaLlevar ? '🛍 PARA LLEVAR' : '🍽 COMER AQUÍ'}</div>
+          <div className="tk-tipo-cocina">{esParaLlevar ? 'PARA LLEVAR' : 'COMER AQUI'}</div>
           <div className="tk-num-cocina">#{data.numeroTicket}</div>
           <div className="tk-hora-cocina">{data.fecha}</div>
+          {data.esReimpresion && <div className="tk-reimp">-- REIMPRESION --</div>}
         </div>
 
         <div className="tk-divider-cocina" />
@@ -56,17 +69,25 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           </thead>
           <tbody>
             {data.items.map((item, idx) => (
-              <tr key={idx}>
-                <td className="tk-cant-cocina">{item.cantidad}x</td>
-                <td className="tk-prod-cocina">{item.nombre}</td>
-              </tr>
+              <>
+                <tr key={idx}>
+                  <td className="tk-cant-cocina">{item.cantidad}x</td>
+                  <td className="tk-prod-cocina">{item.nombre}</td>
+                </tr>
+                {item.notas && (
+                  <tr key={`${idx}-n`}>
+                    <td></td>
+                    <td className="tk-notas-cocina">{item.notas}</td>
+                  </tr>
+                )}
+              </>
             ))}
           </tbody>
         </table>
 
         <div className="tk-divider-cocina" />
         <div className="tk-footer-cocina">
-          Cajero: {data.cajeroNombre} · {data.sucursalNombre}
+          {data.cajeroNombre} - {data.sucursalNombre}
         </div>
       </div>
 
@@ -79,6 +100,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <div className="tk-header-cli">
           <div className="tk-logo-txt">{NEGOCIO.nombre}</div>
           {NEGOCIO.slogan && <div className="tk-slogan">{NEGOCIO.slogan}</div>}
+          <div className="tk-sep-dots" />
           <div className="tk-sub-info">{NEGOCIO.direccion}</div>
           <div className="tk-sub-info">Tel: {NEGOCIO.telefono}</div>
           <div className="tk-sub-info">WhatsApp: {NEGOCIO.whatsapp}</div>
@@ -97,7 +119,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <div className="tk-sep-dashed" />
 
         {/* Tipo de pedido */}
-        <div className="tk-tipo-cli">{esParaLlevar ? '🛍 PARA LLEVAR' : '🍽 COMER AQUÍ'}</div>
+        <div className="tk-tipo-cli">{esParaLlevar ? 'PARA LLEVAR' : 'COMER AQUI'}</div>
 
         <div className="tk-sep-solid" />
 
@@ -105,20 +127,28 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <table className="tk-table-cli">
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', width: '30px' }}>Cant</th>
+              <th style={{ textAlign: 'left', width: '22px' }}>Ct</th>
               <th style={{ textAlign: 'left' }}>Producto</th>
-              <th style={{ textAlign: 'right', width: '50px' }}>P/U</th>
-              <th style={{ textAlign: 'right', width: '58px' }}>Total</th>
+              <th style={{ textAlign: 'right', width: '44px' }}>P/U</th>
+              <th style={{ textAlign: 'right', width: '52px' }}>Total</th>
             </tr>
           </thead>
           <tbody>
             {data.items.map((item, idx) => (
-              <tr key={idx}>
-                <td style={{ verticalAlign: 'top' }}>{item.cantidad}</td>
-                <td style={{ verticalAlign: 'top' }}>{item.nombre}</td>
-                <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{item.precio.toFixed(2)}</td>
-                <td style={{ textAlign: 'right', verticalAlign: 'top', fontWeight: 900 }}>{item.subtotal.toFixed(2)}</td>
-              </tr>
+              <>
+                <tr key={idx}>
+                  <td style={{ verticalAlign: 'top' }}>{item.cantidad}</td>
+                  <td style={{ verticalAlign: 'top' }}>{item.nombre}</td>
+                  <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{item.precio.toFixed(2)}</td>
+                  <td style={{ textAlign: 'right', verticalAlign: 'top', fontWeight: 900 }}>{item.subtotal.toFixed(2)}</td>
+                </tr>
+                {item.notas && (
+                  <tr key={`${idx}-n`}>
+                    <td></td>
+                    <td colSpan={3} className="tk-item-notas">{item.notas}</td>
+                  </tr>
+                )}
+              </>
             ))}
           </tbody>
         </table>
@@ -131,17 +161,38 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
             <span>Subtotal</span>
             <span>{fmt(data.total)}</span>
           </div>
-          <div className="tk-sep-dashed" style={{ margin: '6px 0' }} />
+          <div className="tk-sep-dashed" style={{ margin: '5px 0' }} />
           <div className="tk-total-row tk-total-grande">
             <span>TOTAL</span>
             <span>{fmt(data.total)}</span>
           </div>
-          <div className="tk-sep-dashed" style={{ margin: '6px 0' }} />
-          <div className="tk-total-row">
-            <span>Método de pago</span>
-            <span style={{ textTransform: 'uppercase' }}>{data.metodoPago}</span>
-          </div>
-          {data.metodoPago === 'efectivo' && (
+          <div className="tk-sep-dashed" style={{ margin: '5px 0' }} />
+
+          {/* Método(s) de pago */}
+          {!esMixto ? (
+            <div className="tk-total-row">
+              <span>Pago</span>
+              <span>{metodoLabel}</span>
+            </div>
+          ) : (
+            <>
+              <div className="tk-total-row">
+                <span>Pago Mixto</span>
+                <span></span>
+              </div>
+              <div className="tk-total-row tk-mixto-row">
+                <span>  {data.metodoPago.toUpperCase()}</span>
+                <span>{fmt(data.total - (data.montoPago2 || 0))}</span>
+              </div>
+              <div className="tk-total-row tk-mixto-row">
+                <span>  {data.metodoPago2!.toUpperCase()}</span>
+                <span>{fmt(data.montoPago2 || 0)}</span>
+              </div>
+            </>
+          )}
+
+          {/* Efectivo: recibido y vuelto */}
+          {data.metodoPago === 'efectivo' && !esMixto && (
             <>
               <div className="tk-total-row">
                 <span>Recibido</span>
@@ -153,6 +204,20 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
               </div>
             </>
           )}
+          {esMixto && data.metodoPago === 'efectivo' && (
+            <>
+              <div className="tk-total-row">
+                <span>Recibido</span>
+                <span>{fmt(data.recibido)}</span>
+              </div>
+              {data.vuelto > 0 && (
+                <div className="tk-total-row tk-cambio">
+                  <span>CAMBIO</span>
+                  <span>{fmt(data.vuelto)}</span>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div className="tk-sep-dashed" />
@@ -160,12 +225,12 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         {/* Pie */}
         <div className="tk-footer-cli">
           <p>{NEGOCIO.despedida}</p>
-          <p style={{ marginTop: '4px', fontSize: '11px' }}>{NEGOCIO.nombre}</p>
+          {data.esReimpresion && <p className="tk-reimp-label">*** REIMPRESION ***</p>}
         </div>
       </div>
 
       <style>{`
-        /* ── RESET DE IMPRESIÓN ─────────────────── */
+        /* ── RESET DE IMPRESION ─────────────── */
         @media print {
           .ticket-cocina {
             page-break-after: always;
@@ -173,172 +238,212 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           }
         }
 
-        /* ── BASE COMPARTIDA ─────────────────────── */
+        /* ── BASE COMPARTIDA ─────────────────── */
         .ticket-cocina,
         .ticket-cliente {
-          width: 80mm;
+          width: ${TICKET_WIDTH};
           margin: 0 auto;
-          padding: 6mm 5mm;
+          padding: 4mm 3mm;
           background: #fff;
           color: #000;
           font-family: 'Courier New', Courier, monospace;
-          font-size: 13px;
-          line-height: 1.5;
+          font-size: 11px;
+          line-height: 1.45;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+          word-break: break-word;
         }
 
-        /* ── TICKET COCINA ───────────────────────── */
+        /* ── TICKET COCINA ───────────────────── */
         .ticket-cocina {
           border: 2px dashed #000;
-          border-radius: 4px;
-          margin-bottom: 8px;
+          border-radius: 3px;
+          margin-bottom: 6px;
         }
         .tk-header-cocina {
           text-align: center;
         }
         .tk-tipo-cocina {
-          font-size: 20px;
+          font-size: 16px;
           font-weight: 900;
           letter-spacing: 1px;
           margin-bottom: 2px;
         }
         .tk-num-cocina {
-          font-size: 36px;
+          font-size: 32px;
           font-weight: 900;
           line-height: 1;
         }
         .tk-hora-cocina {
-          font-size: 11px;
+          font-size: 10px;
           margin-top: 2px;
+        }
+        .tk-reimp {
+          font-size: 10px;
+          font-weight: 900;
+          margin-top: 3px;
+          letter-spacing: 1px;
         }
         .tk-divider-cocina {
           border-bottom: 2px dashed #000;
-          margin: 6px 0;
+          margin: 5px 0;
         }
         .tk-table-cocina {
           width: 100%;
           border-collapse: collapse;
         }
         .tk-table-cocina th {
-          font-size: 11px;
+          font-size: 10px;
           text-transform: uppercase;
           border-bottom: 1px solid #000;
-          padding-bottom: 3px;
+          padding-bottom: 2px;
         }
         .tk-table-cocina td {
-          padding: 3px 0;
+          padding: 2px 0;
         }
         .tk-cant-cocina {
-          width: 32px;
-          font-size: 18px;
+          width: 28px;
+          font-size: 16px;
           font-weight: 900;
           vertical-align: top;
         }
         .tk-prod-cocina {
-          font-size: 15px;
+          font-size: 13px;
           font-weight: 900;
           vertical-align: top;
         }
+        .tk-notas-cocina {
+          font-size: 10px;
+          font-style: italic;
+          padding-bottom: 3px;
+          color: #444;
+        }
         .tk-footer-cocina {
           text-align: center;
-          font-size: 11px;
-          margin-top: 4px;
+          font-size: 10px;
+          margin-top: 3px;
         }
 
-        /* ── TICKET CLIENTE ──────────────────────── */
+        /* ── TICKET CLIENTE ──────────────────── */
         .tk-header-cli {
           text-align: center;
         }
         .tk-logo-txt {
-          font-size: 20px;
+          font-size: 16px;
           font-weight: 900;
           letter-spacing: 1px;
-          margin-bottom: 2px;
+          margin-bottom: 1px;
         }
         .tk-slogan {
-          font-size: 14px;
+          font-size: 11px;
           font-weight: 700;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
+        }
+        .tk-sep-dots {
+          border-bottom: 1px dotted #000;
+          margin: 3px 0;
         }
         .tk-sub-info {
-          font-size: 11px;
+          font-size: 10px;
           margin: 0;
+          line-height: 1.4;
         }
 
         .tk-sep-dashed {
           border-bottom: 1px dashed #000;
-          margin: 7px 0;
+          margin: 5px 0;
         }
         .tk-sep-solid {
           border-bottom: 1px solid #000;
-          margin: 7px 0;
+          margin: 5px 0;
         }
 
         .tk-meta {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 1px;
         }
         .tk-meta-row {
           display: flex;
           justify-content: space-between;
-          font-size: 12px;
+          font-size: 10px;
         }
         .tk-meta-row span:first-child {
-          color: #444;
+          color: #555;
         }
         .tk-meta-row span:last-child {
           font-weight: 900;
+          text-align: right;
+          max-width: 60%;
+          word-break: break-all;
         }
 
         .tk-tipo-cli {
           text-align: center;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 900;
           letter-spacing: 0.5px;
-          margin: 4px 0;
+          margin: 3px 0;
         }
 
         .tk-table-cli {
           width: 100%;
           border-collapse: collapse;
-          font-size: 12px;
+          font-size: 10px;
+          table-layout: fixed;
         }
         .tk-table-cli th {
           border-bottom: 1px solid #000;
-          padding-bottom: 3px;
-          font-size: 11px;
+          padding-bottom: 2px;
+          font-size: 10px;
           text-transform: uppercase;
         }
         .tk-table-cli td {
-          padding: 3px 0;
-          font-size: 12px;
+          padding: 2px 0;
+          font-size: 10px;
+          overflow: hidden;
+        }
+        .tk-item-notas {
+          font-size: 9px;
+          font-style: italic;
+          color: #444;
+          padding-bottom: 2px;
         }
 
         .tk-totales {
           display: flex;
           flex-direction: column;
+          gap: 1px;
         }
         .tk-total-row {
           display: flex;
           justify-content: space-between;
-          font-size: 13px;
-          margin-bottom: 2px;
+          font-size: 11px;
+          margin-bottom: 1px;
         }
         .tk-total-grande {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 900;
         }
         .tk-cambio {
           font-weight: 900;
         }
+        .tk-mixto-row {
+          font-size: 10px;
+          color: #333;
+        }
 
         .tk-footer-cli {
           text-align: center;
-          font-size: 13px;
+          font-size: 11px;
           font-weight: 700;
-          margin-top: 4px;
+          margin-top: 3px;
+        }
+        .tk-reimp-label {
+          font-size: 10px;
+          font-weight: 900;
+          margin-top: 3px;
+          letter-spacing: 1px;
         }
       `}</style>
     </>

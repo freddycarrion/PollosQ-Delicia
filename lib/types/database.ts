@@ -5,6 +5,7 @@
 
 export type RolUsuario    = 'admin' | 'cajero' | 'supervisor'
 export type MetodoPago    = 'efectivo' | 'tarjeta' | 'qr' | 'transferencia'
+export type MetodoPagoMixto = Exclude<MetodoPago, 'transferencia'> // Efectivo, Tarjeta, QR
 export type EstadoVenta   = 'completada' | 'anulada' | 'pendiente'
 export type EstadoTurno   = 'abierto' | 'cerrado'
 export type UnidadMedida  = 'kg' | 'g' | 'litro' | 'ml' | 'unidad' | 'docena' | 'caja'
@@ -121,6 +122,7 @@ export interface Producto {
   imagen_url: string | null
   disponible: boolean
   orden: number
+  requiere_presas: boolean       // Si TRUE, solicita presas al agregar al POS
   created_at: string
   updated_at: string
   // Relaciones
@@ -158,6 +160,8 @@ export interface Venta {
   descuento: number
   total: number
   metodo_pago: MetodoPago
+  metodo_pago_2: MetodoPago | null   // Segundo método en pago mixto
+  monto_pago_2: number | null        // Monto del segundo método
   monto_recibido: number | null
   vuelto: number
   tipo_pedido: 'para_llevar' | 'en_local'
@@ -182,6 +186,7 @@ export interface DetalleVenta {
   precio_unitario: number
   cantidad: number
   subtotal: number
+  notas_item: string | null          // Presas/acompañamientos elegidos
   created_at: string
   // Relaciones
   producto?: Producto
