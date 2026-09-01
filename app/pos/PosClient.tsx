@@ -12,8 +12,6 @@ import {
   ChevronRight,
   ClipboardList,
   XCircle,
-  Moon,
-  Sun,
 } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -75,22 +73,6 @@ export default function PosClient({
   const [busqueda, setBusqueda] = useState("");
   const [pedido, setPedido] = useState<ItemPedido[]>([]);
   const [tabActivo, setTabActivo] = useState<'catalogo' | 'carrito' | 'pedidos'>('catalogo');
-
-  // Dark mode — persiste en localStorage
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pos-dark-mode') === 'true'
-    }
-    return false
-  })
-
-  const toggleDarkMode = () => {
-    setDarkMode(prev => {
-      const next = !prev
-      localStorage.setItem('pos-dark-mode', String(next))
-      return next
-    })
-  }
 
   const supabase = createClient();
 
@@ -342,17 +324,9 @@ export default function PosClient({
 
   return (
     <>
-      <div className={`pos-client animate-fade-in no-print${darkMode ? ' pos-dark' : ''}`}>
+      <div className="pos-client animate-fade-in no-print">
         {/* TAB BAR */}
         <div className="pos-tab-bar">
-          {/* Dark Mode Toggle */}
-          <button
-            className="pos-dark-toggle"
-            onClick={toggleDarkMode}
-            title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-          >
-            {darkMode ? <Sun size={18}/> : <Moon size={18}/>}
-          </button>
           <button
             className={`pos-tab-btn ${tabActivo === 'catalogo' ? 'active' : ''}`}
             onClick={() => setTabActivo('catalogo')}
@@ -1089,20 +1063,8 @@ export default function PosClient({
         .cancel-text { font-size: 0.9rem; color: var(--text-400); line-height: 1.5; margin-bottom: 24px; }
         .cancel-actions { display: flex; gap: 12px; justify-content: center; }
 
-        /* ── DARK MODE TOGGLE BUTTON ─────── */
-        .pos-dark-toggle {
-          position: absolute; top: 12px; right: 12px;
-          width: 36px; height: 36px; border-radius: 50%;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: var(--text-400);
-          display: flex; align-items: center; justify-content: center;
-          transition: var(--transition); z-index: 10; cursor: pointer;
-        }
-        .pos-dark-toggle:hover { background: rgba(255,255,255,0.12); color: var(--text-100); }
-
         /* ── DARK MODE (fondo más oscuro aún) ── */
-        .pos-dark {
+        :global(.pos-dark) {
           --bg-900: #050508;
           --bg-800: #0c0c12;
           --bg-700: #111118;
@@ -1120,9 +1082,8 @@ export default function PosClient({
           --yellow: #e5c200;
           --red: #c0392b;
         }
-        .pos-dark .pos-dark-toggle { color: #e5c200; border-color: rgba(229,194,0,0.3); }
-        .pos-dark .ticket-item { border-bottom-color: rgba(255,255,255,0.04); }
-        .pos-dark .pos-product-card { box-shadow: none; }
+        :global(.pos-dark) .ticket-item { border-bottom-color: rgba(255,255,255,0.04); }
+        :global(.pos-dark) .pos-product-card { box-shadow: none; }
 
         `}</style>
       </div>

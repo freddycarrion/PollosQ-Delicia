@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { LogOut, ArrowLeft, Clock } from 'lucide-react'
+import { LogOut, ArrowLeft, Clock, Moon, Sun } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import CerrarTurnoModal from './CerrarTurnoModal'
 import ComunicadosBell from './ComunicadosBell'
@@ -20,6 +20,28 @@ interface Props {
 export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol, sucursal, turnoId }: Props) {
   const router = useRouter()
   const [isCerrarModalOpen, setIsCerrarModalOpen] = useState(false)
+
+  // Dark mode
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const isDark = localStorage.getItem('pos-dark-mode') === 'true'
+      if (isDark) {
+        document.documentElement.classList.add('pos-dark')
+      }
+      return isDark
+    }
+    return false
+  })
+
+  const toggleDarkMode = () => {
+    setDarkMode(prev => {
+      const next = !prev
+      localStorage.setItem('pos-dark-mode', String(next))
+      if (next) document.documentElement.classList.add('pos-dark')
+      else document.documentElement.classList.remove('pos-dark')
+      return next
+    })
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -72,6 +94,13 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           </div>
 
           <div className="pos-actions">
+            <button 
+              onClick={toggleDarkMode}
+              className="btn-pos-dark"
+              title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <ComunicadosBell rol={rol} />
             {esAdmin && (
               <button onClick={() => router.push('/admin/dashboard')} className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(4px)' }} title="Volver al Admin">
@@ -250,10 +279,24 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           transition: var(--transition);
           backdrop-filter: blur(4px);
         }
-        .btn-pos-logout:hover {
+        .btn-pos-logout:hover, .btn-pos-dark:hover {
           background: rgba(255,255,255,0.25);
           color: #fff;
           border-color: rgba(255,255,255,0.4);
+        }
+
+        .btn-pos-dark {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px; height: 36px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.9);
+          border: 1px solid rgba(255,255,255,0.2);
+          transition: var(--transition);
+          backdrop-filter: blur(4px);
+          cursor: pointer;
         }
 
         .pos-main {
