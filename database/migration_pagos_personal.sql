@@ -31,8 +31,11 @@ ALTER TABLE pagos_personal ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "pagos_personal_ver"
   ON pagos_personal FOR SELECT
   USING (
-    get_my_rol() = 'admin'
-    OR (get_my_rol() = 'supervisor' AND sucursal_id = get_my_sucursal())
+    (SELECT rol FROM perfiles WHERE id = auth.uid()) = 'admin'
+    OR (
+      (SELECT rol FROM perfiles WHERE id = auth.uid()) = 'supervisor' 
+      AND sucursal_id = (SELECT sucursal_id FROM perfiles WHERE id = auth.uid())
+    )
   );
 
 -- Solo admin y supervisor pueden registrar pagos
@@ -41,19 +44,22 @@ CREATE POLICY "pagos_personal_insertar"
   WITH CHECK (
     registrado_por = auth.uid()
     AND (
-      get_my_rol() = 'admin'
-      OR (get_my_rol() = 'supervisor' AND sucursal_id = get_my_sucursal())
+      (SELECT rol FROM perfiles WHERE id = auth.uid()) = 'admin'
+      OR (
+        (SELECT rol FROM perfiles WHERE id = auth.uid()) = 'supervisor' 
+        AND sucursal_id = (SELECT sucursal_id FROM perfiles WHERE id = auth.uid())
+      )
     )
   );
 
 -- Solo admin puede actualizar o eliminar
 CREATE POLICY "pagos_personal_admin_modificar"
   ON pagos_personal FOR UPDATE
-  USING (get_my_rol() = 'admin');
+  USING ((SELECT rol FROM perfiles WHERE id = auth.uid()) = 'admin');
 
 CREATE POLICY "pagos_personal_admin_eliminar"
   ON pagos_personal FOR DELETE
-  USING (get_my_rol() = 'admin');
+  USING ((SELECT rol FROM perfiles WHERE id = auth.uid()) = 'admin');
 
 COMMENT ON TABLE pagos_personal IS
   'Registro de pagos realizados al personal: sueldos, bonos, pagos por día/semana/mes.';
