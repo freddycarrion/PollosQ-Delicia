@@ -75,6 +75,13 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
     .lte('fecha_compra', hastaStr)
     .order('fecha_compra', { ascending: false })
 
+  // 7. Pagos de Personal del período
+  const { data: pagosPersonal } = await supabase
+    .from('pagos_personal')
+    .select('monto, fecha_pago, periodo')
+    .gte('fecha_pago', desdeStr)
+    .lte('fecha_pago', hastaStr)
+
   // ─── Procesamiento local ──────────────────────────────────────────────
 
   // Ventas diarias
@@ -197,6 +204,7 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
         ventasMensuales={arrVentasMensuales}
         ventasPorCategoria={arrCategorias}
         compras={(compras as any[]) || []}
+        pagosPersonal={(pagosPersonal as any[]) || []}
         initialDesde={desdeStr}
         initialHasta={hastaStr}
       />

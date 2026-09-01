@@ -19,6 +19,7 @@ interface Props {
   ventasMensuales:    any[]
   ventasPorCategoria: any[]
   compras:            any[]
+  pagosPersonal:      any[]
   initialDesde: string
   initialHasta: string
 }
@@ -39,7 +40,7 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
 
 export default function ReportesClient({
   ventasDiarias, topProductos, desempenoCajeros,
-  ventasMensuales, ventasPorCategoria, compras,
+  ventasMensuales, ventasPorCategoria, compras, pagosPersonal,
   initialDesde, initialHasta
 }: Props) {
   const router = useRouter()
@@ -522,7 +523,18 @@ export default function ReportesClient({
       `}</style>
 
       {/* Print component */}
-      <EstadoResultadosPrint desde={desde} hasta={hasta} ingresosTotales={totalIngresos} />
+      <EstadoResultadosPrint 
+        desde={desde} 
+        hasta={hasta} 
+        ingresosTotales={totalIngresos} 
+        pedidosCompletados={totalPedidos}
+        productoMasVendido={topProductsChartData[0]?.name || 'N/A'}
+        promedioDiario={dailyChartData.length > 0 ? totalIngresos / dailyChartData.length : 0}
+        ventasPorCategoria={ventasPorCategoria}
+        compras={compras}
+        pagosPersonal={pagosPersonal}
+        paymentData={paymentData}
+      />
     </div>
   )
 }
