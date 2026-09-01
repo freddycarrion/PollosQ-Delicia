@@ -471,13 +471,28 @@ export default function PosClient({
         {/* LADO DERECHO: TICKET o PEDIDOS */}
         <div className={`pos-ticket ${tabActivo === 'catalogo' ? 'pos-hidden-mobile' : ''}`}>
 
+          {/* Encabezado con Tabs para la columna derecha (muy útil en desktop) */}
+          <div className="ticket-column-tabs no-print">
+            <button 
+              className={`ticket-col-tab ${tabActivo !== 'pedidos' ? 'active' : ''}`}
+              onClick={() => setTabActivo('carrito')}
+            >
+              🛒 Pedido Actual
+              {pedido.length > 0 && <span className="tab-badge">{pedido.length}</span>}
+            </button>
+            <button 
+              className={`ticket-col-tab ${tabActivo === 'pedidos' ? 'active' : ''}`}
+              onClick={() => setTabActivo('pedidos')}
+            >
+              📋 Historial del Turno
+            </button>
+          </div>
+
           {/* Vista Carrito */}
           {tabActivo !== 'pedidos' && (
             <>
               <div className="ticket-header">
-                <h2 className="ticket-title">Pedido Actual</h2>
-                <div className="ticket-header-actions">
-                  <span className="badge badge-gray">{pedido.length} items</span>
+                <div className="ticket-header-actions w-full flex justify-end">
                   {pedido.length > 0 && (
                     <button
                       className="ticket-cancel-btn"
@@ -485,7 +500,7 @@ export default function PosClient({
                       title="Vaciar carrito"
                     >
                       <XCircle size={18} />
-                      <span>Vaciar</span>
+                      <span>Vaciar Carrito</span>
                     </button>
                   )}
                 </div>
@@ -904,8 +919,33 @@ export default function PosClient({
           }
         }
 
+        .ticket-column-tabs {
+          display: flex;
+          background: var(--bg-900);
+          border-bottom: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+        .ticket-col-tab {
+          flex: 1; padding: 14px 8px;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          background: transparent; border: none;
+          color: var(--text-400); font-weight: 700; font-size: 0.95rem;
+          border-bottom: 3px solid transparent;
+          transition: var(--transition);
+        }
+        .ticket-col-tab:hover { background: var(--bg-800); color: var(--text-200); }
+        .ticket-col-tab.active {
+          color: var(--red);
+          border-bottom-color: var(--red);
+          background: var(--bg-800);
+        }
+        .tab-badge {
+          background: var(--red); color: white; border-radius: 99px;
+          font-size: 0.7rem; font-weight: 800; padding: 2px 8px;
+        }
+
         .ticket-header {
-          padding: 24px; display: flex; align-items: center; justify-content: space-between;
+          padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;
           border-bottom: 1px solid var(--border); flex-shrink: 0;
         }
         @media (max-width: 768px) { .ticket-header { padding: 14px 16px; } }
