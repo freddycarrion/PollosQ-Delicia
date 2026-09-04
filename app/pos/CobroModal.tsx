@@ -10,6 +10,7 @@ export interface ConfirmarVentaPayload {
   metodo: MetodoPago
   tipoVenta: TipoVenta
   montoRecibido: number
+  nombreCliente?: string
   // Pago mixto
   esMixto: boolean
   metodo2?: MetodoPago
@@ -34,6 +35,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
   const [metodo, setMetodo] = useState<MetodoPago>('efectivo')
   const [tipo, setTipo] = useState<TipoVenta>('para_llevar')
   const [montoIngresado, setMontoIngresado] = useState<string>('')
+  const [nombreCliente, setNombreCliente] = useState<string>('')
 
   // Pago mixto
   const [esMixto, setEsMixto] = useState(false)
@@ -46,6 +48,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
       setMetodo('efectivo')
       setTipo('para_llevar')
       setMontoIngresado('')
+      setNombreCliente('')
       setEsMixto(false)
       setMetodo2('tarjeta')
       setMonto1Str('')
@@ -110,6 +113,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
         metodo,
         tipoVenta: tipo,
         montoRecibido: metodo === 'efectivo' ? montoNum : total,
+        nombreCliente: nombreCliente.trim() || undefined,
         esMixto: false,
       })
     } else {
@@ -125,6 +129,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
         metodo,
         tipoVenta: tipo,
         montoRecibido: metodo === 'efectivo' ? monto1 : total,
+        nombreCliente: nombreCliente.trim() || undefined,
         esMixto: true,
         metodo2,
         monto2,
@@ -152,6 +157,21 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
           
           {/* Lado Izquierdo: Configuración */}
           <div className="cobro-left">
+
+            {/* Nombre del Cliente */}
+            <div className="cobro-section">
+              <label className="cobro-label" htmlFor="cobro-nombre-cliente">Nombre del Cliente <span style={{ color: 'var(--text-500)', fontWeight: 400 }}>(opcional)</span></label>
+              <input
+                id="cobro-nombre-cliente"
+                type="text"
+                className="cobro-cliente-input"
+                placeholder="Ej: Juan Pérez"
+                value={nombreCliente}
+                onChange={e => setNombreCliente(e.target.value)}
+                maxLength={100}
+                autoComplete="off"
+              />
+            </div>
             
             {/* Tipo de Consumo */}
             <div className="cobro-section">
@@ -422,6 +442,21 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
           background: var(--bg-900);
           overflow-y: auto;
         }
+
+        .cobro-cliente-input {
+          width: 100%;
+          background: var(--bg-800);
+          border: 1.5px solid var(--border);
+          border-radius: var(--radius-lg);
+          padding: 10px 14px;
+          color: var(--text-100);
+          font-size: 0.9rem;
+          font-weight: 500;
+          transition: var(--transition);
+          outline: none;
+        }
+        .cobro-cliente-input::placeholder { color: var(--text-500); }
+        .cobro-cliente-input:focus { border-color: var(--yellow); background: var(--bg-700); }
 
         .cobro-section { display: flex; flex-direction: column; gap: 8px; }
         .cobro-label { font-size: 0.75rem; font-weight: 700; color: var(--text-500); text-transform: uppercase; letter-spacing: 0.05em; }

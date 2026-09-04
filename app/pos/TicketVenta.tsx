@@ -9,6 +9,7 @@ export interface TicketData {
   total: number
   recibido: number
   vuelto: number
+  nombreCliente?: string        // Nombre del cliente (opcional)
   items: {
     nombre: string
     cantidad: number
@@ -56,6 +57,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           <div className="tk-num-cocina">#{data.numeroTicket}</div>
           <div className="tk-hora-cocina">{data.fecha}</div>
           {data.esReimpresion && <div className="tk-reimp">-- REIMPRESION --</div>}
+          {data.nombreCliente && <div className="tk-cliente-cocina">{data.nombreCliente}</div>}
         </div>
 
         <div className="tk-divider-cocina" />
@@ -112,6 +114,9 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <div className="tk-meta">
           <div className="tk-meta-row"><span>Ticket</span><span>#{data.numeroTicket}</span></div>
           <div className="tk-meta-row"><span>Fecha</span><span>{data.fecha}</span></div>
+          {data.nombreCliente && (
+            <div className="tk-meta-row"><span>Cliente</span><span>{data.nombreCliente}</span></div>
+          )}
           <div className="tk-meta-row"><span>Cajero</span><span>{data.cajeroNombre}</span></div>
           <div className="tk-meta-row"><span>Sucursal</span><span>{data.sucursalNombre}</span></div>
         </div>
@@ -322,6 +327,13 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           text-align: center;
           font-size: 10px;
           margin-top: 3px;
+        }
+        .tk-cliente-cocina {
+          font-size: 13px;
+          font-weight: 900;
+          margin-top: 4px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
         }
 
         /* ── TICKET CLIENTE ──────────────────── */
