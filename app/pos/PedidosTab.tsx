@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Printer, Receipt, Clock, CheckCircle, XCircle, Filter, Edit2, Plus, Minus, Trash2, Save, X } from 'lucide-react'
+import { RefreshCw, Printer, Receipt, Clock, CheckCircle, XCircle, Filter, Edit2, Plus, Minus, Trash2, Save, X, Search, UtensilsCrossed, ShoppingBag } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { TicketData } from './TicketVenta'
 
@@ -30,9 +30,19 @@ interface VentaTurno {
   detalle_ventas: DetalleVentaItem[]
 }
 
+interface ProductoCatalogo {
+  id: string
+  nombre: string
+  precio: number
+  precio_oferta: number | null
+  en_oferta: boolean
+  disponible: boolean
+}
+
 // Estado editable de un ítem del pedido (clonado del original)
 interface ItemEditable extends DetalleVentaItem {
   cantidadEditada: number
+  tipoItem: 'mesa' | 'llevar'
 }
 
 interface Props {
@@ -60,6 +70,11 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   const [ventaEditando, setVentaEditando] = useState<VentaTurno | null>(null)
   const [itemsEditables, setItemsEditables] = useState<ItemEditable[]>([])
   const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+
+  // Estado para agregar productos al pedido
+  const [productosCatalogo, setProductosCatalogo] = useState<ProductoCatalogo[]>([])
+  const [busquedaProducto, setBusquedaProducto] = useState('')
+  const [mostrarCatalogo, setMostrarCatalogo] = useState(false)
 
   const fmt = (n: number) =>
     new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
@@ -143,6 +158,16 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
     }
   }
 
+  // ── Cargar catálogo de productos ──────────────────────────────────────────
+  const cargarCatalogo = useCallback(async () => {
+    const { data } = await supabase
+      .from('productos')
+      .select('id, nombre, precio, precio_oferta, en_oferta, disponible')
+      .eq('disponible', true)
+      .order('nombre')
+    setProductosCatalogo((data as ProductoCatalogo[]) || [])
+  }, [supabase])
+
   // ── Abrir modal de edición ────────────────────────────────────────────────
   const handleAbrirEdicion = (venta: VentaTurno) => {
     setVentaEditando(venta)
@@ -150,8 +175,40 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
       venta.detalle_ventas.map(item => ({
         ...item,
         cantidadEditada: item.cantidad,
+        tipoItem: 'mesa' as const,
       }))
     )
+    setBusquedaProducto('')
+    setMostrarCatalogo(false)
+    cargarCatalogo()
+  }
+
+  // ── Agregar producto del catálogo al pedido ───────────────────────────────
+  const agregarProductoDesdeDialogo = (prod: ProductoCatalogo) => {
+    const precio = prod.en_oferta && prod.precio_oferta ? prod.precio_oferta : prod.precio
+    const itemExistente = itemsEditables.find(i => i.nombre_producto === prod.nombre && i.tipoItem === 'mesa')
+    if (itemExistente) {
+      cambiarCantidadEditable(itemExistente.id, 1)
+    } else {
+      const nuevoItem: ItemEditable = {
+        id: `nuevo-${Date.now()}-${Math.random()}`,
+        nombre_producto: prod.nombre,
+        precio_unitario: precio,
+        cantidad: 1,
+        subtotal: precio,
+        notas_item: null,
+        cantidadEditada: 1,
+        tipoItem: 'mesa',
+      }
+      setItemsEditables(prev => [...prev, nuevoItem])
+    }
+    setMostrarCatalogo(false)
+    setBusquedaProducto('')
+  }
+
+  // ── Cambiar tipo (mesa/llevar) de un ítem ─────────────────────────────────
+  const cambiarTipoItem = (id: string, tipo: 'mesa' | 'llevar') => {
+    setItemsEditables(prev => prev.map(item => item.id === id ? { ...item, tipoItem: tipo } : item))
   }
 
   // ── Modificar cantidad de un ítem editable ────────────────────────────────
@@ -194,16 +251,26 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
       if (delError) throw delError
 
-      // 2. Insertar los ítems editados
-      const nuevosDetalles = itemsEditables.map(item => ({
-        venta_id: ventaEditando.id,
-        producto_id: null,              // No cambiamos el producto, solo la cantidad
-        nombre_producto: item.nombre_producto,
-        precio_unitario: item.precio_unitario,
-        cantidad: item.cantidadEditada,
-        subtotal: +(item.precio_unitario * item.cantidadEditada).toFixed(2),
-        notas_item: item.notas_item,
-      }))
+      // 2. Insertar los ítems editados (con tipo mesa/llevar en notas si aplica)
+      const nuevosDetalles = itemsEditables.map(item => {
+        let notas = item.notas_item || ''
+        // Remover tipo previo si existía
+        notas = notas.replace(/\s*\[Para Llevar\]/g, '').replace(/\s*\[Para la Mesa\]/g, '').trim()
+        if (item.tipoItem === 'llevar') {
+          notas = notas ? notas + ' [Para Llevar]' : '[Para Llevar]'
+        } else if (item.tipoItem === 'mesa') {
+          notas = notas ? notas + ' [Para la Mesa]' : '[Para la Mesa]'
+        }
+        return {
+          venta_id: ventaEditando.id,
+          producto_id: null,
+          nombre_producto: item.nombre_producto,
+          precio_unitario: item.precio_unitario,
+          cantidad: item.cantidadEditada,
+          subtotal: +(item.precio_unitario * item.cantidadEditada).toFixed(2),
+          notas_item: notas || null,
+        }
+      })
 
       const { error: insError } = await supabase
         .from('detalle_ventas')
@@ -417,11 +484,11 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
               </button>
             </div>
 
-            {/* Body: lista de ítems */}
+            {/* Body: lista de ítems + catálogo */}
             <div className="edit-modal-body">
               {itemsEditables.length === 0 ? (
                 <div className="edit-empty">
-                  <p>Sin productos. Guarda para anular el pedido o agrega productos desde el catálogo.</p>
+                  <p>Sin productos. Agrega productos usando el botón de abajo.</p>
                 </div>
               ) : (
                 itemsEditables.map(item => (
@@ -429,9 +496,28 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                     <div className="edit-item-info">
                       <span className="edit-item-nombre">{item.nombre_producto}</span>
                       {item.notas_item && (
-                        <span className="edit-item-notas">{item.notas_item}</span>
+                        <span className="edit-item-notas">{item.notas_item.replace(/\s*\[Para (Llevar|la Mesa)\]/g, '')}</span>
                       )}
                       <span className="edit-item-precio">Bs. {fmt(item.precio_unitario)} c/u</span>
+                      {/* Toggle Mesa / Llevar */}
+                      <div className="edit-tipo-toggle">
+                        <button
+                          className={`edit-tipo-btn ${item.tipoItem === 'mesa' ? 'active-mesa' : ''}`}
+                          onClick={() => cambiarTipoItem(item.id, 'mesa')}
+                          title="Para la mesa"
+                          disabled={guardandoEdicion}
+                        >
+                          <UtensilsCrossed size={12} /> Mesa
+                        </button>
+                        <button
+                          className={`edit-tipo-btn ${item.tipoItem === 'llevar' ? 'active-llevar' : ''}`}
+                          onClick={() => cambiarTipoItem(item.id, 'llevar')}
+                          title="Para llevar"
+                          disabled={guardandoEdicion}
+                        >
+                          <ShoppingBag size={12} /> Llevar
+                        </button>
+                      </div>
                     </div>
 
                     <div className="edit-item-controls">
@@ -466,6 +552,48 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                     </button>
                   </div>
                 ))
+              )}
+
+              {/* Botón + catálogo para agregar productos */}
+              <button
+                className="edit-agregar-btn"
+                onClick={() => setMostrarCatalogo(v => !v)}
+                disabled={guardandoEdicion}
+              >
+                <Plus size={16} /> Agregar producto al pedido
+              </button>
+
+              {mostrarCatalogo && (
+                <div className="edit-catalogo">
+                  <div className="edit-catalogo-search">
+                    <Search size={15} className="edit-cat-icon" />
+                    <input
+                      className="edit-cat-input"
+                      placeholder="Buscar producto..."
+                      value={busquedaProducto}
+                      onChange={e => setBusquedaProducto(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="edit-catalogo-lista">
+                    {productosCatalogo
+                      .filter(p => p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()))
+                      .map(prod => {
+                        const precio = prod.en_oferta && prod.precio_oferta ? prod.precio_oferta : prod.precio
+                        return (
+                          <button
+                            key={prod.id}
+                            className="edit-cat-item"
+                            onClick={() => agregarProductoDesdeDialogo(prod)}
+                          >
+                            <span className="edit-cat-nombre">{prod.nombre}</span>
+                            <span className="edit-cat-precio">Bs. {fmt(precio)}</span>
+                          </button>
+                        )
+                      })
+                    }
+                  </div>
+                </div>
               )}
             </div>
 
@@ -945,6 +1073,104 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         }
         .edit-delete-btn:hover:not(:disabled) { background: var(--red); color: #fff; }
         .edit-delete-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Tipo toggle (Mesa / Llevar) */
+        .edit-tipo-toggle {
+          display: flex;
+          gap: 4px;
+          margin-top: 4px;
+        }
+        .edit-tipo-btn {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          padding: 3px 8px;
+          border-radius: var(--radius-full);
+          font-size: 0.68rem;
+          font-weight: 700;
+          background: var(--bg-700);
+          border: 1px solid var(--border);
+          color: var(--text-500);
+          transition: var(--transition);
+          cursor: pointer;
+        }
+        .edit-tipo-btn.active-mesa {
+          background: rgba(66,165,245,0.15);
+          border-color: #42A5F5;
+          color: #42A5F5;
+        }
+        .edit-tipo-btn.active-llevar {
+          background: rgba(255,152,0,0.15);
+          border-color: #FF9800;
+          color: #FF9800;
+        }
+        .edit-tipo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Botón agregar producto */
+        .edit-agregar-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          padding: 10px;
+          margin-top: 4px;
+          border-radius: var(--radius-lg);
+          background: rgba(66,165,245,0.08);
+          border: 1px dashed rgba(66,165,245,0.4);
+          color: #42A5F5;
+          font-weight: 700;
+          font-size: 0.88rem;
+          transition: var(--transition);
+        }
+        .edit-agregar-btn:hover:not(:disabled) { background: rgba(66,165,245,0.15); }
+        .edit-agregar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Catálogo dentro del modal */
+        .edit-catalogo {
+          border: 1px solid var(--border);
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          background: var(--bg-900);
+          margin-top: 2px;
+        }
+        .edit-catalogo-search {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 14px;
+          border-bottom: 1px solid var(--border);
+        }
+        .edit-cat-icon { color: var(--text-500); flex-shrink: 0; }
+        .edit-cat-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--text-100);
+          font-size: 0.88rem;
+        }
+        .edit-catalogo-lista {
+          max-height: 200px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+        }
+        .edit-cat-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 9px 14px;
+          text-align: left;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid rgba(255,255,255,0.04);
+          cursor: pointer;
+          transition: background 0.12s;
+        }
+        .edit-cat-item:hover { background: rgba(255,255,255,0.05); }
+        .edit-cat-nombre { font-size: 0.85rem; font-weight: 600; color: var(--text-200); }
+        .edit-cat-precio { font-size: 0.82rem; font-weight: 700; color: var(--yellow); font-family: monospace; }
 
         .edit-modal-footer {
           padding: 14px 20px;
