@@ -269,9 +269,9 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
     const diferencia = nuevoTotalEditado - ventaEditando.total
 
-    // Si la diferencia es positiva y no tenemos método todavía, abrimos el modal
-    if (diferencia > 0 && !payloadDiferencia) {
-      setMontoDiferencia(diferencia)
+    // Siempre abrimos el modal de cobro para que el cajero ingrese el monto recibido y el método
+    if (!payloadDiferencia) {
+      setMontoDiferencia(nuevoTotalEditado)
       setMostrarCobroDiferencia(true)
       return
     }
@@ -710,7 +710,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                   ) : (
                     <Save size={16} />
                   )}
-                  {guardandoEdicion ? 'Guardando...' : (nuevoTotalEditado > ventaEditando.total ? 'Cobrar Diferencia' : 'Guardar Cambios')}
+                  {guardandoEdicion ? 'Guardando...' : 'Cobrar y Guardar'}
                 </button>
               </div>
             </div>
