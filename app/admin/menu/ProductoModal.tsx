@@ -164,7 +164,7 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content animate-fade-in-scale" style={{ maxWidth: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="modal animate-fade-in-scale" style={{ maxWidth: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         
         <div className="modal-header">
           <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
