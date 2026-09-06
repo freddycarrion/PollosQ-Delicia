@@ -39,7 +39,6 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
   if (!data) return null
 
   const fmt  = (n: number) => 'Bs.' + n.toFixed(2)
-  const esParaLlevar = data.tipoPedido === 'para_llevar' || data.tipoPedido === 'para_llevar'
   const esMixto = !!data.metodoPago2
   const metodoLabel = esMixto
     ? `${data.metodoPago.toUpperCase()} + ${data.metodoPago2!.toUpperCase()}`
@@ -52,7 +51,6 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           ════════════════════════════════════════ */}
       <div className="ticket-cocina">
         <div className="tk-header-cocina">
-          <div className="tk-tipo-cocina">{esParaLlevar ? 'PARA LLEVAR' : 'COMER AQUI'}</div>
           <div className="tk-num-cocina">#{data.numeroTicket}</div>
           <div className="tk-hora-cocina">{data.fecha}</div>
           {data.esReimpresion && <div className="tk-reimp">-- REIMPRESION --</div>}
@@ -120,9 +118,6 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         </div>
 
         <div className="tk-sep-dashed" />
-
-        {/* Tipo de pedido */}
-        <div className="tk-tipo-cli">{esParaLlevar ? 'PARA LLEVAR' : 'COMER AQUI'}</div>
 
         <div className="tk-sep-solid" />
 

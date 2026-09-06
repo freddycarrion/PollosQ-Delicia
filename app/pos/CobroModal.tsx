@@ -172,24 +172,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
               />
             </div>
             
-            {/* Tipo de Consumo */}
-            <div className="cobro-section">
-              <label className="cobro-label">Tipo de Pedido</label>
-              <div className="cobro-options">
-                <button 
-                  className={`cobro-opt-btn ${tipo === 'para_llevar' ? 'active' : ''}`}
-                  onClick={() => setTipo('para_llevar')}
-                >
-                  <span className="text-xl">🛍️</span> Para Llevar
-                </button>
-                <button 
-                  className={`cobro-opt-btn ${tipo === 'comer_aqui' ? 'active' : ''}`}
-                  onClick={() => setTipo('comer_aqui')}
-                >
-                  <span className="text-xl">🍽️</span> Comer Aquí
-                </button>
-              </div>
-            </div>
+
 
             {/* Toggle Pago Mixto */}
             <div className="cobro-section">
