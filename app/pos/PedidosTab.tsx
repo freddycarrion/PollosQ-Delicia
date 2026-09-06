@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Printer, Receipt, Clock, CheckCircle, XCircle, Filter, Edit2, Plus, Minus, Trash2, Save, X, Search, UtensilsCrossed, ShoppingBag } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { TicketData } from './TicketVenta'
+import PresasModal, { SeleccionPremiun, formatearNotas } from './PresasModal'
 
 interface DetalleVentaItem {
   id: string
@@ -37,6 +38,7 @@ interface ProductoCatalogo {
   precio_oferta: number | null
   en_oferta: boolean
   disponible: boolean
+  requiere_presas: boolean
 }
 
 // Estado editable de un ítem del pedido (clonado del original)
@@ -75,6 +77,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   const [productosCatalogo, setProductosCatalogo] = useState<ProductoCatalogo[]>([])
   const [busquedaProducto, setBusquedaProducto] = useState('')
   const [mostrarCatalogo, setMostrarCatalogo] = useState(false)
+  const [presasModalProducto, setPresasModalProducto] = useState<ProductoCatalogo | null>(null)
 
   const fmt = (n: number) =>
     new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
@@ -162,7 +165,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   const cargarCatalogo = useCallback(async () => {
     const { data } = await supabase
       .from('productos')
-      .select('id, nombre, precio, precio_oferta, en_oferta, disponible')
+      .select('id, nombre, precio, precio_oferta, en_oferta, disponible, requiere_presas')
       .eq('disponible', true)
       .order('nombre')
     setProductosCatalogo((data as ProductoCatalogo[]) || [])
@@ -184,9 +187,18 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   }
 
   // ── Agregar producto del catálogo al pedido ───────────────────────────────
-  const agregarProductoDesdeDialogo = (prod: ProductoCatalogo) => {
+  const agregarProductoDesdeDialogo = (prod: ProductoCatalogo, notasExtra?: string) => {
+    if (prod.requiere_presas && !notasExtra) {
+      setPresasModalProducto(prod)
+      return
+    }
+
     const precio = prod.en_oferta && prod.precio_oferta ? prod.precio_oferta : prod.precio
-    const itemExistente = itemsEditables.find(i => i.nombre_producto === prod.nombre && i.tipoItem === 'mesa')
+    // Usar nombre con notas como clave única si hay notas, para separar del mismo producto sin notas
+    const claveNombreUnico = notasExtra ? `${prod.nombre} (${notasExtra})` : prod.nombre
+
+    const itemExistente = itemsEditables.find(i => i.nombre_producto === prod.nombre && i.notas_item === (notasExtra || null) && i.tipoItem === 'mesa')
+    
     if (itemExistente) {
       cambiarCantidadEditable(itemExistente.id, 1)
     } else {
@@ -196,7 +208,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         precio_unitario: precio,
         cantidad: 1,
         subtotal: precio,
-        notas_item: null,
+        notas_item: notasExtra || null,
         cantidadEditada: 1,
         tipoItem: 'mesa',
       }
@@ -204,6 +216,13 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
     }
     setMostrarCatalogo(false)
     setBusquedaProducto('')
+    setPresasModalProducto(null)
+  }
+
+  const handlePresasConfirmar = (seleccion: SeleccionPremiun) => {
+    if (!presasModalProducto) return
+    const notas = formatearNotas(seleccion) || undefined
+    agregarProductoDesdeDialogo(presasModalProducto, notas)
   }
 
   // ── Cambiar tipo (mesa/llevar) de un ítem ─────────────────────────────────
@@ -634,6 +653,15 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL DE PRESAS Y ACOMPAÑAMIENTOS AL EDITAR */}
+      {presasModalProducto && (
+        <PresasModal
+          nombreProducto={presasModalProducto.nombre}
+          onConfirmar={handlePresasConfirmar}
+          onCancelar={() => setPresasModalProducto(null)}
+        />
       )}
 
       <style>{`
