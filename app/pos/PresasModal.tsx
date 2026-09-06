@@ -14,9 +14,8 @@ export const PRESAS_DISPONIBLES = [
 
 export const ACOMPAÑAMIENTOS_DISPONIBLES = [
   { id: 'arroz',    label: 'Arroz',       emoji: '🍚' },
-  { id: 'papas',    label: 'Papas Fritas', emoji: '🍟' },
-  { id: 'ensalada', label: 'Ensalada',    emoji: '🥗' },
-  { id: 'yuca',     label: 'Yuca',        emoji: '🌿' },
+  { id: 'fideo',    label: 'Fideo',       emoji: '🍝' },
+  { id: 'papa',     label: 'Papa',        emoji: '🥔' },
 ]
 // ──────────────────────────────────────────────────────────────────────────────
 

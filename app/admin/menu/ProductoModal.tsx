@@ -21,6 +21,7 @@ interface Producto {
   imagen_url: string | null
   disponible: boolean
   orden: number
+  requiere_presas: boolean
 }
 
 interface Props {
@@ -44,6 +45,7 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
     imagen_url: '',
     disponible: true,
     orden: 1,
+    requiere_presas: false,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploadingExt, setIsUploadingExt] = useState(false)
@@ -62,6 +64,7 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
         imagen_url: '',
         disponible: true,
         orden: 1,
+        requiere_presas: false,
       })
     }
   }, [productoToEdit, isOpen, categorias])
@@ -132,7 +135,8 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
         en_oferta: formData.en_oferta,
         imagen_url: formData.imagen_url || null,
         disponible: formData.disponible,
-        orden: formData.orden
+        orden: formData.orden,
+        requiere_presas: formData.requiere_presas
       }
 
       if (productoToEdit?.id) {
@@ -303,14 +307,27 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
           </div>
 
           <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-            <input 
-              type="checkbox" 
-              checked={formData.disponible} 
-              onChange={e => setFormData({ ...formData, disponible: e.target.checked })}
-              style={{ transform: 'scale(1.5)', margin: '0 8px' }}
-              id="chk-disp"
-            />
-            <label htmlFor="chk-disp" style={{ cursor: 'pointer', fontWeight: 600 }}>Producto Activo y Disponible</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.disponible} 
+                onChange={e => setFormData({ ...formData, disponible: e.target.checked })}
+                style={{ transform: 'scale(1.5)', margin: '0 8px' }}
+                id="chk-disp"
+              />
+              <label htmlFor="chk-disp" style={{ cursor: 'pointer', fontWeight: 600 }}>Producto Activo y Disponible</label>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.requiere_presas} 
+                onChange={e => setFormData({ ...formData, requiere_presas: e.target.checked })}
+                style={{ transform: 'scale(1.5)', margin: '0 8px' }}
+                id="chk-presas"
+              />
+              <label htmlFor="chk-presas" style={{ cursor: 'pointer', fontWeight: 600 }}>Requiere elegir presas/acompañamientos</label>
+            </div>
           </div>
 
           <div className="modal-footer" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
