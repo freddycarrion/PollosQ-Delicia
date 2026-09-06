@@ -12,6 +12,8 @@ import {
   ChevronRight,
   ClipboardList,
   XCircle,
+  UtensilsCrossed,
+  ShoppingBag,
 } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -46,6 +48,7 @@ interface ItemPedido {
   subtotal: number;
   notas?: string;           // Presas y acompañamientos seleccionados
   itemKey: string;          // Clave única: producto.id + notas (para diferenciar mismos prod con distintas presas)
+  tipoItem: 'mesa' | 'llevar'; // Destino del ítem
 }
 
 interface Props {
@@ -176,7 +179,7 @@ export default function PosClient({
         nuevos[index].subtotal = nuevos[index].cantidad * precioUnitario;
         return nuevos;
       }
-      return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey }];
+      return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey, tipoItem: 'mesa' }];
     });
 
     // En móvil: feedback
@@ -190,6 +193,11 @@ export default function PosClient({
     const notas = formatearNotas(seleccion) || undefined;
     agregarItemConNotas(presasModalProducto, notas);
     setPresasModalProducto(null);
+  };
+
+  // Cambiar tipo (mesa/llevar) de un ítem del carrito
+  const cambiarTipoItemCarrito = (itemKey: string, tipo: 'mesa' | 'llevar') => {
+    setPedido(prev => prev.map(item => item.itemKey === itemKey ? { ...item, tipoItem: tipo } : item));
   };
 
   // ── Actualizar cantidad ───────────────────────────────────────────────────
@@ -264,15 +272,24 @@ export default function PosClient({
       if (ventaError) throw ventaError;
 
       // 2. Crear los Detalles de Venta
-      const detalles = pedido.map((item) => ({
-        venta_id: venta.id,
-        producto_id: item.producto.id,
-        nombre_producto: item.producto.nombre,
-        precio_unitario: getPrecioUnitario(item.producto),
-        cantidad: item.cantidad,
-        subtotal: item.subtotal,
-        notas_item: item.notas || null,
-      }));
+      const detalles = pedido.map((item) => {
+        // Agregar [Para la Mesa] o [Para Llevar] a las notas del item
+        let notasFinales = item.notas || '';
+        if (item.tipoItem === 'llevar') {
+          notasFinales = notasFinales ? notasFinales + ' [Para Llevar]' : '[Para Llevar]';
+        } else {
+          notasFinales = notasFinales ? notasFinales + ' [Para la Mesa]' : '[Para la Mesa]';
+        }
+        return {
+          venta_id: venta.id,
+          producto_id: item.producto.id,
+          nombre_producto: item.producto.nombre,
+          precio_unitario: getPrecioUnitario(item.producto),
+          cantidad: item.cantidad,
+          subtotal: item.subtotal,
+          notas_item: notasFinales || null,
+        };
+      });
 
       const { error: detalleError } = await supabase
         .from("detalle_ventas")
@@ -533,6 +550,21 @@ export default function PosClient({
                             Bs.{" "}
                             {fmt(getPrecioUnitario(item.producto))}{" "}
                             x {item.cantidad}
+                          </div>
+                          {/* Toggle Mesa / Llevar */}
+                          <div className="ticket-tipo-toggle">
+                            <button
+                              className={`ticket-tipo-btn ${item.tipoItem === 'mesa' ? 'active-mesa' : ''}`}
+                              onClick={() => cambiarTipoItemCarrito(item.itemKey, 'mesa')}
+                            >
+                              <UtensilsCrossed size={11} /> Mesa
+                            </button>
+                            <button
+                              className={`ticket-tipo-btn ${item.tipoItem === 'llevar' ? 'active-llevar' : ''}`}
+                              onClick={() => cambiarTipoItemCarrito(item.itemKey, 'llevar')}
+                            >
+                              <ShoppingBag size={11} /> Llevar
+                            </button>
                           </div>
                         </div>
 
@@ -994,6 +1026,16 @@ export default function PosClient({
         .ticket-item-main { min-width: 0; }
         .ticket-item-name { font-size: 0.95rem; font-weight: 600; color: var(--text-100); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .ticket-item-notas { font-size: 0.75rem; color: var(--yellow); font-style: italic; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ticket-tipo-toggle { display: flex; gap: 4px; margin-top: 5px; }
+        .ticket-tipo-btn {
+          display: flex; align-items: center; gap: 3px;
+          padding: 3px 8px; border-radius: var(--radius-full);
+          font-size: 0.68rem; font-weight: 700;
+          background: var(--bg-700); border: 1px solid var(--border);
+          color: var(--text-500); transition: var(--transition); cursor: pointer;
+        }
+        .ticket-tipo-btn.active-mesa { background: rgba(66,165,245,0.15); border-color: #42A5F5; color: #42A5F5; }
+        .ticket-tipo-btn.active-llevar { background: rgba(255,152,0,0.15); border-color: #FF9800; color: #FF9800; }
         .ticket-item-sub { font-size: 0.8rem; color: var(--text-500); margin-top: 2px; }
 
         .ticket-item-controls {
