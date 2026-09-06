@@ -29,6 +29,7 @@ interface Producto {
   imagen_url: string | null
   disponible: boolean
   orden: number
+  requiere_presas: boolean
   categorias: { nombre: string }
 }
 
