@@ -332,11 +332,10 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           if (!payloadDiferencia.esMixto) {
             let field = 'total_efectivo'
             if (payloadDiferencia.metodo === 'qr') field = 'total_qr'
-            if (payloadDiferencia.metodo === 'transferencia') field = 'total_transferencia'
             updates[field] = (turno[field] || 0) + diferencia
           } else {
-            let field1 = 'total_efectivo'; if(payloadDiferencia.metodo === 'qr') field1 = 'total_qr'; if(payloadDiferencia.metodo === 'transferencia') field1 = 'total_transferencia'
-            let field2 = 'total_efectivo'; if(payloadDiferencia.metodo2 === 'qr') field2 = 'total_qr'; if(payloadDiferencia.metodo2 === 'transferencia') field2 = 'total_transferencia'
+            let field1 = 'total_efectivo'; if(payloadDiferencia.metodo === 'qr') field1 = 'total_qr';
+            let field2 = 'total_efectivo'; if(payloadDiferencia.metodo2 === 'qr') field2 = 'total_qr';
             
             updates[field1] = (turno[field1] || 0) + payloadDiferencia.montoRecibido
             updates[field2] = (turno[field2] || 0) + (payloadDiferencia.monto2 || 0)
