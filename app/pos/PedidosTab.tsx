@@ -5,6 +5,7 @@ import { RefreshCw, Printer, Receipt, Clock, CheckCircle, XCircle, Filter, Edit2
 import { createClient } from '@/lib/supabase/client'
 import { TicketData } from './TicketVenta'
 import PresasModal, { SeleccionPremiun, formatearNotas } from './PresasModal'
+import CobroModal, { ConfirmarVentaPayload } from './CobroModal'
 
 interface DetalleVentaItem {
   id: string
@@ -71,6 +72,10 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   const [ventaEditando, setVentaEditando] = useState<VentaTurno | null>(null)
   const [itemsEditables, setItemsEditables] = useState<ItemEditable[]>([])
   const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+
+  // Estado para cobrar diferencia en edición
+  const [montoDiferencia, setMontoDiferencia] = useState(0)
+  const [mostrarCobroDiferencia, setMostrarCobroDiferencia] = useState(false)
 
   // Búsqueda en el historial
   const [busquedaHistorial, setBusquedaHistorial] = useState('')
@@ -255,10 +260,19 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   )
 
   // ── Guardar cambios en la BD ──────────────────────────────────────────────
-  const handleGuardarEdicion = async () => {
+  const handleGuardarEdicion = async (payloadDiferencia?: ConfirmarVentaPayload) => {
     if (!ventaEditando) return
     if (itemsEditables.length === 0) {
       alert('El pedido debe tener al menos un ítem.')
+      return
+    }
+
+    const diferencia = nuevoTotalEditado - ventaEditando.total
+
+    // Si la diferencia es positiva y no tenemos método todavía, abrimos el modal
+    if (diferencia > 0 && !payloadDiferencia) {
+      setMontoDiferencia(diferencia)
+      setMostrarCobroDiferencia(true)
       return
     }
 
@@ -310,7 +324,30 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
       if (updError) throw updError
 
-      // 4. Cerrar modal y recargar
+      // 4. Si hay diferencia positiva, registrarla en el turno
+      if (diferencia > 0 && payloadDiferencia) {
+        const { data: turno } = await supabase.from('turnos').select('*').eq('id', turnoId).single()
+        if (turno) {
+          const updates: any = {}
+          if (!payloadDiferencia.esMixto) {
+            let field = 'total_efectivo'
+            if (payloadDiferencia.metodo === 'qr') field = 'total_qr'
+            if (payloadDiferencia.metodo === 'transferencia') field = 'total_transferencia'
+            updates[field] = (turno[field] || 0) + diferencia
+          } else {
+            let field1 = 'total_efectivo'; if(payloadDiferencia.metodo === 'qr') field1 = 'total_qr'; if(payloadDiferencia.metodo === 'transferencia') field1 = 'total_transferencia'
+            let field2 = 'total_efectivo'; if(payloadDiferencia.metodo2 === 'qr') field2 = 'total_qr'; if(payloadDiferencia.metodo2 === 'transferencia') field2 = 'total_transferencia'
+            
+            updates[field1] = (turno[field1] || 0) + payloadDiferencia.montoRecibido
+            updates[field2] = (turno[field2] || 0) + (payloadDiferencia.monto2 || 0)
+          }
+          await supabase.from('turnos').update(updates).eq('id', turnoId)
+        }
+      }
+
+      // 5. Cerrar modal y recargar
+      setMostrarCobroDiferencia(false)
+      setMontoDiferencia(0)
       setVentaEditando(null)
       setItemsEditables([])
       await cargarVentas()
@@ -663,7 +700,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                 </button>
                 <button
                   className="edit-btn-save"
-                  onClick={handleGuardarEdicion}
+                  onClick={() => handleGuardarEdicion()}
                   disabled={guardandoEdicion || itemsEditables.length === 0}
                 >
                   {guardandoEdicion ? (
@@ -671,7 +708,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                   ) : (
                     <Save size={16} />
                   )}
-                  {guardandoEdicion ? 'Guardando...' : 'Guardar Cambios'}
+                  {guardandoEdicion ? 'Guardando...' : (nuevoTotalEditado > ventaEditando.total ? 'Cobrar Diferencia' : 'Guardar Cambios')}
                 </button>
               </div>
             </div>
@@ -685,6 +722,19 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           nombreProducto={presasModalProducto.nombre}
           onConfirmar={handlePresasConfirmar}
           onCancelar={() => setPresasModalProducto(null)}
+        />
+      )}
+
+      {/* Modal para cobrar la diferencia si agregan productos */}
+      {mostrarCobroDiferencia && (
+        <CobroModal
+          isOpen={mostrarCobroDiferencia}
+          onClose={() => setMostrarCobroDiferencia(false)}
+          total={montoDiferencia}
+          cargando={guardandoEdicion}
+          onConfirmar={(payload) => {
+             handleGuardarEdicion(payload)
+          }}
         />
       )}
 
