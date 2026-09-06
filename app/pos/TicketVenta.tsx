@@ -1,3 +1,5 @@
+import React from 'react'
+
 export interface TicketData {
   sucursalNombre: string
   cajeroNombre: string
@@ -67,20 +69,35 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
             </tr>
           </thead>
           <tbody>
-            {data.items.map((item, idx) => (
-              <>
-                <tr key={idx}>
-                  <td className="tk-cant-cocina">{item.cantidad}x</td>
-                  <td className="tk-prod-cocina">{item.nombre}</td>
-                </tr>
-                {item.notas && (
-                  <tr key={`${idx}-n`}>
-                    <td></td>
-                    <td className="tk-notas-cocina">{item.notas}</td>
+            {data.items.map((item, idx) => {
+              let notasText = item.notas || '';
+              const isLlevar = notasText.includes('[Para Llevar]');
+              const isMesa = notasText.includes('[Para la Mesa]');
+              notasText = notasText.replace('[Para Llevar]', '').replace('[Para la Mesa]', '').trim();
+
+              return (
+                <React.Fragment key={idx}>
+                  <tr>
+                    <td className="tk-cant-cocina">{item.cantidad}x</td>
+                    <td className="tk-prod-cocina">{item.nombre}</td>
                   </tr>
-                )}
-              </>
-            ))}
+                  {(isLlevar || isMesa) && (
+                    <tr key={`${idx}-tipo`}>
+                      <td></td>
+                      <td className="tk-notas-cocina" style={{ fontWeight: 'bold', fontSize: '1.2em', paddingBottom: '2px' }}>
+                        👉 {isLlevar ? 'PARA LLEVAR' : 'PARA LA MESA'}
+                      </td>
+                    </tr>
+                  )}
+                  {notasText && (
+                    <tr key={`${idx}-n`}>
+                      <td></td>
+                      <td className="tk-notas-cocina">{notasText}</td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
 
@@ -132,22 +149,37 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
             </tr>
           </thead>
           <tbody>
-            {data.items.map((item, idx) => (
-              <>
-                <tr key={idx}>
-                  <td style={{ verticalAlign: 'top' }}>{item.cantidad}</td>
-                  <td style={{ verticalAlign: 'top' }}>{item.nombre}</td>
-                  <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{item.precio.toFixed(2)}</td>
-                  <td style={{ textAlign: 'right', verticalAlign: 'top', fontWeight: 900 }}>{item.subtotal.toFixed(2)}</td>
-                </tr>
-                {item.notas && (
-                  <tr key={`${idx}-n`}>
-                    <td></td>
-                    <td colSpan={3} className="tk-item-notas">{item.notas}</td>
+            {data.items.map((item, idx) => {
+              let notasText = item.notas || '';
+              const isLlevar = notasText.includes('[Para Llevar]');
+              const isMesa = notasText.includes('[Para la Mesa]');
+              notasText = notasText.replace('[Para Llevar]', '').replace('[Para la Mesa]', '').trim();
+
+              return (
+                <React.Fragment key={idx}>
+                  <tr>
+                    <td style={{ verticalAlign: 'top' }}>{item.cantidad}</td>
+                    <td style={{ verticalAlign: 'top' }}>{item.nombre}</td>
+                    <td style={{ textAlign: 'right', verticalAlign: 'top' }}>{item.precio.toFixed(2)}</td>
+                    <td style={{ textAlign: 'right', verticalAlign: 'top', fontWeight: 900 }}>{item.subtotal.toFixed(2)}</td>
                   </tr>
-                )}
-              </>
-            ))}
+                  {(isLlevar || isMesa) && (
+                    <tr key={`${idx}-tipo`}>
+                      <td></td>
+                      <td colSpan={3} className="tk-item-notas" style={{ fontWeight: 'bold', fontSize: '1.2em' }}>
+                        👉 {isLlevar ? 'PARA LLEVAR' : 'PARA LA MESA'}
+                      </td>
+                    </tr>
+                  )}
+                  {notasText && (
+                    <tr key={`${idx}-n`}>
+                      <td></td>
+                      <td colSpan={3} className="tk-item-notas">{notasText}</td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
 
