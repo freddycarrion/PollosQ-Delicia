@@ -189,7 +189,7 @@ CREATE TABLE ventas (
 CREATE TABLE detalle_ventas (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     venta_id        UUID           NOT NULL REFERENCES ventas(id)    ON DELETE CASCADE,
-    producto_id     UUID           NOT NULL REFERENCES productos(id)  ON DELETE RESTRICT,
+    producto_id     UUID                    REFERENCES productos(id)  ON DELETE SET NULL,
     nombre_producto VARCHAR(150)   NOT NULL,
     precio_unitario NUMERIC(10, 2) NOT NULL,
     cantidad        SMALLINT       NOT NULL CHECK (cantidad > 0),
