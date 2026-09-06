@@ -272,6 +272,8 @@ export default function PosClient({
       if (ventaError) throw ventaError;
 
       // 2. Crear los Detalles de Venta
+      // Guardar las notas finales por separado para el ticket
+      const notasParaTicket: string[] = [];
       const detalles = pedido.map((item) => {
         // Agregar [Para la Mesa] o [Para Llevar] a las notas del item
         let notasFinales = item.notas || '';
@@ -280,6 +282,7 @@ export default function PosClient({
         } else {
           notasFinales = notasFinales ? notasFinales + ' [Para la Mesa]' : '[Para la Mesa]';
         }
+        notasParaTicket.push(notasFinales);
         return {
           venta_id: venta.id,
           producto_id: item.producto.id,
@@ -311,12 +314,12 @@ export default function PosClient({
         recibido: payload.montoRecibido,
         vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
         nombreCliente: payload.nombreCliente,
-        items: pedido.map((i) => ({
-          nombre: i.producto.nombre,
-          cantidad: i.cantidad,
-          precio: getPrecioUnitario(i.producto),
-          subtotal: i.subtotal,
-          notas: i.notas,
+        items: pedido.map((item, i) => ({
+          nombre: item.producto.nombre,
+          cantidad: item.cantidad,
+          precio: getPrecioUnitario(item.producto),
+          subtotal: item.subtotal,
+          notas: notasParaTicket[i] || undefined,
         })),
         fecha: new Date().toLocaleString("es-BO"),
       };
