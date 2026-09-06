@@ -563,20 +563,18 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
               </button>
             </div>
 
-            {/* Body: lista de ítems + catálogo */}
-            <div className="edit-modal-body">
-              {/* Botón + catálogo para agregar productos al inicio */}
+            {/* Panel fijo de búsqueda - siempre visible arriba */}
+            <div className="edit-catalogo-panel">
               <button
                 className="edit-agregar-btn"
-                style={{ marginBottom: mostrarCatalogo ? '4px' : '12px' }}
                 onClick={() => setMostrarCatalogo(v => !v)}
                 disabled={guardandoEdicion}
               >
-                <Plus size={16} /> Agregar producto al pedido
+                <Plus size={16} /> {mostrarCatalogo ? 'Cerrar buscador' : '+ Agregar producto al pedido'}
               </button>
 
               {mostrarCatalogo && (
-                <div className="edit-catalogo" style={{ marginBottom: '12px' }}>
+                <div className="edit-catalogo">
                   <div className="edit-catalogo-search">
                     <Search size={15} className="edit-cat-icon" />
                     <input
@@ -607,7 +605,10 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                   </div>
                 </div>
               )}
+            </div>
 
+            {/* Body scrolleable: solo la lista de ítems */}
+            <div className="edit-modal-body">
               {itemsEditables.length === 0 ? (
                 <div className="edit-empty">
                   <p>Sin productos en el pedido.</p>
@@ -675,8 +676,6 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                   </div>
                 ))
               )}
-
-
             </div>
 
             {/* Footer: total + acciones */}
@@ -1095,7 +1094,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           border-radius: var(--radius-xl);
           width: 100%;
           max-width: 560px;
-          max-height: 90vh;
+          max-height: 95vh;
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -1133,10 +1132,20 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         .edit-modal-body {
           flex: 1;
           overflow-y: auto;
-          padding: 12px 20px;
+          padding: 8px 20px 12px;
           display: flex;
           flex-direction: column;
           gap: 8px;
+          min-height: 0;
+        }
+        .edit-catalogo-panel {
+          flex-shrink: 0;
+          padding: 10px 20px 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 10px;
         }
         .edit-empty {
           text-align: center;
@@ -1305,7 +1314,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           font-size: 0.88rem;
         }
         .edit-catalogo-lista {
-          max-height: 200px;
+          max-height: 260px;
           overflow-y: auto;
           display: flex;
           flex-direction: column;
