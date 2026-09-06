@@ -25,8 +25,7 @@ export interface TicketData {
 const NEGOCIO = {
   nombre:     "POLLOS Q' DELICIA",
   slogan:     '',
-  direccion:  'Av. Principal s/n, Tu Ciudad',
-  telefono:   '+591 7XX-XXXXX',
+  direccion:  'av libertadores calle los claveles',
   whatsapp:   '+591 7XX-XXXXX',
   despedida:  'Gracias por su visita!',
 }
@@ -104,7 +103,6 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           {NEGOCIO.slogan && <div className="tk-slogan">{NEGOCIO.slogan}</div>}
           <div className="tk-sep-dots" />
           <div className="tk-sub-info">{NEGOCIO.direccion}</div>
-          <div className="tk-sub-info">Tel: {NEGOCIO.telefono}</div>
           <div className="tk-sub-info">WhatsApp: {NEGOCIO.whatsapp}</div>
         </div>
 
