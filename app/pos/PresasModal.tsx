@@ -9,7 +9,7 @@ export const PRESAS_DISPONIBLES = [
   { id: 'pechuga',  label: 'Pechuga',  emoji: '🍗' },
   { id: 'pierna',   label: 'Pierna',   emoji: '🦵' },
   { id: 'ala',      label: 'Ala',      emoji: '🍗' },
-  { id: 'muslo',    label: 'Muslo',    emoji: '🦴' },
+  { id: 'contra',  label: 'Contra',   emoji: '🍗' },
 ]
 
 export const ACOMPAÑAMIENTOS_DISPONIBLES = [
