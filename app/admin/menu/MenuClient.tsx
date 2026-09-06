@@ -212,14 +212,7 @@ export default function MenuClient({ categoriasIniciales, productosIniciales }: 
                   >
                     <ChefHat size={16} /> Receta
                   </button>
-                  <button 
-                    className="btn btn-icon-only hover-danger"
-                    style={{ color: prod.disponible ? 'var(--text-400)' : '#4CAF50' }}
-                    title={prod.disponible ? 'Desactivar producto' : 'Reactivar producto'}
-                    onClick={() => handleToggleDisponible(prod.id, prod.disponible)}
-                  >
-                    {prod.disponible ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+
                   <button 
                     className="btn btn-icon-only hover-danger text-gray-400"
                     title="Eliminar producto"
