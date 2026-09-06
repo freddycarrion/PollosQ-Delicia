@@ -566,9 +566,52 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
             {/* Body: lista de ítems + catálogo */}
             <div className="edit-modal-body">
+              {/* Botón + catálogo para agregar productos al inicio */}
+              <button
+                className="edit-agregar-btn"
+                style={{ marginBottom: mostrarCatalogo ? '4px' : '12px' }}
+                onClick={() => setMostrarCatalogo(v => !v)}
+                disabled={guardandoEdicion}
+              >
+                <Plus size={16} /> Agregar producto al pedido
+              </button>
+
+              {mostrarCatalogo && (
+                <div className="edit-catalogo" style={{ marginBottom: '12px' }}>
+                  <div className="edit-catalogo-search">
+                    <Search size={15} className="edit-cat-icon" />
+                    <input
+                      className="edit-cat-input"
+                      placeholder="Buscar producto..."
+                      value={busquedaProducto}
+                      onChange={e => setBusquedaProducto(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="edit-catalogo-lista">
+                    {productosCatalogo
+                      .filter(p => p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()))
+                      .map(prod => {
+                        const precio = prod.en_oferta && prod.precio_oferta ? prod.precio_oferta : prod.precio
+                        return (
+                          <button
+                            key={prod.id}
+                            className="edit-cat-item"
+                            onClick={() => agregarProductoDesdeDialogo(prod)}
+                          >
+                            <span className="edit-cat-nombre">{prod.nombre}</span>
+                            <span className="edit-cat-precio">Bs. {fmt(precio)}</span>
+                          </button>
+                        )
+                      })
+                    }
+                  </div>
+                </div>
+              )}
+
               {itemsEditables.length === 0 ? (
                 <div className="edit-empty">
-                  <p>Sin productos. Agrega productos usando el botón de abajo.</p>
+                  <p>Sin productos en el pedido.</p>
                 </div>
               ) : (
                 itemsEditables.map(item => (
@@ -634,47 +677,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                 ))
               )}
 
-              {/* Botón + catálogo para agregar productos */}
-              <button
-                className="edit-agregar-btn"
-                onClick={() => setMostrarCatalogo(v => !v)}
-                disabled={guardandoEdicion}
-              >
-                <Plus size={16} /> Agregar producto al pedido
-              </button>
 
-              {mostrarCatalogo && (
-                <div className="edit-catalogo">
-                  <div className="edit-catalogo-search">
-                    <Search size={15} className="edit-cat-icon" />
-                    <input
-                      className="edit-cat-input"
-                      placeholder="Buscar producto..."
-                      value={busquedaProducto}
-                      onChange={e => setBusquedaProducto(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <div className="edit-catalogo-lista">
-                    {productosCatalogo
-                      .filter(p => p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()))
-                      .map(prod => {
-                        const precio = prod.en_oferta && prod.precio_oferta ? prod.precio_oferta : prod.precio
-                        return (
-                          <button
-                            key={prod.id}
-                            className="edit-cat-item"
-                            onClick={() => agregarProductoDesdeDialogo(prod)}
-                          >
-                            <span className="edit-cat-nombre">{prod.nombre}</span>
-                            <span className="edit-cat-precio">Bs. {fmt(precio)}</span>
-                          </button>
-                        )
-                      })
-                    }
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Footer: total + acciones */}
