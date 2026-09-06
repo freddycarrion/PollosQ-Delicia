@@ -56,7 +56,6 @@ interface Props {
 
 const METODO_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
-  tarjeta: 'Tarjeta',
   qr: 'QR',
   transferencia: 'Transferencia',
 }

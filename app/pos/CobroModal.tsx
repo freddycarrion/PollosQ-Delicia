@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Banknote, CreditCard, Smartphone, CheckCircle2, SplitSquareHorizontal } from 'lucide-react'
 
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'qr'
+export type MetodoPago = 'efectivo' | 'qr'
 export type TipoVenta  = 'para_llevar' | 'comer_aqui'
 
 export interface ConfirmarVentaPayload {
@@ -27,7 +27,6 @@ interface Props {
 
 const METODO_INFO = {
   efectivo:  { label: 'Efectivo',      icon: Banknote,    colorClass: 'text-green' },
-  tarjeta:   { label: 'Tarjeta',       icon: CreditCard,  colorClass: 'text-blue'  },
   qr:        { label: 'QR / Billetera',icon: Smartphone,  colorClass: 'text-yellow'},
 }
 
@@ -39,7 +38,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
 
   // Pago mixto
   const [esMixto, setEsMixto] = useState(false)
-  const [metodo2, setMetodo2] = useState<MetodoPago>('tarjeta')
+  const [metodo2, setMetodo2] = useState<MetodoPago>('qr')
   const [monto1Str, setMonto1Str] = useState<string>('')
   const [monto2Str, setMonto2Str] = useState<string>('')
 
@@ -50,7 +49,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
       setMontoIngresado('')
       setNombreCliente('')
       setEsMixto(false)
-      setMetodo2('tarjeta')
+      setMetodo2('qr')
       setMonto1Str('')
       setMonto2Str('')
     }
@@ -350,7 +349,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
               ) : (
                 <div className="cobro-no-keypad">
                   <div className="icon-wrap">
-                    {metodo === 'tarjeta' ? <CreditCard size={48} className="text-blue" /> : <Smartphone size={48} className="text-yellow" />}
+                    <Smartphone size={48} className="text-yellow" />
                   </div>
                   <p>El cobro se procesará externamente por <strong>{metodo.toUpperCase()}</strong>.</p>
                   <p className="text-sm">Asegúrate de confirmar la recepción del dinero antes de emitir el ticket.</p>
@@ -680,7 +679,7 @@ function MixtoKeypad({
   onKey: (key: string, cual: 1 | 2) => void
 }) {
   const METODO_LABELS: Record<MetodoPago, string> = {
-    efectivo: 'Efectivo', tarjeta: 'Tarjeta', qr: 'QR'
+    efectivo: 'Efectivo', qr: 'QR'
   }
   const [campoActivo, setCampoActivo] = useState<1 | 2>(1)
 
