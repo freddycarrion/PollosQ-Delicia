@@ -73,6 +73,22 @@ export default function MenuClient({ categoriasIniciales, productosIniciales }: 
     }
   }
 
+  const handleEliminarProducto = async (id: string, nombre: string) => {
+    if (!confirm(`¿Estás seguro de eliminar el producto "${nombre}"? Esta acción no se puede deshacer.`)) return
+
+    try {
+      const { error } = await supabase
+        .from('productos')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      toast.success('Producto eliminado correctamente.')
+      router.refresh()
+    } catch (err: any) {
+      toast.error(err.message || 'Error al eliminar el producto')
+    }
+  }
+
   const productosFiltrados = productosIniciales.filter(p => 
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
     p.categorias?.nombre.toLowerCase().includes(busqueda.toLowerCase())
@@ -203,6 +219,13 @@ export default function MenuClient({ categoriasIniciales, productosIniciales }: 
                     onClick={() => handleToggleDisponible(prod.id, prod.disponible)}
                   >
                     {prod.disponible ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                  <button 
+                    className="btn btn-icon-only hover-danger text-gray-400"
+                    title="Eliminar producto"
+                    onClick={() => handleEliminarProducto(prod.id, prod.nombre)}
+                  >
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
