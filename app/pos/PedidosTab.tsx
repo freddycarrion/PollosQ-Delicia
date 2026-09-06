@@ -73,6 +73,9 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   const [itemsEditables, setItemsEditables] = useState<ItemEditable[]>([])
   const [guardandoEdicion, setGuardandoEdicion] = useState(false)
 
+  // Búsqueda en el historial
+  const [busquedaHistorial, setBusquedaHistorial] = useState('')
+
   // Estado para agregar productos al pedido
   const [productosCatalogo, setProductosCatalogo] = useState<ProductoCatalogo[]>([])
   const [busquedaProducto, setBusquedaProducto] = useState('')
@@ -321,9 +324,14 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
     }
   }
 
-  const ventasFiltradas = ventas.filter(v =>
-    filtroEstado === 'todos' ? true : v.estado === filtroEstado
-  )
+  const ventasFiltradas = ventas.filter(v => {
+    const cumpleEstado = filtroEstado === 'todos' ? true : v.estado === filtroEstado;
+    const busqueda = busquedaHistorial.toLowerCase();
+    const cumpleBusqueda = busqueda === '' || 
+      (v.nombre_cliente && v.nombre_cliente.toLowerCase().includes(busqueda)) ||
+      String(v.numero_ticket).includes(busqueda);
+    return cumpleEstado && cumpleBusqueda;
+  })
 
   const totalCompletadas = ventas.filter(v => v.estado === 'completada').reduce((s, v) => s + v.total, 0)
   const countCompletadas = ventas.filter(v => v.estado === 'completada').length
@@ -356,20 +364,37 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         </button>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros y Buscador */}
       <div className="pedidos-filtros">
-        {(['todos', 'completada', 'anulada'] as const).map(f => (
-          <button
-            key={f}
-            className={`pedidos-filtro-btn ${filtroEstado === f ? 'active' : ''}`}
-            onClick={() => setFiltroEstado(f)}
-          >
-            {f === 'todos' && <Filter size={13} />}
-            {f === 'completada' && <CheckCircle size={13} />}
-            {f === 'anulada' && <XCircle size={13} />}
-            {f === 'todos' ? 'Todos' : f === 'completada' ? 'Completadas' : 'Anuladas'}
-          </button>
-        ))}
+        <div className="pedidos-filtros-estados">
+          {(['todos', 'completada', 'anulada'] as const).map(f => (
+            <button
+              key={f}
+              className={`pedidos-filtro-btn ${filtroEstado === f ? 'active' : ''}`}
+              onClick={() => setFiltroEstado(f)}
+            >
+              {f === 'todos' && <Filter size={13} />}
+              {f === 'completada' && <CheckCircle size={13} />}
+              {f === 'anulada' && <XCircle size={13} />}
+              {f === 'todos' ? 'Todos' : f === 'completada' ? 'Completadas' : 'Anuladas'}
+            </button>
+          ))}
+        </div>
+        <div className="pedidos-buscador-wrapper">
+          <Search size={14} className="pedidos-buscador-icon" />
+          <input
+            type="text"
+            className="pedidos-buscador-input"
+            placeholder="Buscar por cliente o ticket..."
+            value={busquedaHistorial}
+            onChange={(e) => setBusquedaHistorial(e.target.value)}
+          />
+          {busquedaHistorial && (
+            <button className="pedidos-buscador-clear" onClick={() => setBusquedaHistorial('')}>
+              <X size={12} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Lista */}
@@ -728,10 +753,17 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
         .pedidos-filtros {
           display: flex;
-          gap: 8px;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
           padding: 10px 16px;
           border-bottom: 1px solid var(--border);
           flex-shrink: 0;
+          flex-wrap: wrap;
+        }
+        .pedidos-filtros-estados {
+          display: flex;
+          gap: 8px;
           overflow-x: auto;
         }
         .pedidos-filtro-btn {
@@ -753,6 +785,49 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           background: var(--red);
           border-color: var(--red);
           color: #fff;
+        }
+
+        .pedidos-buscador-wrapper {
+          display: flex;
+          align-items: center;
+          background: var(--bg-900);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-full);
+          padding: 4px 10px;
+          flex: 1;
+          min-width: 200px;
+          max-width: 300px;
+        }
+        .pedidos-buscador-icon {
+          color: var(--text-500);
+          margin-right: 6px;
+          flex-shrink: 0;
+        }
+        .pedidos-buscador-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--text-100);
+          font-size: 0.8rem;
+          width: 100%;
+        }
+        .pedidos-buscador-clear {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-700);
+          border: none;
+          color: var(--text-400);
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        .pedidos-buscador-clear:hover {
+          background: var(--bg-600);
+          color: var(--text-200);
         }
 
         .pedidos-list {
