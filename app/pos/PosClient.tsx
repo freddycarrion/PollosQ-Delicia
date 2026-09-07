@@ -216,10 +216,10 @@ export default function PosClient({
     }
   };
 
-  const handlePresasConfirmar = (seleccion: SeleccionPremiun) => {
+  const handlePresasConfirmar = (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar') => {
     if (!presasModalProducto) return;
     const notas = formatearNotas(seleccion) || undefined;
-    agregarItemConNotas(presasModalProducto, notas, 'mesa');
+    agregarItemConNotas(presasModalProducto, notas, tipo);
     setPresasModalProducto(null);
   };
 

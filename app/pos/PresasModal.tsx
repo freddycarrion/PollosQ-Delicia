@@ -30,7 +30,7 @@ export interface SeleccionPremiun {
 
 interface Props {
   nombreProducto: string
-  onConfirmar: (seleccion: SeleccionPremiun) => void
+  onConfirmar: (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar') => void
   onCancelar: () => void
 }
 
@@ -75,11 +75,11 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
 
   const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci')
 
-  const handleConfirmar = () => {
+  const handleConfirmar = (tipo: 'mesa' | 'llevar') => {
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
       acompañamientos: acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label),
-    })
+    }, tipo)
   }
 
   const totalSeleccionado = presasSeleccionadas.length + acompañamientosSeleccionados.length
@@ -165,19 +165,25 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
 
         {/* Footer */}
         <div className="presas-footer">
-          <button onClick={onCancelar} className="btn btn-ghost">
+          <button onClick={onCancelar} className="btn btn-ghost" style={{ padding: '0 16px' }}>
             Cancelar
           </button>
-          <button
-            className="btn btn-primary presas-confirm-btn"
-            onClick={handleConfirmar}
-          >
-            <CheckCircle2 size={18} />
-            Agregar al Pedido
-            {totalSeleccionado > 0 && (
-              <span className="presas-count-badge">{totalSeleccionado}</span>
-            )}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1, padding: '12px 8px', background: 'var(--bg-600)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
+              onClick={() => handleConfirmar('mesa')}
+            >
+              🍽️ Mesa
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1, padding: '12px 8px', background: 'var(--red)' }}
+              onClick={() => handleConfirmar('llevar')}
+            >
+              🛍️ Llevar
+            </button>
+          </div>
         </div>
 
       </div>
