@@ -220,10 +220,17 @@ export default function PosClient({
     }
   };
 
-  const handlePresasConfirmar = (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar') => {
+  const handlePresasConfirmar = (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     if (!presasModalProducto) return;
     const notas = formatearNotas(seleccion) || undefined;
-    agregarItemConNotas(presasModalProducto, notas, tipo);
+    
+    if (tipo === 'consumo_interno') {
+      setEsConsumoInterno(true);
+      agregarItemConNotas(presasModalProducto, notas, 'mesa');
+    } else {
+      agregarItemConNotas(presasModalProducto, notas, tipo);
+    }
+    
     setPresasModalProducto(null);
   };
 
@@ -856,6 +863,18 @@ export default function PosClient({
                 >
                   <ShoppingBag size={28} />
                   <span style={{ fontWeight: 700 }}>Para Llevar</span>
+                </button>
+                <button
+                  className="btn"
+                  style={{ flex: 1, padding: '16px', background: 'var(--yellow)', border: '2px solid var(--yellow)', flexDirection: 'column', gap: '8px', color: 'var(--bg-900)' }}
+                  onClick={() => {
+                    setEsConsumoInterno(true);
+                    agregarItemConNotas(tipoModalProducto, undefined, 'mesa');
+                    setTipoModalProducto(null);
+                  }}
+                >
+                  <Package size={28} />
+                  <span style={{ fontWeight: 700 }}>Interno</span>
                 </button>
               </div>
               <div style={{ marginTop: '20px' }}>

@@ -31,7 +31,7 @@ export interface SeleccionPremiun {
 interface Props {
   nombreProducto: string
   precio?: number
-  onConfirmar: (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar') => void
+  onConfirmar: (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar' | 'consumo_interno') => void
   onCancelar: () => void
 }
 
@@ -75,18 +75,19 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
   } else if (nombreMinus.includes('pecho') || nombreMinus.includes('pechuga') || nombreMinus.includes('ala')) {
     // Nombre dice "pecho", "pechuga" o "ala" → solo Pechuga y Ala
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
-  } else if (precioNum > 0 && precioNum < 15) {
-    // Precio menor a 15 (ej: Bs. 14) → solo Pierna y Contra
-    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
-  } else if (precioNum >= 15) {
-    // Precio mayor o igual a 15 (ej: Bs. 16) → solo Pechuga y Ala
-    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
+  } else if (nombreMinus.includes('econom') || nombreMinus.includes('económ')) {
+    // Si es Económico, filtrar por precio
+    if (precioNum <= 14) {
+      presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
+    } else {
+      presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
+    }
   }
 
   // Ocultar acompañamientos para Porciones, Presas sueltas, y Económico
   const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci') || nombreMinus.includes('econom');
 
-  const handleConfirmar = (tipo: 'mesa' | 'llevar') => {
+  const handleConfirmar = (tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
       acompañamientos: acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label),
@@ -182,17 +183,24 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
           <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
             <button
               className="btn btn-primary"
-              style={{ flex: 1, padding: '12px 8px', background: 'var(--bg-600)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
+              style={{ flex: 1, padding: '12px 4px', fontSize: '0.85rem', background: 'var(--bg-600)', color: 'var(--text-100)', border: '1px solid var(--border)' }}
               onClick={() => handleConfirmar('mesa')}
             >
               🍽️ Mesa
             </button>
             <button
               className="btn btn-primary"
-              style={{ flex: 1, padding: '12px 8px', background: 'var(--red)' }}
+              style={{ flex: 1, padding: '12px 4px', fontSize: '0.85rem', background: 'var(--red)' }}
               onClick={() => handleConfirmar('llevar')}
             >
               🛍️ Llevar
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1, padding: '12px 4px', fontSize: '0.85rem', background: 'var(--yellow)', color: 'var(--bg-900)' }}
+              onClick={() => handleConfirmar('consumo_interno')}
+            >
+              📦 Interno
             </button>
           </div>
         </div>
