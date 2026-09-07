@@ -874,7 +874,7 @@ export default function PosClient({
         {presasModalProducto && (
           <PresasModal
             nombreProducto={presasModalProducto.nombre}
-            precio={presasModalProducto.precio}
+            precio={getPrecioUnitario(presasModalProducto)}
             onConfirmar={handlePresasConfirmar}
             onCancelar={() => setPresasModalProducto(null)}
           />
