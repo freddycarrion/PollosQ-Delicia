@@ -80,17 +80,19 @@ export default function PosClient({
   const supabase = createClient();
 
   // ── Stock de Bebidas ──────────────────────────────────────────────────────
-  // Mapa: producto_id -> stock_actual
-  const [stockBebidas, setStockBebidas] = useState<Record<string, number>>({});
+  // Mapa: producto_id -> { actual, inicial }
+  const [stockBebidas, setStockBebidas] = useState<Record<string, { actual: number, inicial: number }>>({});
 
   const cargarStockBebidas = useCallback(async () => {
     const { data } = await supabase
       .from('stock_bebidas_turno')
-      .select('producto_id, stock_actual')
+      .select('producto_id, stock_actual, stock_inicial')
       .eq('turno_id', turnoId);
     if (data) {
-      const mapa: Record<string, number> = {};
-      data.forEach(r => { mapa[r.producto_id] = r.stock_actual; });
+      const mapa: Record<string, { actual: number, inicial: number }> = {};
+      data.forEach(r => { 
+        mapa[r.producto_id] = { actual: r.stock_actual, inicial: r.stock_inicial }; 
+      });
       setStockBebidas(mapa);
     }
   }, [turnoId, supabase]);
@@ -321,16 +323,35 @@ export default function PosClient({
 
       if (detalleError) throw detalleError;
 
-      // 2b. Descontar stock de bebidas vendidas
+      // 2b. Descontar stock de bebidas vendidas y notificar
       for (const item of pedido) {
-        if (stockBebidas[item.producto.id] !== undefined) {
-          const nuevoStock = Math.max(0, stockBebidas[item.producto.id] - item.cantidad);
+        const stockData = stockBebidas[item.producto.id];
+        if (stockData !== undefined) {
+          const nuevoStock = Math.max(0, stockData.actual - item.cantidad);
+          
           await supabase
             .from('stock_bebidas_turno')
             .update({ stock_actual: nuevoStock })
             .eq('turno_id', turnoId)
             .eq('producto_id', item.producto.id);
-          setStockBebidas(prev => ({ ...prev, [item.producto.id]: nuevoStock }));
+            
+          setStockBebidas(prev => ({ 
+            ...prev, 
+            [item.producto.id]: { actual: nuevoStock, inicial: prev[item.producto.id].inicial } 
+          }));
+
+          // Lógica de notificaciones (mitad y crítico)
+          const mitad = Math.floor(stockData.inicial / 2);
+          
+          if (stockData.actual > 0 && nuevoStock === 0) {
+             toast.error(`¡ATENCIÓN! Se agotó el stock de ${item.producto.nombre}`, { duration: 6000 });
+          } 
+          else if (stockData.actual > 5 && nuevoStock <= 5) {
+             toast(`¡Alerta Crítica! Queda muy poco de ${item.producto.nombre} (${nuevoStock} restantes)`, { icon: '🚨', duration: 5000 });
+          } 
+          else if (mitad > 5 && stockData.actual > mitad && nuevoStock <= mitad) {
+             toast(`Stock a la mitad: ${item.producto.nombre} (${nuevoStock} restantes)`, { icon: '⚠️', duration: 4000 });
+          }
         }
       }
 
@@ -466,7 +487,8 @@ export default function PosClient({
             {productosFiltrados.length > 0 ? (
               productosFiltrados.map((prod) => {
                 const precioMostrar = getPrecioUnitario(prod);
-                const stockActual = stockBebidas[prod.id];
+                const stockData = stockBebidas[prod.id];
+                const stockActual = stockData ? stockData.actual : undefined;
                 const tieneStock = stockActual !== undefined; // es bebida con stock registrado
                 const sinStock = tieneStock && stockActual <= 0;
                 return (
