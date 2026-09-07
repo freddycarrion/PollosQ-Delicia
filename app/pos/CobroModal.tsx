@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Banknote, CreditCard, Smartphone, CheckCircle2, SplitSquareHorizontal } from 'lucide-react'
 
-export type MetodoPago = 'efectivo' | 'qr'
+export type MetodoPago = 'efectivo' | 'qr' | 'consumo_interno'
 export type TipoVenta  = 'para_llevar' | 'comer_aqui'
 
 export interface ConfirmarVentaPayload {

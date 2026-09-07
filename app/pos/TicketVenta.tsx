@@ -43,9 +43,12 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
 
   const fmt  = (n: number) => 'Bs.' + n.toFixed(2)
   const esMixto = !!data.metodoPago2
-  const metodoLabel = esMixto
-    ? `${data.metodoPago.toUpperCase()} + ${data.metodoPago2!.toUpperCase()}`
-    : data.metodoPago.toUpperCase()
+  const esConsumoInterno = data.metodoPago === 'consumo_interno'
+  const metodoLabel = esConsumoInterno
+    ? 'CONSUMO INTERNO'
+    : esMixto
+      ? `${data.metodoPago.toUpperCase()} + ${data.metodoPago2!.toUpperCase()}`
+      : data.metodoPago.toUpperCase()
 
   return (
     <>
@@ -117,6 +120,9 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <div className="tk-header-cli">
           <div className="tk-logo-txt">{NEGOCIO.nombre}</div>
           {NEGOCIO.slogan && <div className="tk-slogan">{NEGOCIO.slogan}</div>}
+          {esConsumoInterno && (
+            <div className="tk-consumo-banda">★ CONSUMO INTERNO ★</div>
+          )}
           <div className="tk-sep-dots" />
           <div className="tk-sub-info">{NEGOCIO.direccion}</div>
           <div className="tk-sub-info">WhatsApp: {NEGOCIO.whatsapp}</div>
@@ -193,22 +199,17 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <div className="tk-totales">
           <div className="tk-total-row">
             <span>Subtotal</span>
-            <span>{fmt(data.total)}</span>
+            <span>{esConsumoInterno ? 'Bs.0.00' : fmt(data.total)}</span>
           </div>
           <div className="tk-sep-dashed" style={{ margin: '5px 0' }} />
           <div className="tk-total-row tk-total-grande">
             <span>TOTAL</span>
-            <span>{fmt(data.total)}</span>
+            <span>{esConsumoInterno ? 'Bs.0.00' : fmt(data.total)}</span>
           </div>
           <div className="tk-sep-dashed" style={{ margin: '5px 0' }} />
 
           {/* Método(s) de pago */}
-          {!esMixto ? (
-            <div className="tk-total-row">
-              <span>Pago</span>
-              <span>{metodoLabel}</span>
-            </div>
-          ) : (
+          {esMixto ? (
             <>
               <div className="tk-total-row">
                 <span>Pago Mixto</span>
@@ -223,6 +224,11 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
                 <span>{fmt(data.montoPago2 || 0)}</span>
               </div>
             </>
+          ) : (
+            <div className="tk-total-row">
+              <span>Pago</span>
+              <span>{metodoLabel}</span>
+            </div>
           )}
 
           {/* Efectivo: recibido y vuelto */}
@@ -486,6 +492,15 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           font-weight: 900;
           margin-top: 3px;
           letter-spacing: 1px;
+        }
+        .tk-consumo-banda {
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 1.5px;
+          border: 2px solid #000;
+          padding: 3px 6px;
+          margin: 4px 0;
+          text-align: center;
         }
       `}</style>
     </>

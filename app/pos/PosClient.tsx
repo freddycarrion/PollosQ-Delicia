@@ -14,6 +14,7 @@ import {
   XCircle,
   UtensilsCrossed,
   ShoppingBag,
+  Package,
 } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -153,6 +154,9 @@ export default function PosClient({
   // Ticket Data (para imprimir)
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
 
+  // Consumo Interno
+  const [esConsumoInterno, setEsConsumoInterno] = useState(false);
+
   // Filtrado de productos
   const productosFiltrados = useMemo(() => {
     return productos.filter((p) => {
@@ -272,6 +276,7 @@ export default function PosClient({
   // ── Cancelar pedido ───────────────────────────────────────────────────────
   const handleCancelarPedido = () => {
     setPedido([]);
+    setEsConsumoInterno(false);
     setIsCancelModalOpen(false);
     toast('Pedido cancelado', { icon: '🗑️' });
   };
@@ -290,15 +295,16 @@ export default function PosClient({
 
     try {
       // 1. Crear la Venta
+      const totalReal = payload.metodo === 'consumo_interno' ? 0 : totalPedido;
       const ventaData: any = {
         turno_id: turnoId,
         cajero_id: cajeroId,
         sucursal_id: sucursalId,
-        subtotal: totalPedido,
+        subtotal: totalReal,
         descuento: 0,
-        total: totalPedido,
+        total: totalReal,
         metodo_pago: payload.metodo,
-        monto_recibido: payload.montoRecibido,
+        monto_recibido: payload.metodo === 'consumo_interno' ? 0 : payload.montoRecibido,
         vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
         tipo_pedido: payload.tipoVenta,
         nombre_cliente: payload.nombreCliente || null,
@@ -391,8 +397,8 @@ export default function PosClient({
         metodoPago: metodoPagoLabel,
         metodoPago2: payload.esMixto ? payload.metodo2 : undefined,
         montoPago2: payload.esMixto ? payload.monto2 : undefined,
-        total: totalPedido,
-        recibido: payload.montoRecibido,
+        total: totalReal,
+        recibido: payload.metodo === 'consumo_interno' ? 0 : payload.montoRecibido,
         vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
         nombreCliente: payload.nombreCliente,
         carnetCliente: payload.carnetCliente,
@@ -407,13 +413,14 @@ export default function PosClient({
       };
       setTicketData(ticket);
 
-      toast.success("¡Venta completada! Generando ticket...");
+      toast.success(payload.metodo === 'consumo_interno' ? '¡Consumo interno registrado!' : '¡Venta completada! Generando ticket...');
 
       // Esperar renderizado y lanzar print
       setTimeout(() => {
         window.print();
         setPedido([]);
         setIsModalOpen(false);
+        setEsConsumoInterno(false);
         setTabActivo('catalogo');
       }, 500);
     } catch (err: any) {
@@ -422,6 +429,16 @@ export default function PosClient({
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // ── Consumo Interno (sin cobro) ─────────────────────────────────────────
+  const handleConsumoInterno = async () => {
+    await handleConfirmarVenta({
+      metodo: 'consumo_interno',
+      tipoVenta: 'comer_aqui',
+      montoRecibido: 0,
+      esMixto: false,
+    });
   };
 
   const totalItems = pedido.reduce((s, i) => s + i.cantidad, 0);
@@ -696,28 +713,51 @@ export default function PosClient({
               </div>
 
               <div className="ticket-footer">
+                {/* Toggle Consumo Interno */}
+                <button
+                  className={`consumo-interno-toggle ${esConsumoInterno ? 'active' : ''}`}
+                  onClick={() => setEsConsumoInterno(v => !v)}
+                  disabled={pedido.length === 0}
+                >
+                  <Package size={15} />
+                  <span>{esConsumoInterno ? '✓ Consumo Interno Activo' : 'Consumo Interno'}</span>
+                </button>
+
                 <div className="ticket-totals">
                   <div className="ticket-total-row">
                     <span className="ticket-total-label">Subtotal</span>
-                    <span className="ticket-total-val">Bs. {fmt(totalPedido)}</span>
+                    <span className={`ticket-total-val ${esConsumoInterno ? 'line-through-val' : ''}`}>
+                      Bs. {fmt(totalPedido)}
+                    </span>
                   </div>
                   <div className="ticket-divider" />
                   <div className="ticket-total-row big">
                     <span className="ticket-total-label">TOTAL</span>
-                    <span className="ticket-total-val text-red">
-                      Bs. {fmt(totalPedido)}
+                    <span className={`ticket-total-val ${esConsumoInterno ? 'text-consumo' : 'text-red'}`}>
+                      {esConsumoInterno ? 'Bs. 0.00' : `Bs. ${fmt(totalPedido)}`}
                     </span>
                   </div>
                 </div>
 
-                <button
-                  className="btn btn-primary btn-lg w-full ticket-cobrar-btn"
-                  disabled={pedido.length === 0}
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  <span>Cobrar Pedido</span>
-                  <ArrowRight size={20} />
-                </button>
+                {esConsumoInterno ? (
+                  <button
+                    className="btn btn-consumo-interno btn-lg w-full ticket-cobrar-btn"
+                    disabled={pedido.length === 0 || isProcessing}
+                    onClick={handleConsumoInterno}
+                  >
+                    <Package size={20} />
+                    <span>{isProcessing ? 'Registrando...' : 'Registrar Consumo Interno'}</span>
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-primary btn-lg w-full ticket-cobrar-btn"
+                    disabled={pedido.length === 0}
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    <span>Cobrar Pedido</span>
+                    <ArrowRight size={20} />
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -1226,7 +1266,34 @@ export default function PosClient({
         .ticket-total-row.big .ticket-total-label { font-size: 1.2rem; font-weight: 800; color: var(--text-100); }
         .ticket-total-row.big .ticket-total-val { font-size: 1.8rem; font-weight: 900; }
         .text-red { color: var(--red) !important; }
+        .text-consumo { color: #7B68EE !important; }
+        .line-through-val { text-decoration: line-through; color: var(--text-500) !important; font-size: 0.9rem !important; }
         .ticket-divider { height: 1px; background: var(--border); }
+
+        /* Consumo Interno Toggle */
+        .consumo-interno-toggle {
+          display: flex; align-items: center; gap: 7px;
+          width: 100%; margin-bottom: 12px;
+          padding: 8px 14px; border-radius: var(--radius-lg);
+          border: 1.5px dashed var(--border);
+          background: transparent;
+          color: var(--text-500); font-size: 0.8rem; font-weight: 700;
+          transition: var(--transition);
+        }
+        .consumo-interno-toggle:hover:not(:disabled) { border-color: #7B68EE; color: #7B68EE; background: rgba(123,104,238,0.06); }
+        .consumo-interno-toggle.active {
+          border-color: #7B68EE; border-style: solid;
+          background: rgba(123,104,238,0.12); color: #7B68EE;
+        }
+        .consumo-interno-toggle:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Botón Consumo Interno */
+        .btn-consumo-interno {
+          background: linear-gradient(135deg, #5f4fd6, #7B68EE) !important;
+          border: none !important;
+          justify-content: center; gap: 12px;
+        }
+        .btn-consumo-interno:hover:not(:disabled) { filter: brightness(1.1); }
 
         .ticket-cobrar-btn {
           height: 60px; font-size: 1.2rem; border-radius: var(--radius-xl);
