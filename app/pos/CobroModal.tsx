@@ -29,6 +29,7 @@ interface Props {
 const METODO_INFO = {
   efectivo:  { label: 'Efectivo',      icon: Banknote,    colorClass: 'text-green' },
   qr:        { label: 'QR / Billetera',icon: Smartphone,  colorClass: 'text-yellow'},
+  consumo_interno: { label: 'Consumo Interno', icon: CheckCircle2, colorClass: 'text-blue' }
 }
 
 export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargando }: Props) {
@@ -682,7 +683,7 @@ function MixtoKeypad({
   onKey: (key: string, cual: 1 | 2) => void
 }) {
   const METODO_LABELS: Record<MetodoPago, string> = {
-    efectivo: 'Efectivo', qr: 'QR'
+    efectivo: 'Efectivo', qr: 'QR', consumo_interno: 'Consumo Interno'
   }
   const [campoActivo, setCampoActivo] = useState<1 | 2>(1)
 
