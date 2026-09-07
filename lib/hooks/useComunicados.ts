@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import toast from 'react-hot-toast'
 
 interface Comunicado {
   id: string
@@ -50,6 +51,13 @@ export function useComunicados(rol: string, initialData: Comunicado[] = []) {
         if (esParaMi) {
           setComunicados(prev => [nuevo, ...prev])
           setUnseenCount(prev => prev + 1)
+          toast.success(`Nuevo aviso: ${nuevo.titulo}`, { icon: '📢', duration: 8000 })
+          
+          // Opcional: Sonido
+          if (typeof window !== 'undefined') {
+            const audio = new Audio('/notification.mp3') // Si tienen un sonido
+            audio.play().catch(() => {})
+          }
         }
       })
       .subscribe()
