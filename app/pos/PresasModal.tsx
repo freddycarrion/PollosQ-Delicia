@@ -47,7 +47,9 @@ export function formatearNotas(seleccion: SeleccionPremiun): string {
 
 export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }: Props) {
   const [presasSeleccionadas, setPresasSeleccionadas] = useState<string[]>([])
-  const [acompañamientosSeleccionados, setAcompañamientosSeleccionados] = useState<string[]>([])
+  const [acompañamientosSeleccionados, setAcompañamientosSeleccionados] = useState<string[]>(
+    ACOMPAÑAMIENTOS_DISPONIBLES.map(a => a.id)
+  )
 
   const togglePresa = (id: string) => {
     setPresasSeleccionadas(prev =>
