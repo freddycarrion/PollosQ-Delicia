@@ -67,11 +67,14 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
   // ── Filtrar presas según precio (categoría Económico) o nombre ────────────
   let presasA_Mostrar = PRESAS_DISPONIBLES;
   const nombreMinus = nombreProducto.toLowerCase();
+  const precioNum = Number(precio ?? 0);
+  const precioRedondeado = Math.round(precioNum);
+  const esEconomico = nombreMinus.includes('econom');
 
-  if (precio === 14) {
+  if (precioRedondeado === 14 || (esEconomico && precioNum > 0 && precioNum < 15)) {
     // Bs. 14 → solo Pierna y Contra
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
-  } else if (precio === 16) {
+  } else if (precioRedondeado === 16 || (esEconomico && precioNum >= 15)) {
     // Bs. 16 → solo Pechuga y Ala
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
   } else if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
