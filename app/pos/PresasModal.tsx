@@ -6,10 +6,14 @@ import { X, CheckCircle2, ChevronRight } from 'lucide-react'
 // ─── CONFIGURACIÓN DE PRESAS Y ACOMPAÑAMIENTOS ────────────────────────────────
 // Edita estas listas para cambiar las opciones disponibles en el POS
 export const PRESAS_DISPONIBLES = [
-  { id: 'pechuga',  label: 'Pechuga',  emoji: '🍗' },
-  { id: 'pierna',   label: 'Pierna',   emoji: '🦵' },
-  { id: 'ala',      label: 'Ala',      emoji: '🍗' },
-  { id: 'contra',  label: 'Contra',   emoji: '🍗' },
+  { id: 'pechuga-broaster', label: 'Pechuga Broaster', emoji: '🍗' },
+  { id: 'pechuga-spiedo',   label: 'Pechuga Spiedo',   emoji: '🔥' },
+  { id: 'pierna-broaster',  label: 'Pierna Broaster',  emoji: '🦵' },
+  { id: 'pierna-spiedo',    label: 'Pierna Spiedo',    emoji: '🔥' },
+  { id: 'ala-broaster',     label: 'Ala Broaster',     emoji: '🍗' },
+  { id: 'ala-spiedo',       label: 'Ala Spiedo',       emoji: '🔥' },
+  { id: 'contra-broaster',  label: 'Contra Broaster',  emoji: '🍗' },
+  { id: 'contra-spiedo',    label: 'Contra Spiedo',    emoji: '🔥' },
 ]
 
 export const ACOMPAÑAMIENTOS_DISPONIBLES = [
