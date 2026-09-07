@@ -29,7 +29,7 @@ const NEGOCIO = {
   nombre:     "POLLOS Q' DELICIA",
   slogan:     '',
   direccion:  'av libertadores calle los claveles',
-  whatsapp:   '+591 7XX-XXXXX',
+  whatsapp:   '72632801',
   despedida:  'Gracias por su visita!',
 }
 // ──────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
                   {notasText && (
                     <tr key={`${idx}-n`}>
                       <td></td>
-                      <td className="tk-notas-cocina">{notasText}</td>
+                      <td className="tk-notas-cocina" style={{ fontWeight: 'bold' }}>{notasText}</td>
                     </tr>
                   )}
                 </React.Fragment>
@@ -178,7 +178,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
                   {notasText && (
                     <tr key={`${idx}-n`}>
                       <td></td>
-                      <td colSpan={3} className="tk-item-notas">{notasText}</td>
+                      <td colSpan={3} className="tk-item-notas" style={{ fontWeight: 'bold' }}>{notasText}</td>
                     </tr>
                   )}
                 </React.Fragment>
