@@ -7,12 +7,13 @@ export const dynamic = 'force-dynamic'
 export default async function VentasAdminPage({
   searchParams,
 }: {
-  searchParams: { desde?: string; hasta?: string }
+  searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
   const supabase = await createClient()
 
-  const desde = searchParams.desde
-  const hasta = searchParams.hasta
+  const params = await searchParams
+  const desde = params.desde
+  const hasta = params.hasta
 
   // Construir la consulta
   let query = supabase
