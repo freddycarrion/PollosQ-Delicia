@@ -310,11 +310,11 @@ export default function PosClient({
         subtotal: totalReal,
         descuento: 0,
         total: totalReal,
-        metodo_pago: payload.metodo,
+        metodo_pago: payload.metodo === 'consumo_interno' ? 'efectivo' : payload.metodo,
         monto_recibido: payload.metodo === 'consumo_interno' ? 0 : payload.montoRecibido,
         vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
         tipo_pedido: payload.tipoVenta,
-        nombre_cliente: payload.nombreCliente || null,
+        nombre_cliente: payload.metodo === 'consumo_interno' ? 'Consumo Interno' : (payload.nombreCliente || null),
         carnet_cliente: payload.carnetCliente || null,
         estado: "completada",
       };
