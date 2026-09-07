@@ -64,26 +64,22 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
     )
   }
 
-  // ── Filtrar presas según nombre del producto o precio ─────────────────────
+  // ── Filtrar presas según nombre o precio ──────────────────────────────────
   let presasA_Mostrar = PRESAS_DISPONIBLES;
   const nombreMinus = nombreProducto.toLowerCase();
-  const precioNum = Number(precio ?? 0);
-  const precioRedondeado = Math.round(precioNum);
+  const precioNum = precio !== undefined ? Number(precio) : 0;
 
-  const tienePierna  = nombreMinus.includes('pierna')  || nombreMinus.includes('contra');
-  const tienePechuga = nombreMinus.includes('pecho')   || nombreMinus.includes('pechuga') || nombreMinus.includes('ala');
-
-  if (tienePierna) {
-    // Nombre incluye "pierna" o "contra" → solo Pierna y Contra
+  if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
+    // Nombre dice "pierna" o "contra" → solo Pierna y Contra
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
-  } else if (tienePechuga) {
-    // Nombre incluye "pecho", "pechuga" o "ala" → solo Pechuga y Ala
+  } else if (nombreMinus.includes('pecho') || nombreMinus.includes('pechuga') || nombreMinus.includes('ala')) {
+    // Nombre dice "pecho", "pechuga" o "ala" → solo Pechuga y Ala
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
-  } else if (precioRedondeado === 14 || precioNum < 15) {
-    // Precio ~14 → solo Pierna y Contra
+  } else if (precioNum > 0 && precioNum < 15) {
+    // Precio menor a 15 (ej: Bs. 14) → solo Pierna y Contra
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
-  } else if (precioRedondeado === 16 || precioNum >= 15) {
-    // Precio ~16 → solo Pechuga y Ala
+  } else if (precioNum >= 15) {
+    // Precio mayor o igual a 15 (ej: Bs. 16) → solo Pechuga y Ala
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
   }
 
