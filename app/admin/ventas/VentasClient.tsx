@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Eye, Filter, CalendarDays, ShoppingBag, Receipt, ArrowRightLeft } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Search, Eye, Filter, CalendarDays, ShoppingBag, Receipt } from 'lucide-react'
 
 interface DetalleVenta {
   id: string
@@ -42,15 +43,41 @@ export default function VentasClient({ initialVentas }: Props) {
   // Statics summary
   const ventasCompletadas = ventas.filter(v => v.estado === 'completada')
   const totalHoy = ventasCompletadas.reduce((acc, v) => acc + v.total, 0)
-  const totalEfectivo = ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'efectivo' ? v.total : 0), 0)
-  const totalQR = ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'qr' ? v.total : 0), 0)
   const ticketsEmitidos = ventas.length
   const ticketPromedio = ticketsEmitidos > 0 ? totalHoy / ticketsEmitidos : 0
+
+  // Routing para filtros
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   // State
   const [busqueda, setBusqueda] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [ventaSeleccionada, setVentaSeleccionada] = useState<Venta | null>(null)
+  
+  // Date filter state
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [dateDesde, setDateDesde] = useState(searchParams.get('desde') || '')
+  const [dateHasta, setDateHasta] = useState(searchParams.get('hasta') || '')
+
+  const aplicarFiltroFechas = () => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (dateDesde) params.set('desde', dateDesde)
+    else params.delete('desde')
+    
+    if (dateHasta) params.set('hasta', dateHasta)
+    else params.delete('hasta')
+
+    setShowDatePicker(false)
+    router.push(`/admin/ventas?${params.toString()}`)
+  }
+
+  const limpiarFiltroFechas = () => {
+    setDateDesde('')
+    setDateHasta('')
+    setShowDatePicker(false)
+    router.push(`/admin/ventas`)
+  }
 
   // Filtering
   const filtradas = ventas.filter(v => {
@@ -109,26 +136,6 @@ export default function VentasClient({ initialVentas }: Props) {
              <p className="stat-value font-mono text-yellow">Bs. {fmt(ticketPromedio)}</p>
           </div>
         </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrap bg-green/10 text-green" style={{background: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50'}}>
-             <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>💵</span>
-          </div>
-          <div className="stat-info">
-             <p className="stat-label">Efectivo</p>
-             <p className="stat-value font-mono text-green">Bs. {fmt(totalEfectivo)}</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrap bg-blue/10 text-blue" style={{background: 'rgba(156, 39, 176, 0.1)', color: '#9C27B0'}}>
-             <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>📱</span>
-          </div>
-          <div className="stat-info">
-             <p className="stat-label">QR</p>
-             <p className="stat-value font-mono" style={{color: '#9C27B0'}}>Bs. {fmt(totalQR)}</p>
-          </div>
-        </div>
       </div>
 
       {/* Tabla de Ventas */}
@@ -144,9 +151,49 @@ export default function VentasClient({ initialVentas }: Props) {
               className="search-input"
             />
           </div>
-          <button className="btn btn-ghost btn-icon">
-            <Filter size={18} /> Filtrar Fechas
-          </button>
+          
+          <div style={{ position: 'relative' }}>
+            <button 
+              className={`btn ${searchParams.get('desde') ? 'btn-primary' : 'btn-ghost'} btn-icon`}
+              onClick={() => setShowDatePicker(!showDatePicker)}
+            >
+              <Filter size={18} /> {searchParams.get('desde') ? 'Fechas Filtradas' : 'Filtrar Fechas'}
+            </button>
+
+            {showDatePicker && (
+              <div className="date-picker-popover" style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: '8px', zIndex: 50,
+                background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+                padding: '16px', width: '280px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+              }}>
+                <h4 className="text-white font-bold mb-3">Rango de Fechas</h4>
+                <div className="mb-3">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Desde</label>
+                  <input 
+                    type="date" 
+                    value={dateDesde}
+                    onChange={(e) => setDateDesde(e.target.value)}
+                    className="search-input"
+                    style={{ padding: '8px 12px' }}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Hasta</label>
+                  <input 
+                    type="date" 
+                    value={dateHasta}
+                    onChange={(e) => setDateHasta(e.target.value)}
+                    className="search-input"
+                    style={{ padding: '8px 12px' }}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button className="btn btn-ghost" onClick={limpiarFiltroFechas} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Limpiar</button>
+                  <button className="btn btn-primary" onClick={aplicarFiltroFechas} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Aplicar</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="table-container">

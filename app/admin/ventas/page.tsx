@@ -4,11 +4,18 @@ import { ShoppingCart } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function VentasAdminPage() {
+export default async function VentasAdminPage({
+  searchParams,
+}: {
+  searchParams: { desde?: string; hasta?: string }
+}) {
   const supabase = await createClient()
 
-  // Obtener las últimas 100 ventas con sus detalles y perfiles
-  const { data: ventas, error } = await supabase
+  const desde = searchParams.desde
+  const hasta = searchParams.hasta
+
+  // Construir la consulta
+  let query = supabase
     .from('ventas')
     .select(`
       id,
@@ -38,7 +45,22 @@ export default async function VentasAdminPage() {
       )
     `)
     .order('created_at', { ascending: false })
-    .limit(150)
+
+  if (desde) {
+    // Asegurar que comience a las 00:00:00
+    query = query.gte('created_at', `${desde}T00:00:00.000Z`)
+  }
+  if (hasta) {
+    // Asegurar que termine a las 23:59:59
+    query = query.lte('created_at', `${hasta}T23:59:59.999Z`)
+  }
+
+  // Si no hay filtro de fechas, limitamos a 150 para no sobrecargar
+  if (!desde && !hasta) {
+    query = query.limit(150)
+  }
+
+  const { data: ventas, error } = await query
 
   if (error) {
     console.error("Error al cargar ventas:", error)
