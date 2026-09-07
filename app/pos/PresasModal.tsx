@@ -83,7 +83,8 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
   }
 
-  const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci')
+  // Ocultar acompañamientos para Porciones, Presas sueltas, y Económico
+  const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci') || nombreMinus.includes('econom');
 
   const handleConfirmar = (tipo: 'mesa' | 'llevar') => {
     onConfirmar({

@@ -723,6 +723,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
       {presasModalProducto && (
         <PresasModal
           nombreProducto={presasModalProducto.nombre}
+          precio={presasModalProducto.en_oferta && presasModalProducto.precio_oferta ? presasModalProducto.precio_oferta : presasModalProducto.precio}
           onConfirmar={handlePresasConfirmar}
           onCancelar={() => setPresasModalProducto(null)}
         />
