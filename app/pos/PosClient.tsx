@@ -148,6 +148,7 @@ export default function PosClient({
 
   // Modal de selección de presas
   const [presasModalProducto, setPresasModalProducto] = useState<Producto | null>(null);
+  const [tipoModalProducto, setTipoModalProducto] = useState<Producto | null>(null);
 
   // Ticket Data (para imprimir)
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
@@ -186,11 +187,16 @@ export default function PosClient({
       setPresasModalProducto(producto);
       return;
     }
-    agregarItemConNotas(producto, undefined);
+    if (producto.nombre.toLowerCase().includes('hamburguesa')) {
+      // Preguntar si es para mesa o llevar
+      setTipoModalProducto(producto);
+      return;
+    }
+    agregarItemConNotas(producto, undefined, 'mesa');
   };
 
-  const agregarItemConNotas = (producto: Producto, notas: string | undefined) => {
-    const itemKey = `${producto.id}::${notas || ''}`;
+  const agregarItemConNotas = (producto: Producto, notas: string | undefined, tipo: 'mesa' | 'llevar' = 'mesa') => {
+    const itemKey = `${producto.id}::${notas || ''}::${tipo}`;
     const precioUnitario = getPrecioUnitario(producto);
 
     setPedido((prev) => {
@@ -201,7 +207,7 @@ export default function PosClient({
         nuevos[index].subtotal = nuevos[index].cantidad * precioUnitario;
         return nuevos;
       }
-      return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey, tipoItem: 'mesa' }];
+      return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey, tipoItem: tipo }];
     });
 
     // En móvil: feedback
@@ -213,13 +219,33 @@ export default function PosClient({
   const handlePresasConfirmar = (seleccion: SeleccionPremiun) => {
     if (!presasModalProducto) return;
     const notas = formatearNotas(seleccion) || undefined;
-    agregarItemConNotas(presasModalProducto, notas);
+    agregarItemConNotas(presasModalProducto, notas, 'mesa');
     setPresasModalProducto(null);
   };
 
   // Cambiar tipo (mesa/llevar) de un ítem del carrito
   const cambiarTipoItemCarrito = (itemKey: string, tipo: 'mesa' | 'llevar') => {
-    setPedido(prev => prev.map(item => item.itemKey === itemKey ? { ...item, tipoItem: tipo } : item));
+    setPedido(prev => {
+      const itemToChange = prev.find(item => item.itemKey === itemKey);
+      if (!itemToChange || itemToChange.tipoItem === tipo) return prev;
+      
+      const newItemKey = `${itemToChange.producto.id}::${itemToChange.notas || ''}::${tipo}`;
+      
+      // Check if target key already exists
+      const existingTargetIndex = prev.findIndex(item => item.itemKey === newItemKey);
+      
+      if (existingTargetIndex >= 0) {
+        // Merge with existing
+        const nuevos = prev.filter(item => item.itemKey !== itemKey);
+        const targetIndex = nuevos.findIndex(item => item.itemKey === newItemKey);
+        nuevos[targetIndex].cantidad += itemToChange.cantidad;
+        nuevos[targetIndex].subtotal = nuevos[targetIndex].cantidad * getPrecioUnitario(nuevos[targetIndex].producto);
+        return nuevos;
+      } else {
+        // Just update key and tipo
+        return prev.map(item => item.itemKey === itemKey ? { ...item, tipoItem: tipo, itemKey: newItemKey } : item);
+      }
+    });
   };
 
   // ── Actualizar cantidad ───────────────────────────────────────────────────
@@ -749,8 +775,55 @@ export default function PosClient({
                   className="btn btn-danger"
                   onClick={handleCancelarPedido}
                 >
-                  <XCircle size={16} />
-                  Sí, vaciar
+                  Sí, vaciar carrito
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Selección Mesa o Llevar (Hamburguesas) */}
+        {tipoModalProducto && (
+          <div className="modal-overlay" style={{ zIndex: 10000 }}>
+            <div className="modal animate-fade-in-scale" style={{ maxWidth: '400px', textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🍔</div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '8px' }}>
+                ¿Cómo desea la hamburguesa?
+              </h3>
+              <p style={{ color: 'var(--text-400)', marginBottom: '24px', fontSize: '0.9rem' }}>
+                Seleccione si el pedido de {tipoModalProducto.nombre} es para consumir en el local o para llevar.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button
+                  className="btn"
+                  style={{ flex: 1, padding: '16px', background: 'var(--bg-600)', border: '2px solid var(--border)', flexDirection: 'column', gap: '8px', color: 'var(--text-100)' }}
+                  onClick={() => {
+                    agregarItemConNotas(tipoModalProducto, undefined, 'mesa');
+                    setTipoModalProducto(null);
+                  }}
+                >
+                  <UtensilsCrossed size={28} />
+                  <span style={{ fontWeight: 700 }}>Para Mesa</span>
+                </button>
+                <button
+                  className="btn"
+                  style={{ flex: 1, padding: '16px', background: 'var(--red)', border: '2px solid var(--red)', flexDirection: 'column', gap: '8px', color: '#fff' }}
+                  onClick={() => {
+                    agregarItemConNotas(tipoModalProducto, undefined, 'llevar');
+                    setTipoModalProducto(null);
+                  }}
+                >
+                  <ShoppingBag size={28} />
+                  <span style={{ fontWeight: 700 }}>Para Llevar</span>
+                </button>
+              </div>
+              <div style={{ marginTop: '20px' }}>
+                <button
+                  className="btn btn-ghost w-full"
+                  onClick={() => setTipoModalProducto(null)}
+                >
+                  Cancelar
                 </button>
               </div>
             </div>
