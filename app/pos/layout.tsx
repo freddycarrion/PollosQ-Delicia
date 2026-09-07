@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import PosSidebarHeader from './Header'
+import { Toaster } from 'react-hot-toast'
 
 export default async function PosLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -38,6 +39,7 @@ export default async function PosLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="pos-layout-wrapper">
+      <Toaster position="top-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
       <PosSidebarHeader 
         nombreUsuario={nombreCompleto} 
         esAdmin={esAdmin}
