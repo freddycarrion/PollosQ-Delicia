@@ -64,22 +64,26 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
     )
   }
 
-  // ── Filtrar presas según precio (categoría Económico) o nombre ────────────
+  // ── Filtrar presas según nombre del producto o precio ─────────────────────
   let presasA_Mostrar = PRESAS_DISPONIBLES;
   const nombreMinus = nombreProducto.toLowerCase();
   const precioNum = Number(precio ?? 0);
   const precioRedondeado = Math.round(precioNum);
-  const esEconomico = nombreMinus.includes('econom');
 
-  if (precioRedondeado === 14 || (esEconomico && precioNum > 0 && precioNum < 15)) {
-    // Bs. 14 → solo Pierna y Contra
+  const tienePierna  = nombreMinus.includes('pierna')  || nombreMinus.includes('contra');
+  const tienePechuga = nombreMinus.includes('pecho')   || nombreMinus.includes('pechuga') || nombreMinus.includes('ala');
+
+  if (tienePierna) {
+    // Nombre incluye "pierna" o "contra" → solo Pierna y Contra
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
-  } else if (precioRedondeado === 16 || (esEconomico && precioNum >= 15)) {
-    // Bs. 16 → solo Pechuga y Ala
+  } else if (tienePechuga) {
+    // Nombre incluye "pecho", "pechuga" o "ala" → solo Pechuga y Ala
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
-  } else if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
+  } else if (precioRedondeado === 14 || precioNum < 15) {
+    // Precio ~14 → solo Pierna y Contra
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
-  } else if (nombreMinus.includes('pecho') || nombreMinus.includes('ala') || nombreMinus.includes('pechuga')) {
+  } else if (precioRedondeado === 16 || precioNum >= 15) {
+    // Precio ~16 → solo Pechuga y Ala
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
   }
 
