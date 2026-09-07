@@ -4,6 +4,15 @@
 -- al abrir el turno, y se descuenta automáticamente al vender.
 -- ============================================================
 
+-- Asegurar que la función set_updated_at exista
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
 CREATE TABLE IF NOT EXISTS stock_bebidas_turno (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     turno_id        UUID NOT NULL REFERENCES turnos(id) ON DELETE CASCADE,
