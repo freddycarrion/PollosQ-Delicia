@@ -61,6 +61,16 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
     )
   }
 
+  // Filtrar presas según el nombre del producto
+  let presasA_Mostrar = PRESAS_DISPONIBLES;
+  const nombreMinus = nombreProducto.toLowerCase();
+  
+  if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
+    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
+  } else if (nombreMinus.includes('pecho') || nombreMinus.includes('ala') || nombreMinus.includes('pechuga')) {
+    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
+  }
+
   const handleConfirmar = () => {
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
@@ -97,7 +107,7 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
               </div>
             </div>
             <div className="presas-options-grid">
-              {PRESAS_DISPONIBLES.map(presa => {
+              {presasA_Mostrar.map(presa => {
                 const selected = presasSeleccionadas.includes(presa.id)
                 return (
                   <button
