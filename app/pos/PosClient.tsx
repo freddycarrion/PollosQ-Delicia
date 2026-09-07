@@ -1189,7 +1189,7 @@ export default function PosClient({
         .cancel-actions { display: flex; gap: 12px; justify-content: center; }
 
         /* ── DARK MODE (fondo más oscuro aún) ── */
-        :global(.pos-dark) {
+        :global(.dark) {
           --bg-900: #050508;
           --bg-800: #0c0c12;
           --bg-700: #111118;
@@ -1207,8 +1207,8 @@ export default function PosClient({
           --yellow: #e5c200;
           --red: #c0392b;
         }
-        :global(.pos-dark) .ticket-item { border-bottom-color: rgba(255,255,255,0.04); }
-        :global(.pos-dark) .pos-product-card { box-shadow: none; }
+        :global(.dark) .ticket-item { border-bottom-color: rgba(255,255,255,0.04); }
+        :global(.dark) .pos-product-card { box-shadow: none; }
 
         `}</style>
       </div>

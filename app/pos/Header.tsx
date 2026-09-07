@@ -26,7 +26,7 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
     if (typeof window !== 'undefined') {
       const isDark = localStorage.getItem('pos-dark-mode') === 'true'
       if (isDark) {
-        document.documentElement.classList.add('pos-dark')
+        document.documentElement.classList.add('dark')
       }
       return isDark
     }
@@ -37,8 +37,8 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
     setDarkMode(prev => {
       const next = !prev
       localStorage.setItem('pos-dark-mode', String(next))
-      if (next) document.documentElement.classList.add('pos-dark')
-      else document.documentElement.classList.remove('pos-dark')
+      if (next) document.documentElement.classList.add('dark')
+      else document.documentElement.classList.remove('dark')
       return next
     })
   }
