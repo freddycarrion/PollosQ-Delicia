@@ -280,8 +280,9 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           padding: 4mm 3mm;
           background: #fff;
           color: #000;
-          font-family: 'Courier New', Courier, monospace;
+          font-family: Arial, Helvetica, sans-serif;
           font-size: 11px;
+          font-weight: bold;
           line-height: 1.45;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
