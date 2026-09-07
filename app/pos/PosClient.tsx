@@ -79,6 +79,26 @@ export default function PosClient({
 
   const supabase = createClient();
 
+  // ── Stock de Bebidas ──────────────────────────────────────────────────────
+  // Mapa: producto_id -> stock_actual
+  const [stockBebidas, setStockBebidas] = useState<Record<string, number>>({});
+
+  const cargarStockBebidas = useCallback(async () => {
+    const { data } = await supabase
+      .from('stock_bebidas_turno')
+      .select('producto_id, stock_actual')
+      .eq('turno_id', turnoId);
+    if (data) {
+      const mapa: Record<string, number> = {};
+      data.forEach(r => { mapa[r.producto_id] = r.stock_actual; });
+      setStockBebidas(mapa);
+    }
+  }, [turnoId, supabase]);
+
+  useEffect(() => {
+    cargarStockBebidas();
+  }, [cargarStockBebidas]);
+
   // Ref para la barra de categorías
   const catBarRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -301,6 +321,19 @@ export default function PosClient({
 
       if (detalleError) throw detalleError;
 
+      // 2b. Descontar stock de bebidas vendidas
+      for (const item of pedido) {
+        if (stockBebidas[item.producto.id] !== undefined) {
+          const nuevoStock = Math.max(0, stockBebidas[item.producto.id] - item.cantidad);
+          await supabase
+            .from('stock_bebidas_turno')
+            .update({ stock_actual: nuevoStock })
+            .eq('turno_id', turnoId)
+            .eq('producto_id', item.producto.id);
+          setStockBebidas(prev => ({ ...prev, [item.producto.id]: nuevoStock }));
+        }
+      }
+
       // 3. Preparar Ticket para Imprimir
       const metodoPagoLabel = payload.metodo;
       const ticket: TicketData = {
@@ -433,11 +466,15 @@ export default function PosClient({
             {productosFiltrados.length > 0 ? (
               productosFiltrados.map((prod) => {
                 const precioMostrar = getPrecioUnitario(prod);
+                const stockActual = stockBebidas[prod.id];
+                const tieneStock = stockActual !== undefined; // es bebida con stock registrado
+                const sinStock = tieneStock && stockActual <= 0;
                 return (
                   <div
                     key={prod.id}
-                    className="pos-product-card card-hover"
-                    onClick={() => agregarAlPedido(prod)}
+                    className={`pos-product-card card-hover ${sinStock ? 'sin-stock' : ''}`}
+                    onClick={() => !sinStock && agregarAlPedido(prod)}
+                    style={sinStock ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
                     <div className="pos-product-img-wrap">
                       {prod.imagen_url ? (
@@ -460,6 +497,11 @@ export default function PosClient({
                           🍗
                         </div>
                       )}
+                      {tieneStock && (
+                        <div className={`pos-stock-badge ${sinStock ? 'agotado' : stockActual <= 3 ? 'bajo' : 'ok'}`}>
+                          {sinStock ? 'AGOTADO' : `🥤 ${stockActual}`}
+                        </div>
+                      )}
                     </div>
                     <div className="pos-product-info">
                       <h3 className="pos-product-name">{prod.nombre}</h3>
@@ -474,7 +516,7 @@ export default function PosClient({
                         )}
                       </div>
                     </div>
-                    <button className="pos-product-add">
+                    <button className="pos-product-add" disabled={sinStock}>
                       <Plus size={18} />
                     </button>
                   </div>
@@ -904,6 +946,18 @@ export default function PosClient({
           width: 26px; height: 26px;
           display: flex; align-items: center; justify-content: center;
         }
+        .pos-stock-badge {
+          position: absolute; bottom: 8px; left: 6px;
+          z-index: 10; font-size: 0.7rem; font-weight: 800;
+          border-radius: var(--radius-md);
+          padding: 2px 7px;
+          letter-spacing: 0.02em;
+          line-height: 1.4;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        .pos-stock-badge.ok   { background: rgba(76,175,80,0.9);  color: #fff; }
+        .pos-stock-badge.bajo { background: rgba(255,152,0,0.9);  color: #fff; }
+        .pos-stock-badge.agotado { background: rgba(211,47,47,0.9); color: #fff; }
 
         .pos-product-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
         .pos-product-name {
