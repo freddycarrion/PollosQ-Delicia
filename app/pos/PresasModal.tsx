@@ -86,6 +86,9 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
 
   // Ocultar acompañamientos para Porciones y Presas sueltas
   const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci');
+  
+  // Ocultar presas para mixta
+  const esMixta = nombreMinus.includes('mixta');
 
   const handleConfirmar = (tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     onConfirmar({
@@ -114,35 +117,37 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
         <div className="presas-body">
           
           {/* Sección Presas */}
-          <div className="presas-section">
-            <div className="presas-section-header">
-              <span className="presas-section-icon">🍗</span>
-              <div>
-                <h3 className="presas-section-title">Elige las Presas</h3>
-                <p className="presas-section-hint">Selecciona una o más presas</p>
+          {!esMixta && (
+            <div className="presas-section">
+              <div className="presas-section-header">
+                <span className="presas-section-icon">🍗</span>
+                <div>
+                  <h3 className="presas-section-title">Elige las Presas</h3>
+                  <p className="presas-section-hint">Selecciona una o más presas</p>
+                </div>
+              </div>
+              <div className="presas-options-grid">
+                {presasA_Mostrar.map(presa => {
+                  const selected = presasSeleccionadas.includes(presa.id)
+                  return (
+                    <button
+                      key={presa.id}
+                      className={`presas-option-btn ${selected ? 'selected' : ''}`}
+                      onClick={() => togglePresa(presa.id)}
+                    >
+                      <span className="presa-emoji">{presa.emoji}</span>
+                      <span className="presa-label">{presa.label}</span>
+                      {selected && <CheckCircle2 size={16} className="presa-check" />}
+                    </button>
+                  )
+                })}
               </div>
             </div>
-            <div className="presas-options-grid">
-              {presasA_Mostrar.map(presa => {
-                const selected = presasSeleccionadas.includes(presa.id)
-                return (
-                  <button
-                    key={presa.id}
-                    className={`presas-option-btn ${selected ? 'selected' : ''}`}
-                    onClick={() => togglePresa(presa.id)}
-                  >
-                    <span className="presa-emoji">{presa.emoji}</span>
-                    <span className="presa-label">{presa.label}</span>
-                    {selected && <CheckCircle2 size={16} className="presa-check" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          )}
 
           {!esPorcionOPresa && (
             <>
-              <div className="presas-divider" />
+              {!esMixta && <div className="presas-divider" />}
 
               {/* Sección Acompañamientos */}
               <div className="presas-section">
