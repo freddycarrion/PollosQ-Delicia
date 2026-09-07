@@ -30,8 +30,7 @@ export default function ComunicadosClient({ comunicados: initialData, userId }: 
           titulo,
           mensaje,
           roles_destino: roles,
-          creador_id: userId,
-          fecha: new Date().toISOString()
+          creador_id: userId
         })
         .select('*, creador_id(nombre, apellido)')
         .single()
