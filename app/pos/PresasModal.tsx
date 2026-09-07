@@ -71,6 +71,8 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
   }
 
+  const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci')
+
   const handleConfirmar = () => {
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
@@ -124,34 +126,38 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
             </div>
           </div>
 
-          <div className="presas-divider" />
+          {!esPorcionOPresa && (
+            <>
+              <div className="presas-divider" />
 
-          {/* Sección Acompañamientos */}
-          <div className="presas-section">
-            <div className="presas-section-header">
-              <span className="presas-section-icon">🍚</span>
-              <div>
-                <h3 className="presas-section-title">Acompañamientos</h3>
-                <p className="presas-section-hint">¿Con qué viene servido?</p>
+              {/* Sección Acompañamientos */}
+              <div className="presas-section">
+                <div className="presas-section-header">
+                  <span className="presas-section-icon">🍚</span>
+                  <div>
+                    <h3 className="presas-section-title">Acompañamientos</h3>
+                    <p className="presas-section-hint">¿Con qué viene servido?</p>
+                  </div>
+                </div>
+                <div className="presas-options-grid">
+                  {ACOMPAÑAMIENTOS_DISPONIBLES.map(acompa => {
+                    const selected = acompañamientosSeleccionados.includes(acompa.id)
+                    return (
+                      <button
+                        key={acompa.id}
+                        className={`presas-option-btn acompa ${selected ? 'selected' : ''}`}
+                        onClick={() => toggleAcompa(acompa.id)}
+                      >
+                        <span className="presa-emoji">{acompa.emoji}</span>
+                        <span className="presa-label">{acompa.label}</span>
+                        {selected && <CheckCircle2 size={16} className="presa-check" />}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="presas-options-grid">
-              {ACOMPAÑAMIENTOS_DISPONIBLES.map(acompa => {
-                const selected = acompañamientosSeleccionados.includes(acompa.id)
-                return (
-                  <button
-                    key={acompa.id}
-                    className={`presas-option-btn acompa ${selected ? 'selected' : ''}`}
-                    onClick={() => toggleAcompa(acompa.id)}
-                  >
-                    <span className="presa-emoji">{acompa.emoji}</span>
-                    <span className="presa-label">{acompa.label}</span>
-                    {selected && <CheckCircle2 size={16} className="presa-check" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+            </>
+          )}
 
         </div>
 
