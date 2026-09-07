@@ -84,8 +84,8 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
     }
   }
 
-  // Ocultar acompañamientos para Porciones, Presas sueltas, y Económico
-  const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci') || nombreMinus.includes('econom');
+  // Ocultar acompañamientos para Porciones y Presas sueltas
+  const esPorcionOPresa = nombreMinus.includes('presa') || nombreMinus.includes('porci');
 
   const handleConfirmar = (tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     onConfirmar({
