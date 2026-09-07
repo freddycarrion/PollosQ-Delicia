@@ -30,6 +30,7 @@ export interface SeleccionPremiun {
 
 interface Props {
   nombreProducto: string
+  precio?: number
   onConfirmar: (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar') => void
   onCancelar: () => void
 }
@@ -45,7 +46,7 @@ export function formatearNotas(seleccion: SeleccionPremiun): string {
   return partes.join(' | ')
 }
 
-export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }: Props) {
+export default function PresasModal({ nombreProducto, precio, onConfirmar, onCancelar }: Props) {
   const [presasSeleccionadas, setPresasSeleccionadas] = useState<string[]>([])
   const [acompañamientosSeleccionados, setAcompañamientosSeleccionados] = useState<string[]>(
     ACOMPAÑAMIENTOS_DISPONIBLES.map(a => a.id)
@@ -63,11 +64,17 @@ export default function PresasModal({ nombreProducto, onConfirmar, onCancelar }:
     )
   }
 
-  // Filtrar presas según el nombre del producto
+  // ── Filtrar presas según precio (categoría Económico) o nombre ────────────
   let presasA_Mostrar = PRESAS_DISPONIBLES;
   const nombreMinus = nombreProducto.toLowerCase();
-  
-  if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
+
+  if (precio === 14) {
+    // Bs. 14 → solo Pierna y Contra
+    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
+  } else if (precio === 16) {
+    // Bs. 16 → solo Pechuga y Ala
+    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
+  } else if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
   } else if (nombreMinus.includes('pecho') || nombreMinus.includes('ala') || nombreMinus.includes('pechuga')) {
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
