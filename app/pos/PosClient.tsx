@@ -254,6 +254,7 @@ export default function PosClient({
         vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
         tipo_pedido: payload.tipoVenta,
         nombre_cliente: payload.nombreCliente || null,
+        carnet_cliente: payload.carnetCliente || null,
         estado: "completada",
       };
 
@@ -314,6 +315,7 @@ export default function PosClient({
         recibido: payload.montoRecibido,
         vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
         nombreCliente: payload.nombreCliente,
+        carnetCliente: payload.carnetCliente,
         items: pedido.map((item, i) => ({
           nombre: item.producto.nombre,
           cantidad: item.cantidad,

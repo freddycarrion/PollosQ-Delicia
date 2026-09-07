@@ -28,6 +28,7 @@ interface VentaTurno {
   tipo_pedido: string
   estado: 'completada' | 'anulada' | 'pendiente'
   nombre_cliente: string | null
+  carnet_cliente: string | null
   created_at: string
   detalle_ventas: DetalleVentaItem[]
 }
@@ -96,7 +97,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         .from('ventas')
         .select(`
           id, numero_ticket, total, metodo_pago, metodo_pago_2, monto_pago_2,
-          monto_recibido, vuelto, tipo_pedido, estado, nombre_cliente, created_at,
+          monto_recibido, vuelto, tipo_pedido, estado, nombre_cliente, carnet_cliente, created_at,
           detalle_ventas (
             id, nombre_producto, precio_unitario, cantidad, subtotal, notas_item
           )
@@ -134,6 +135,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
       recibido: venta.monto_recibido || venta.total,
       vuelto: venta.vuelto || 0,
       nombreCliente: venta.nombre_cliente || undefined,
+      carnetCliente: venta.carnet_cliente || undefined,
       items: venta.detalle_ventas.map(d => ({
         nombre: d.nombre_producto,
         cantidad: d.cantidad,

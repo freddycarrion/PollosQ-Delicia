@@ -11,6 +11,7 @@ export interface ConfirmarVentaPayload {
   tipoVenta: TipoVenta
   montoRecibido: number
   nombreCliente?: string
+  carnetCliente?: string
   // Pago mixto
   esMixto: boolean
   metodo2?: MetodoPago
@@ -35,6 +36,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
   const [tipo, setTipo] = useState<TipoVenta>('para_llevar')
   const [montoIngresado, setMontoIngresado] = useState<string>('')
   const [nombreCliente, setNombreCliente] = useState<string>('')
+  const [carnetCliente, setCarnetCliente] = useState<string>('')
 
   // Pago mixto
   const [esMixto, setEsMixto] = useState(false)
@@ -48,6 +50,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
       setTipo('para_llevar')
       setMontoIngresado('')
       setNombreCliente('')
+      setCarnetCliente('')
       setEsMixto(false)
       setMetodo2('qr')
       setMonto1Str('')
@@ -113,6 +116,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
         tipoVenta: tipo,
         montoRecibido: metodo === 'efectivo' ? montoNum : total,
         nombreCliente: nombreCliente.trim() || undefined,
+        carnetCliente: carnetCliente.trim() || undefined,
         esMixto: false,
       })
     } else {
@@ -129,6 +133,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
         tipoVenta: tipo,
         montoRecibido: metodo === 'efectivo' ? monto1 : total,
         nombreCliente: nombreCliente.trim() || undefined,
+        carnetCliente: carnetCliente.trim() || undefined,
         esMixto: true,
         metodo2,
         monto2,
@@ -168,6 +173,21 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
                 value={nombreCliente}
                 onChange={e => setNombreCliente(e.target.value)}
                 maxLength={100}
+                autoComplete="off"
+              />
+            </div>
+
+            {/* Carnet del Cliente */}
+            <div className="cobro-section">
+              <label className="cobro-label" htmlFor="cobro-carnet-cliente">Número de Carnet <span style={{ color: 'var(--text-500)', fontWeight: 400 }}>(opcional)</span></label>
+              <input
+                id="cobro-carnet-cliente"
+                type="text"
+                className="cobro-cliente-input"
+                placeholder="Ej: 1234567 LP"
+                value={carnetCliente}
+                onChange={e => setCarnetCliente(e.target.value)}
+                maxLength={20}
                 autoComplete="off"
               />
             </div>

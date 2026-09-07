@@ -12,6 +12,7 @@ export interface TicketData {
   recibido: number
   vuelto: number
   nombreCliente?: string        // Nombre del cliente (opcional)
+  carnetCliente?: string        // Carnet del cliente (opcional)
   items: {
     nombre: string
     cantidad: number
@@ -56,7 +57,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           <div className="tk-num-cocina">#{data.numeroTicket}</div>
           <div className="tk-hora-cocina">{data.fecha}</div>
           {data.esReimpresion && <div className="tk-reimp">-- REIMPRESION --</div>}
-          {data.nombreCliente && <div className="tk-cliente-cocina">{data.nombreCliente}</div>}
+          {data.nombreCliente && <div className="tk-cliente-cocina">{data.nombreCliente} {data.carnetCliente && ` - CI: ${data.carnetCliente}`}</div>}
         </div>
 
         <div className="tk-divider-cocina" />
@@ -129,6 +130,9 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
           <div className="tk-meta-row"><span>Fecha</span><span>{data.fecha}</span></div>
           {data.nombreCliente && (
             <div className="tk-meta-row"><span>Cliente</span><span>{data.nombreCliente}</span></div>
+          )}
+          {data.carnetCliente && (
+            <div className="tk-meta-row"><span>Carnet/NIT</span><span>{data.carnetCliente}</span></div>
           )}
           <div className="tk-meta-row"><span>Cajero</span><span>{data.cajeroNombre}</span></div>
           <div className="tk-meta-row"><span>Sucursal</span><span>{data.sucursalNombre}</span></div>
