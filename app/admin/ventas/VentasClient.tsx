@@ -40,11 +40,11 @@ interface Props {
 export default function VentasClient({ initialVentas }: Props) {
   const ventas: Venta[] = initialVentas || []
 
-  // Statics summary
   const ventasCompletadas = ventas.filter(v => v.estado === 'completada')
   const totalHoy = ventasCompletadas.reduce((acc, v) => acc + v.total, 0)
+  const totalEfectivo = ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'efectivo' ? v.total : 0), 0)
+  const totalQR = ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'qr' ? v.total : 0), 0)
   const ticketsEmitidos = ventas.length
-  const ticketPromedio = ticketsEmitidos > 0 ? totalHoy / ticketsEmitidos : 0
 
   // Routing para filtros
   const router = useRouter()
@@ -128,12 +128,22 @@ export default function VentasClient({ initialVentas }: Props) {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon-wrap bg-yellow/10 text-yellow">
-             <ShoppingBag size={24} />
+          <div className="stat-icon-wrap bg-green/10 text-green" style={{background: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50'}}>
+             <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>💵</span>
           </div>
           <div className="stat-info">
-             <p className="stat-label">Ticket Promedio</p>
-             <p className="stat-value font-mono text-yellow">Bs. {fmt(ticketPromedio)}</p>
+             <p className="stat-label">Efectivo</p>
+             <p className="stat-value font-mono text-green">Bs. {fmt(totalEfectivo)}</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon-wrap bg-blue/10 text-blue" style={{background: 'rgba(156, 39, 176, 0.1)', color: '#9C27B0'}}>
+             <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>📱</span>
+          </div>
+          <div className="stat-info">
+             <p className="stat-label">QR</p>
+             <p className="stat-value font-mono" style={{color: '#9C27B0'}}>Bs. {fmt(totalQR)}</p>
           </div>
         </div>
       </div>
