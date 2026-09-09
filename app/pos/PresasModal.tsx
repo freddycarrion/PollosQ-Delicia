@@ -48,9 +48,7 @@ export function formatearNotas(seleccion: SeleccionPremiun): string {
 
 export default function PresasModal({ nombreProducto, precio, onConfirmar, onCancelar }: Props) {
   const [presasSeleccionadas, setPresasSeleccionadas] = useState<string[]>([])
-  const [acompañamientosSeleccionados, setAcompañamientosSeleccionados] = useState<string[]>(
-    ACOMPAÑAMIENTOS_DISPONIBLES.map(a => a.id)
-  )
+  const [acompañamientosSeleccionados, setAcompañamientosSeleccionados] = useState<string[]>([])
 
   const togglePresa = (id: string) => {
     setPresasSeleccionadas(prev =>
@@ -93,7 +91,7 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
   const handleConfirmar = (tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
-      acompañamientos: acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label),
+      acompañamientos: esPorcionOPresa ? [] : acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label),
     }, tipo)
   }
 
@@ -153,10 +151,17 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
               <div className="presas-section">
                 <div className="presas-section-header">
                   <span className="presas-section-icon">🍚</span>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <h3 className="presas-section-title">Acompañamientos</h3>
                     <p className="presas-section-hint">¿Con qué viene servido?</p>
                   </div>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ padding: '6px 12px', fontSize: '0.85rem', background: 'var(--yellow)', color: 'var(--bg-900)' }}
+                    onClick={() => setAcompañamientosSeleccionados(ACOMPAÑAMIENTOS_DISPONIBLES.map(a => a.id))}
+                  >
+                    Completo
+                  </button>
                 </div>
                 <div className="presas-options-grid">
                   {ACOMPAÑAMIENTOS_DISPONIBLES.map(acompa => {
