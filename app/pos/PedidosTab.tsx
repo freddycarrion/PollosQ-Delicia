@@ -126,7 +126,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
     const ticket: TicketData = {
       sucursalNombre,
       cajeroNombre,
-      numeroTicket: String(venta.numero_ticket).padStart(4, '0'),
+      numeroTicket: String(venta.numero_ticket).padStart(2, '0'),
       tipoPedido: venta.tipo_pedido,
       metodoPago: metodoPago,
       metodoPago2: venta.metodo_pago_2 || undefined,
@@ -150,7 +150,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   }
 
   const handleAnular = async (ventaId: string, ticketNum: number) => {
-    const confirmar = window.confirm(`¿Estás seguro que deseas ANULAR el ticket #${String(ticketNum).padStart(4, '0')}? Esta acción no se puede deshacer.`)
+    const confirmar = window.confirm(`¿Estás seguro que deseas ANULAR el ticket #${String(ticketNum).padStart(2, '0')}? Esta acción no se puede deshacer.`)
     if (!confirmar) return
 
     try {
@@ -463,7 +463,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
                   onClick={() => setVentaExpandida(isExpanded ? null : venta.id)}
                 >
                   <div className="pedido-ticket-info">
-                    <span className="pedido-num">#{String(venta.numero_ticket).padStart(4, '0')}</span>
+                    <span className="pedido-num">#{String(venta.numero_ticket).padStart(2, '0')}</span>
                     <div className={`pedido-estado-dot ${completada ? 'completada' : 'anulada'}`} />
                   </div>
 
@@ -550,7 +550,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
             <div className="edit-modal-header">
               <div>
                 <h3 className="edit-modal-title">
-                  ✏️ Editar Pedido #{String(ventaEditando.numero_ticket).padStart(4, '0')}
+                  ✏️ Editar Pedido #{String(ventaEditando.numero_ticket).padStart(2, '0')}
                 </h3>
                 {ventaEditando.nombre_cliente && (
                   <p className="edit-modal-subtitle">Cliente: {ventaEditando.nombre_cliente}</p>

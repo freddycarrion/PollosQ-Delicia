@@ -399,7 +399,7 @@ export default function PosClient({
       const ticket: TicketData = {
         sucursalNombre,
         cajeroNombre,
-        numeroTicket: String(venta.numero_ticket).padStart(4, "0"),
+        numeroTicket: String(venta.numero_ticket).padStart(2, "0"),
         tipoPedido: payload.tipoVenta,
         metodoPago: metodoPagoLabel,
         metodoPago2: payload.esMixto ? payload.metodo2 : undefined,
