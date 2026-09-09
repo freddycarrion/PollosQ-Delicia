@@ -88,7 +88,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
                   {(isLlevar || isMesa) && (
                     <tr key={`${idx}-tipo`}>
                       <td></td>
-                      <td className="tk-notas-cocina" style={{ fontWeight: 'bold', fontSize: '1.2em', paddingBottom: '2px' }}>
+                      <td className="tk-notas-cocina" style={{ fontWeight: 'bold', fontSize: '16px', paddingBottom: '4px' }}>
                         👉 {isLlevar ? 'PARA LLEVAR' : 'PARA LA MESA'}
                       </td>
                     </tr>
@@ -96,7 +96,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
                   {notasText && (
                     <tr key={`${idx}-n`}>
                       <td></td>
-                      <td className="tk-notas-cocina" style={{ fontWeight: 'bold' }}>{notasText}</td>
+                      <td className="tk-notas-cocina" style={{ fontWeight: 'bold', fontSize: '16px', paddingBottom: '4px' }}>{notasText}</td>
                     </tr>
                   )}
                 </React.Fragment>
@@ -118,6 +118,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
 
         {/* Cabecera */}
         <div className="tk-header-cli">
+          <div className="tk-num-cli-top">Ticket #{data.numeroTicket}</div>
           <div className="tk-logo-txt">{NEGOCIO.nombre}</div>
           {NEGOCIO.slogan && <div className="tk-slogan">{NEGOCIO.slogan}</div>}
           {esConsumoInterno && (
@@ -132,7 +133,6 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
 
         {/* Info del ticket */}
         <div className="tk-meta">
-          <div className="tk-meta-row"><span>Ticket</span><span>#{data.numeroTicket}</span></div>
           <div className="tk-meta-row"><span>Fecha</span><span>{data.fecha}</span></div>
           {data.nombreCliente && (
             <div className="tk-meta-row"><span>Cliente</span><span>{data.nombreCliente}</span></div>
@@ -375,6 +375,12 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         /* ── TICKET CLIENTE ──────────────────── */
         .tk-header-cli {
           text-align: center;
+        }
+        .tk-num-cli-top {
+          font-size: 26px;
+          font-weight: 900;
+          margin-bottom: 4px;
+          line-height: 1;
         }
         .tk-logo-txt {
           font-size: 16px;
