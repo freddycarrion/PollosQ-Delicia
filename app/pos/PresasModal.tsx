@@ -88,6 +88,9 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
   // Ocultar presas para mixta
   const esMixta = nombreMinus.includes('mixta');
 
+  // Mostrar botones de todo broaster / spiedo para entero y medio
+  const esEnteroOMedio = nombreMinus.includes('entero') || nombreMinus.includes('medio');
+
   const handleConfirmar = (tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
@@ -119,10 +122,28 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
             <div className="presas-section">
               <div className="presas-section-header">
                 <span className="presas-section-icon">🍗</span>
-                <div>
+                <div style={{ flex: 1 }}>
                   <h3 className="presas-section-title">Elige las Presas</h3>
                   <p className="presas-section-hint">Selecciona una o más presas</p>
                 </div>
+                {esEnteroOMedio && (
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ padding: '6px 10px', fontSize: '0.8rem', background: 'var(--red)', color: 'white', border: 'none' }}
+                      onClick={() => setPresasSeleccionadas(presasA_Mostrar.filter(p => p.id.includes('broaster')).map(p => p.id))}
+                    >
+                      Todo Broaster
+                    </button>
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ padding: '6px 10px', fontSize: '0.8rem', background: 'var(--yellow)', color: 'var(--bg-900)', border: 'none' }}
+                      onClick={() => setPresasSeleccionadas(presasA_Mostrar.filter(p => p.id.includes('spiedo')).map(p => p.id))}
+                    >
+                      Todo Spiedo
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="presas-options-grid">
                 {presasA_Mostrar.map(presa => {
