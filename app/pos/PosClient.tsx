@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Minus,
@@ -79,6 +80,7 @@ export default function PosClient({
   const [tabActivo, setTabActivo] = useState<'catalogo' | 'carrito' | 'pedidos'>('catalogo');
 
   const supabase = createClient();
+  const router = useRouter();
 
   // ── Stock de Bebidas ──────────────────────────────────────────────────────
   // Mapa: producto_id -> { actual, inicial }
@@ -301,6 +303,19 @@ export default function PosClient({
     setIsProcessing(true);
 
     try {
+      // 0. Verificar que el turno sigue activo antes de insertar
+      const { data: turnoActivo, error: turnoCheckError } = await supabase
+        .from('turnos')
+        .select('id, estado')
+        .eq('id', turnoId)
+        .single();
+
+      if (turnoCheckError || !turnoActivo || turnoActivo.estado !== 'abierto') {
+        toast.error('Tu turno fue cerrado. Recargando...', { duration: 4000, icon: '🔒' });
+        setTimeout(() => router.refresh(), 2000);
+        return;
+      }
+
       // 1. Crear la Venta
       const totalReal = payload.metodo === 'consumo_interno' ? 0 : totalPedido;
       const ventaData: any = {
