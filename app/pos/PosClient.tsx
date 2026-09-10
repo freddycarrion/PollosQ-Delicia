@@ -51,6 +51,7 @@ interface ItemPedido {
   notas?: string;           // Presas y acompañamientos seleccionados
   itemKey: string;          // Clave única: producto.id + notas (para diferenciar mismos prod con distintas presas)
   tipoItem: 'mesa' | 'llevar'; // Destino del ítem
+  nombreTicket?: string;    // Nombre simplificado para el ticket (ej: "Entero Broaster")
 }
 
 interface Props {
@@ -201,9 +202,27 @@ export default function PosClient({
     agregarItemConNotas(producto, undefined, 'mesa');
   };
 
-  const agregarItemConNotas = (producto: Producto, notas: string | undefined, tipo: 'mesa' | 'llevar' = 'mesa') => {
+  const agregarItemConNotas = (
+    producto: Producto,
+    notas: string | undefined,
+    tipo: 'mesa' | 'llevar' = 'mesa',
+    nombreTicket?: string
+  ) => {
     const itemKey = `${producto.id}::${notas || ''}::${tipo}`;
     const precioUnitario = getPrecioUnitario(producto);
+
+    // ── Verificar stock de bebidas antes de agregar ────────────────────────
+    const stockData = stockBebidas[producto.id];
+    if (stockData !== undefined) {
+      // Calcular cuántas unidades de esta bebida ya están en el carrito
+      const cantidadEnCarrito = pedido
+        .filter(i => i.producto.id === producto.id)
+        .reduce((sum, i) => sum + i.cantidad, 0);
+      if (cantidadEnCarrito >= stockData.actual) {
+        toast.error(`No hay más ${producto.nombre} disponibles (stock: ${stockData.actual})`, { duration: 3000 });
+        return;
+      }
+    }
 
     setPedido((prev) => {
       const index = prev.findIndex((i) => i.itemKey === itemKey);
@@ -213,7 +232,7 @@ export default function PosClient({
         nuevos[index].subtotal = nuevos[index].cantidad * precioUnitario;
         return nuevos;
       }
-      return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey, tipoItem: tipo }];
+      return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey, tipoItem: tipo, nombreTicket }];
     });
 
     // En móvil: feedback
@@ -225,12 +244,26 @@ export default function PosClient({
   const handlePresasConfirmar = (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
     if (!presasModalProducto) return;
     const notas = formatearNotas(seleccion) || undefined;
+
+    // Calcular nombre simplificado para el ticket cuando todo es broaster o spiedo
+    let nombreTicket: string | undefined = undefined;
+    if (seleccion.tipoSimplificado) {
+      const nombreBase = presasModalProducto.nombre
+      const nombreMinus = nombreBase.toLowerCase()
+      const esEntero = nombreMinus.includes('entero')
+      const esMedio = nombreMinus.includes('medio')
+      if (esEntero || esMedio) {
+        const prefix = esEntero ? 'Entero' : 'Medio'
+        const suffix = seleccion.tipoSimplificado === 'broaster' ? 'Broaster' : 'Spiedo'
+        nombreTicket = `${prefix} ${suffix}`
+      }
+    }
     
     if (tipo === 'consumo_interno') {
       setEsConsumoInterno(true);
-      agregarItemConNotas(presasModalProducto, notas, 'mesa');
+      agregarItemConNotas(presasModalProducto, notas, 'mesa', nombreTicket);
     } else {
-      agregarItemConNotas(presasModalProducto, notas, tipo);
+      agregarItemConNotas(presasModalProducto, notas, tipo, nombreTicket);
     }
     
     setPresasModalProducto(null);
@@ -269,6 +302,21 @@ export default function PosClient({
           if (item.itemKey === itemKey) {
             const nuevaCant = item.cantidad + delta;
             if (nuevaCant <= 0) return item;
+
+            // Si es bebida con stock, verificar que no exceda el stock disponible
+            if (delta > 0) {
+              const stockData = stockBebidas[item.producto.id];
+              if (stockData !== undefined) {
+                if (nuevaCant > stockData.actual) {
+                  toast.error(
+                    `No hay más ${item.producto.nombre} disponibles (stock: ${stockData.actual})`,
+                    { duration: 3000 }
+                  );
+                  return item; // No incrementar
+                }
+              }
+            }
+
             const precioUnitario = getPrecioUnitario(item.producto);
             return { ...item, cantidad: nuevaCant, subtotal: nuevaCant * precioUnitario };
           }
@@ -425,7 +473,7 @@ export default function PosClient({
         nombreCliente: payload.nombreCliente,
         carnetCliente: payload.carnetCliente,
         items: pedido.map((item, i) => ({
-          nombre: item.producto.nombre,
+          nombre: item.nombreTicket || item.producto.nombre,  // Usar nombre simplificado si existe
           cantidad: item.cantidad,
           precio: getPrecioUnitario(item.producto),
           subtotal: item.subtotal,

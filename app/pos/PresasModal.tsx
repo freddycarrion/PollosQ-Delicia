@@ -26,6 +26,7 @@ export const ACOMPAÑAMIENTOS_DISPONIBLES = [
 export interface SeleccionPremiun {
   presas: string[]
   acompañamientos: string[]
+  tipoSimplificado?: 'broaster' | 'spiedo'  // Para entero/medio todo broaster o todo spiedo
 }
 
 interface Props {
@@ -44,6 +45,29 @@ export function formatearNotas(seleccion: SeleccionPremiun): string {
     partes.push('Con: ' + seleccion.acompañamientos.join(', '))
   }
   return partes.join(' | ')
+}
+
+/**
+ * Detecta si las presas seleccionadas corresponden a "todo broaster" o "todo spiedo"
+ * para productos entero/medio, y retorna la clave simplificada o null.
+ */
+export function detectarTipoBroasterSpiedo(
+  nombreProducto: string,
+  presasSeleccionadas: string[],
+  presasDisponibles: { id: string }[]
+): 'broaster' | 'spiedo' | null {
+  const nombreMinus = nombreProducto.toLowerCase()
+  const esEnteroOMedio = nombreMinus.includes('entero') || nombreMinus.includes('medio')
+  if (!esEnteroOMedio || presasSeleccionadas.length === 0) return null
+
+  const todasBroaster = presasSeleccionadas.length === presasDisponibles.filter(p => p.id.includes('broaster')).length
+    && presasSeleccionadas.every(id => id.includes('broaster'))
+  const todasSpiedo = presasSeleccionadas.length === presasDisponibles.filter(p => p.id.includes('spiedo')).length
+    && presasSeleccionadas.every(id => id.includes('spiedo'))
+
+  if (todasBroaster) return 'broaster'
+  if (todasSpiedo) return 'spiedo'
+  return null
 }
 
 export default function PresasModal({ nombreProducto, precio, onConfirmar, onCancelar }: Props) {
@@ -92,9 +116,11 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
   const esEnteroOMedio = nombreMinus.includes('entero') || nombreMinus.includes('medio');
 
   const handleConfirmar = (tipo: 'mesa' | 'llevar' | 'consumo_interno') => {
+    const tipoSimplificado = detectarTipoBroasterSpiedo(nombreProducto, presasSeleccionadas, presasA_Mostrar)
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
       acompañamientos: esPorcionOPresa ? [] : acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label),
+      tipoSimplificado: tipoSimplificado ?? undefined,
     }, tipo)
   }
 
