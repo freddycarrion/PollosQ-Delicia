@@ -259,11 +259,14 @@ export default function PosClient({
       }
     }
     
+    // Si hay nombre simplificado, no imprimir las presas en el ticket
+    const notasTicket = nombreTicket ? undefined : notas;
+
     if (tipo === 'consumo_interno') {
       setEsConsumoInterno(true);
-      agregarItemConNotas(presasModalProducto, notas, 'mesa', nombreTicket);
+      agregarItemConNotas(presasModalProducto, notasTicket, 'mesa', nombreTicket);
     } else {
-      agregarItemConNotas(presasModalProducto, notas, tipo, nombreTicket);
+      agregarItemConNotas(presasModalProducto, notasTicket, tipo, nombreTicket);
     }
     
     setPresasModalProducto(null);
