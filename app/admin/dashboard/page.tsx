@@ -102,9 +102,9 @@ export default async function DashboardPage() {
         </div>
 
         <div className="kpi-card yellow">
-          <span className="kpi-label">Ticket promedio</span>
-          <span className="kpi-value">Bs. {fmt(ticketPromedio)}</span>
-          <span className="kpi-sub">Por venta completada</span>
+          <span className="kpi-label">Tickets generados</span>
+          <span className="kpi-value">{numVentasHoy}</span>
+          <span className="kpi-sub">Ventas completadas hoy</span>
           <ShoppingCart size={48} className="kpi-icon" />
         </div>
 
