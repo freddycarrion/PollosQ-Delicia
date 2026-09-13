@@ -15,6 +15,14 @@ export default async function VentasAdminPage({
   const desde = params.desde
   const hasta = params.hasta
 
+  // Helper para construir rango de fechas
+  const buildDesde = (d: string) => `${d}T05:00:00-04:00`
+  const buildHasta = (h: string) => {
+    const dt = new Date(`${h}T12:00:00Z`)
+    dt.setUTCDate(dt.getUTCDate() + 1)
+    return `${dt.toISOString().split('T')[0]}T04:59:59-04:00`
+  }
+
   // Construir la consulta
   let query = supabase
     .from('ventas')
@@ -47,17 +55,8 @@ export default async function VentasAdminPage({
     `)
     .order('created_at', { ascending: false })
 
-  if (desde) {
-    // Asegurar que comience a las 05:00:00 hora de Bolivia
-    query = query.gte('created_at', `${desde}T05:00:00-04:00`)
-  }
-  if (hasta) {
-    // Asegurar que termine a las 04:59:59 del día siguiente
-    const dateHasta = new Date(`${hasta}T12:00:00Z`)
-    dateHasta.setUTCDate(dateHasta.getUTCDate() + 1)
-    const hastaStrSig = dateHasta.toISOString().split('T')[0]
-    query = query.lte('created_at', `${hastaStrSig}T04:59:59-04:00`)
-  }
+  if (desde) query = query.gte('created_at', buildDesde(desde))
+  if (hasta)  query = query.lte('created_at', buildHasta(hasta))
 
   // Si no hay filtro de fechas, limitamos a 150 para no sobrecargar
   if (!desde && !hasta) {
@@ -71,25 +70,45 @@ export default async function VentasAdminPage({
   }
 
   // --- QUERY SECUNDARIA PARA TOTALES GLOBALES (sin límite) ---
-  let totalesQuery = supabase.from('ventas').select('total, metodo_pago, estado')
-  if (desde) {
-    totalesQuery = totalesQuery.gte('created_at', `${desde}T05:00:00-04:00`)
-  }
-  if (hasta) {
-    const dateHasta = new Date(`${hasta}T12:00:00Z`)
-    dateHasta.setUTCDate(dateHasta.getUTCDate() + 1)
-    const hastaStrSig = dateHasta.toISOString().split('T')[0]
-    totalesQuery = totalesQuery.lte('created_at', `${hastaStrSig}T04:59:59-04:00`)
-  }
+  let totalesQuery = supabase.from('ventas').select('total, metodo_pago, estado, nombre_cliente')
+  if (desde) totalesQuery = totalesQuery.gte('created_at', buildDesde(desde))
+  if (hasta)  totalesQuery = totalesQuery.lte('created_at', buildHasta(hasta))
   const { data: ventasParaTotales } = await totalesQuery
-  
-  const completadasTotales = (ventasParaTotales || []).filter(v => v.estado === 'completada')
+
+  const completadasTotales = (ventasParaTotales || []).filter((v: any) => v.estado === 'completada' && v.nombre_cliente !== 'Consumo Interno')
   const globalStats = {
-    totalGeneral: completadasTotales.reduce((acc, v) => acc + Number(v.total), 0),
-    totalEfectivo: completadasTotales.reduce((acc, v) => acc + (v.metodo_pago === 'efectivo' ? Number(v.total) : 0), 0),
-    totalQR: completadasTotales.reduce((acc, v) => acc + (v.metodo_pago === 'qr' ? Number(v.total) : 0), 0),
-    ticketsEmitidos: (ventasParaTotales || []).length
+    totalGeneral:    completadasTotales.reduce((acc: number, v: any) => acc + Number(v.total), 0),
+    totalEfectivo:   completadasTotales.reduce((acc: number, v: any) => acc + (v.metodo_pago === 'efectivo' ? Number(v.total) : 0), 0),
+    totalQR:         completadasTotales.reduce((acc: number, v: any) => acc + (v.metodo_pago === 'qr' ? Number(v.total) : 0), 0),
+    ticketsEmitidos: completadasTotales.length
   }
+
+  // --- QUERY CONSUMO INTERNO: obtener detalles de productos consumidos ---
+  let consumoQuery = supabase
+    .from('ventas')
+    .select(`
+      id, estado, nombre_cliente,
+      detalle_ventas ( nombre_producto, cantidad )
+    `)
+    .eq('nombre_cliente', 'Consumo Interno')
+    .eq('estado', 'completada')
+  if (desde) consumoQuery = consumoQuery.gte('created_at', buildDesde(desde))
+  if (hasta)  consumoQuery = consumoQuery.lte('created_at', buildHasta(hasta))
+
+  const { data: ventasConsumo } = await consumoQuery
+
+  // Agrupar por producto
+  type ConsumoItem = { nombre: string; cantidad: number }
+  const consumoAgrupado: Record<string, ConsumoItem> = {}
+  ;(ventasConsumo || []).forEach((v: any) => {
+    ;(v.detalle_ventas || []).forEach((d: any) => {
+      if (!consumoAgrupado[d.nombre_producto]) {
+        consumoAgrupado[d.nombre_producto] = { nombre: d.nombre_producto, cantidad: 0 }
+      }
+      consumoAgrupado[d.nombre_producto].cantidad += d.cantidad
+    })
+  })
+  const consumoStats: ConsumoItem[] = Object.values(consumoAgrupado).sort((a, b) => b.cantidad - a.cantidad)
 
   return (
     <div className="admin-page animate-fade-in text-white">
@@ -105,7 +124,7 @@ export default async function VentasAdminPage({
         </div>
       </div>
 
-      <VentasClient initialVentas={ventas || []} globalStats={globalStats} />
+      <VentasClient initialVentas={ventas || []} globalStats={globalStats} consumoStats={consumoStats} />
     </div>
   )
 }

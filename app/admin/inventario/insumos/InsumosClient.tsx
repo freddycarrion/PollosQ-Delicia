@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Edit2, AlertTriangle, Package, MapPin, Tag, CheckCircle2 } from 'lucide-react'
+import { Plus, Edit2, AlertTriangle, Package, MapPin, Tag, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
@@ -53,6 +53,22 @@ export default function InsumosClient({ initialData, sucursales }: Props) {
       
       if (error) throw error
       toast.success(nuevoEstado ? 'Insumo activado' : 'Insumo inhabilitado')
+      router.refresh()
+    } catch (error: any) {
+      toast.error('Error: ' + error.message)
+    }
+  }
+
+  const handleEliminarConsumo = async (insumo: Insumo) => {
+    if (!confirm(`¿Seguro que quieres poner el consumo de "${insumo.nombre}" a 0? Esto pondrá el stock actual en 0.`)) return
+    const supabase = createClient()
+    try {
+      const { error } = await supabase
+        .from('insumos')
+        .update({ stock_actual: 0 })
+        .eq('id', insumo.id)
+      if (error) throw error
+      toast.success(`Consumo de "${insumo.nombre}" eliminado. Stock en 0.`)
       router.refresh()
     } catch (error: any) {
       toast.error('Error: ' + error.message)
@@ -171,12 +187,33 @@ export default function InsumosClient({ initialData, sucursales }: Props) {
               </div>
 
               {/* Footer */}
-              <div className="card-footer">
+              <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                 <button 
                   onClick={() => handleToggleEstado(insumo)}
                   className={`btn-toggle-status ${insumo.activo ? 'desactivar' : 'activar'}`}
                 >
                   {insumo.activo ? 'Inhabilitar / No usar más' : 'Activar Insumo'}
+                </button>
+                <button
+                  onClick={() => handleEliminarConsumo(insumo)}
+                  title="Eliminar consumo (poner stock en 0)"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid rgba(239,83,80,0.3)',
+                    color: 'var(--red)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '4px 10px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    flexShrink: 0,
+                    transition: 'var(--transition)'
+                  }}
+                >
+                  <Trash2 size={13} /> Borrar consumo
                 </button>
               </div>
             </div>

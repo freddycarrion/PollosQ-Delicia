@@ -41,9 +41,10 @@ interface Props {
     totalQR: number
     ticketsEmitidos: number
   }
+  consumoStats?: { nombre: string; cantidad: number }[]
 }
 
-export default function VentasClient({ initialVentas, globalStats }: Props) {
+export default function VentasClient({ initialVentas, globalStats, consumoStats }: Props) {
   const ventas: Venta[] = initialVentas || []
 
   // Si no vienen globalStats (fallback), calculamos con las ventas cargadas (max 150)
@@ -155,6 +156,29 @@ export default function VentasClient({ initialVentas, globalStats }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Tarjeta Consumo Interno */}
+      {consumoStats && consumoStats.length > 0 && (
+        <div className="consumo-card">
+          <div className="consumo-header">
+            <div className="consumo-icon-wrap">
+              <span style={{ fontSize: '1.4rem' }}>🍽️</span>
+            </div>
+            <div>
+              <p className="consumo-title">Consumo Interno</p>
+              <p className="consumo-sub">Productos consumidos sin cobro (período seleccionado)</p>
+            </div>
+          </div>
+          <div className="consumo-items">
+            {consumoStats.map((p, i) => (
+              <div key={i} className="consumo-row">
+                <span className="consumo-nombre">{p.nombre}</span>
+                <span className="consumo-cant">{p.cantidad} unid.</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabla de Ventas */}
       <div className="data-table-section">
@@ -383,7 +407,67 @@ export default function VentasClient({ initialVentas, globalStats }: Props) {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           gap: 24px;
-          margin-bottom: 32px;
+          margin-bottom: 20px;
+        }
+
+        /* Consumo Interno Card */
+        .consumo-card {
+          background: linear-gradient(135deg, rgba(123,104,238,0.12), rgba(123,104,238,0.06));
+          border: 1px solid rgba(123,104,238,0.35);
+          border-radius: var(--radius-xl);
+          padding: 20px 24px;
+          margin-bottom: 24px;
+        }
+        .consumo-header {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 16px;
+        }
+        .consumo-icon-wrap {
+          width: 48px; height: 48px;
+          border-radius: 50%;
+          background: rgba(123,104,238,0.2);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .consumo-title {
+          font-size: 1rem;
+          font-weight: 800;
+          color: #9f8fff;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin: 0;
+        }
+        .consumo-sub {
+          font-size: 0.78rem;
+          color: var(--text-500);
+          margin: 2px 0 0 0;
+        }
+        .consumo-items {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 10px;
+        }
+        .consumo-row {
+          background: rgba(123,104,238,0.1);
+          border: 1px solid rgba(123,104,238,0.2);
+          border-radius: var(--radius-md);
+          padding: 10px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .consumo-nombre {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: var(--text-100);
+        }
+        .consumo-cant {
+          font-size: 1.1rem;
+          font-weight: 900;
+          color: #9f8fff;
+          font-family: monospace;
         }
 
         .stat-card {
