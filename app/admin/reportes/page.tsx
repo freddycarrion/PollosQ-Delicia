@@ -12,17 +12,27 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const params = await searchParams
   
-  // 1. Rango de Fechas (Default: Últimos 30 días, ajustado a UTC-4 Bolivia)
+  // 1. Rango de Fechas (Default: Últimos 30 días, ajustado a UTC-4 Bolivia y corte 05:00 AM)
   const offsetMs = 4 * 60 * 60 * 1000
-  const today = new Date(Date.now() - offsetMs)
-  const thirtyDaysAgo = new Date(Date.now() - offsetMs)
+  const ahoraBolivia = new Date(Date.now() - offsetMs)
+  
+  // Día de negocio actual (el día termina a las 04:59 AM)
+  const fechaNegocio = new Date(ahoraBolivia.getTime() - (5 * 60 * 60 * 1000))
+  const today = new Date(fechaNegocio)
+  
+  const thirtyDaysAgo = new Date(fechaNegocio)
   thirtyDaysAgo.setDate(today.getDate() - 30)
 
   const desdeStr = params.desde || thirtyDaysAgo.toISOString().split('T')[0]
   const hastaStr = params.hasta || today.toISOString().split('T')[0]
 
-  const desde = `${desdeStr}T00:00:00-04:00`
-  const hasta = `${hastaStr}T23:59:59-04:00`
+  const desde = `${desdeStr}T05:00:00-04:00`
+  
+  // Para el 'hasta', debe ser a las 04:59:59 del DÍA SIGUIENTE
+  const dateHasta = new Date(`${hastaStr}T12:00:00Z`)
+  dateHasta.setUTCDate(dateHasta.getUTCDate() + 1)
+  const hastaStrSig = dateHasta.toISOString().split('T')[0]
+  const hasta = `${hastaStrSig}T04:59:59-04:00`
 
   // 2. Ventas del período filtrado
   const { data: ventas } = await supabase

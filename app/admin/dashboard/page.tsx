@@ -6,14 +6,28 @@ import {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const hoy = new Date().toISOString().split('T')[0]
+  
+  // Obtener fecha actual en Bolivia (UTC-4)
+  const ahoraBolivia = new Date(Date.now() - (4 * 60 * 60 * 1000))
+  
+  // Ajuste para horario de restaurante: El día empieza a las 05:00 AM.
+  // Restamos 5 horas a la hora actual de Bolivia para calcular el "Día de Negocio"
+  const fechaNegocio = new Date(ahoraBolivia.getTime() - (5 * 60 * 60 * 1000))
+  const hoyStr = fechaNegocio.toISOString().split('T')[0]
+  
+  const inicioDia = `${hoyStr}T05:00:00-04:00`
+  
+  // El fin del día es a las 04:59:59 del día siguiente
+  const mananaNegocio = new Date(fechaNegocio.getTime() + (24 * 60 * 60 * 1000))
+  const mananaStr = mananaNegocio.toISOString().split('T')[0]
+  const finDia = `${mananaStr}T04:59:59-04:00`
 
   // Ventas de hoy
   const { data: ventasHoy } = await supabase
     .from('ventas')
     .select('total, metodo_pago, estado')
-    .gte('created_at', `${hoy}T00:00:00`)
-    .lte('created_at', `${hoy}T23:59:59`)
+    .gte('created_at', inicioDia)
+    .lte('created_at', finDia)
 
   const ventasCompletadas = ventasHoy?.filter(v => v.estado === 'completada') ?? []
   const totalHoy = ventasCompletadas.reduce((s, v) => s + Number(v.total), 0)
@@ -44,8 +58,8 @@ export default async function DashboardPage() {
   const { data: detallesHoyRaw } = await supabase
     .from('detalle_ventas')
     .select('nombre_producto, cantidad, subtotal, ventas!inner(estado, created_at)')
-    .gte('ventas.created_at', `${hoy}T00:00:00`)
-    .lte('ventas.created_at', `${hoy}T23:59:59`)
+    .gte('ventas.created_at', inicioDia)
+    .lte('ventas.created_at', finDia)
     .eq('ventas.estado', 'completada')
 
   type ProdResumen = { nombre: string; cantidad: number; subtotal: number }

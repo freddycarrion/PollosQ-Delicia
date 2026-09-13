@@ -48,12 +48,15 @@ export default async function VentasAdminPage({
     .order('created_at', { ascending: false })
 
   if (desde) {
-    // Asegurar que comience a las 00:00:00 hora de Bolivia
-    query = query.gte('created_at', `${desde}T00:00:00-04:00`)
+    // Asegurar que comience a las 05:00:00 hora de Bolivia
+    query = query.gte('created_at', `${desde}T05:00:00-04:00`)
   }
   if (hasta) {
-    // Asegurar que termine a las 23:59:59 hora de Bolivia
-    query = query.lte('created_at', `${hasta}T23:59:59-04:00`)
+    // Asegurar que termine a las 04:59:59 del día siguiente
+    const dateHasta = new Date(`${hasta}T12:00:00Z`)
+    dateHasta.setUTCDate(dateHasta.getUTCDate() + 1)
+    const hastaStrSig = dateHasta.toISOString().split('T')[0]
+    query = query.lte('created_at', `${hastaStrSig}T04:59:59-04:00`)
   }
 
   // Si no hay filtro de fechas, limitamos a 150 para no sobrecargar
