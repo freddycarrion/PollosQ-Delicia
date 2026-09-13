@@ -49,7 +49,9 @@ export default async function DashboardPage() {
     .lte('ventas.created_at', `${hoy}T23:59:59`)
     .eq('ventas.estado', 'completada')
 
-  const productosAgrupados = (detallesHoyRaw || []).reduce((acc: any, curr: any) => {
+  type ProdResumen = { nombre: string; cantidad: number; subtotal: number }
+
+  const productosAgrupados = (detallesHoyRaw || []).reduce((acc: Record<string, ProdResumen>, curr: any) => {
     const nombre = curr.nombre_producto
     if (!acc[nombre]) {
       acc[nombre] = { nombre, cantidad: 0, subtotal: 0 }
@@ -59,7 +61,7 @@ export default async function DashboardPage() {
     return acc
   }, {})
 
-  const productosVendidos = Object.values(productosAgrupados).sort((a: any, b: any) => b.cantidad - a.cantidad)
+  const productosVendidos: ProdResumen[] = Object.values(productosAgrupados).sort((a, b) => b.cantidad - a.cantidad)
 
   // Top 5 para la tarjeta de la derecha
   const topProductos = productosVendidos.slice(0, 5)
@@ -208,7 +210,7 @@ export default async function DashboardPage() {
                   <div className="top-info">
                     <span className="top-nombre">
                       {i === 0 && '🏆 '}
-                      {p.nombre_producto}
+                      {p.nombre}
                     </span>
                     <span className="top-detail">{p.cantidad} unid. · Bs. {fmt(Number(p.subtotal))}</span>
                   </div>
