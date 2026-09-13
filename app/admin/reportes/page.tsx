@@ -12,16 +12,17 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const params = await searchParams
   
-  // 1. Rango de Fechas (Default: Últimos 30 días)
-  const today = new Date()
-  const thirtyDaysAgo = new Date()
+  // 1. Rango de Fechas (Default: Últimos 30 días, ajustado a UTC-4 Bolivia)
+  const offsetMs = 4 * 60 * 60 * 1000
+  const today = new Date(Date.now() - offsetMs)
+  const thirtyDaysAgo = new Date(Date.now() - offsetMs)
   thirtyDaysAgo.setDate(today.getDate() - 30)
 
   const desdeStr = params.desde || thirtyDaysAgo.toISOString().split('T')[0]
   const hastaStr = params.hasta || today.toISOString().split('T')[0]
 
-  const desde = `${desdeStr}T00:00:00`
-  const hasta = `${hastaStr}T23:59:59`
+  const desde = `${desdeStr}T00:00:00-04:00`
+  const hasta = `${hastaStr}T23:59:59-04:00`
 
   // 2. Ventas del período filtrado
   const { data: ventas } = await supabase

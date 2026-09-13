@@ -48,12 +48,12 @@ export default async function VentasAdminPage({
     .order('created_at', { ascending: false })
 
   if (desde) {
-    // Asegurar que comience a las 00:00:00
-    query = query.gte('created_at', `${desde}T00:00:00.000Z`)
+    // Asegurar que comience a las 00:00:00 hora de Bolivia
+    query = query.gte('created_at', `${desde}T00:00:00-04:00`)
   }
   if (hasta) {
-    // Asegurar que termine a las 23:59:59
-    query = query.lte('created_at', `${hasta}T23:59:59.999Z`)
+    // Asegurar que termine a las 23:59:59 hora de Bolivia
+    query = query.lte('created_at', `${hasta}T23:59:59-04:00`)
   }
 
   // Si no hay filtro de fechas, limitamos a 150 para no sobrecargar
