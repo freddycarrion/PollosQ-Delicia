@@ -27,12 +27,11 @@ export default async function DashboardPage() {
   // Ticket promedio
   const ticketPromedio = numVentasHoy > 0 ? totalHoy / numVentasHoy : 0
 
-  // Empleados activos
-  const { count: numEmpleados } = await supabase
-    .from('perfiles')
+  // Cajeros activos (con turno abierto)
+  const { count: cajerosActivos } = await supabase
+    .from('turnos')
     .select('*', { count: 'exact', head: true })
-    .eq('activo', true)
-    .eq('rol', 'cajero')
+    .eq('estado', 'abierto')
 
   // Alertas de stock bajo
   const { count: stockAlertas } = await supabase
@@ -112,8 +111,8 @@ export default async function DashboardPage() {
 
         <div className="kpi-card green">
           <span className="kpi-label">Cajeros activos</span>
-          <span className="kpi-value">{numEmpleados ?? 0}</span>
-          <span className="kpi-sub">Empleados con acceso</span>
+          <span className="kpi-value">{cajerosActivos ?? 0}</span>
+          <span className="kpi-sub">Con turno abierto</span>
           <Users size={48} className="kpi-icon" />
         </div>
 
