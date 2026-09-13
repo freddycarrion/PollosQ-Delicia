@@ -131,9 +131,7 @@ export default async function DashboardPage() {
         <div className="metodos-grid">
           {[
             { label: 'Efectivo',       total: totalEfectivo,      icon: <Banknote size={22} />,    cls: 'metodo-card green' },
-            { label: 'Tarjeta',        total: totalTarjeta,       icon: <CreditCard size={22} />,  cls: 'metodo-card blue' },
             { label: 'QR / Billetera', total: totalQR,            icon: <Smartphone size={22} />,  cls: 'metodo-card yellow' },
-            { label: 'Transferencia',  total: totalTransferencia, icon: <ArrowUpRight size={22} />, cls: 'metodo-card orange' },
           ].map(m => (
             <div key={m.label} className={`card ${m.cls}`}>
               <div className="metodo-icon">{m.icon}</div>
@@ -269,7 +267,7 @@ export default async function DashboardPage() {
 
         .metodos-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: 14px;
         }
         @media (max-width: 1100px) { .metodos-grid { grid-template-columns: repeat(2, 1fr); } }
