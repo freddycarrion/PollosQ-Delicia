@@ -41,23 +41,28 @@ export default async function DashboardPage() {
     .filter('stock_actual', 'lte', 'stock_minimo')
     .eq('activo', true)
 
-  // Últimas 8 ventas
-  const { data: ultimasVentas } = await supabase
-    .from('ventas')
-    .select(`
-      id, numero_ticket, total, metodo_pago, estado, created_at,
-      cajero:perfiles(nombre, apellido)
-    `)
-    .order('created_at', { ascending: false })
-    .limit(8)
-
-  // Productos más vendidos hoy
-  const { data: topProductos } = await supabase
+  // Productos vendidos hoy (agrupados)
+  const { data: detallesHoyRaw } = await supabase
     .from('detalle_ventas')
-    .select('nombre_producto, cantidad, subtotal')
-    .gte('created_at', `${hoy}T00:00:00`)
-    .order('cantidad', { ascending: false })
-    .limit(5)
+    .select('nombre_producto, cantidad, subtotal, ventas!inner(estado, created_at)')
+    .gte('ventas.created_at', `${hoy}T00:00:00`)
+    .lte('ventas.created_at', `${hoy}T23:59:59`)
+    .eq('ventas.estado', 'completada')
+
+  const productosAgrupados = (detallesHoyRaw || []).reduce((acc: any, curr: any) => {
+    const nombre = curr.nombre_producto
+    if (!acc[nombre]) {
+      acc[nombre] = { nombre, cantidad: 0, subtotal: 0 }
+    }
+    acc[nombre].cantidad += curr.cantidad
+    acc[nombre].subtotal += Number(curr.subtotal)
+    return acc
+  }, {})
+
+  const productosVendidos = Object.values(productosAgrupados).sort((a: any, b: any) => b.cantidad - a.cantidad)
+
+  // Top 5 para la tarjeta de la derecha
+  const topProductos = productosVendidos.slice(0, 5)
 
   const fmt = (n: number) =>
     new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
@@ -149,51 +154,38 @@ export default async function DashboardPage() {
       {/* ── Tabla + Productos ── */}
       <div className="dashboard-bottom">
 
-        {/* Últimas ventas */}
+        {/* Resumen de platos vendidos hoy */}
         <section className="card dashboard-ventas-card">
           <div className="section-header">
-            <h2 className="section-title">Últimas ventas</h2>
-            <a href="/admin/ventas" className="btn btn-ghost btn-sm">Ver todo</a>
+            <h2 className="section-title">Platos vendidos hoy</h2>
+            <a href="/admin/reportes" className="btn btn-ghost btn-sm">Ver reportes</a>
           </div>
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>#Ticket</th>
-                  <th>Hora</th>
-                  <th>Cajero</th>
-                  <th>Método</th>
-                  <th>Total</th>
-                  <th>Estado</th>
+                  <th>Producto</th>
+                  <th style={{ textAlign: 'center' }}>Cantidad</th>
+                  <th style={{ textAlign: 'right' }}>Recaudado</th>
                 </tr>
               </thead>
               <tbody>
-                {ultimasVentas && ultimasVentas.length > 0 ? (
-                  ultimasVentas.map((v: any) => (
-                    <tr key={v.id}>
-                      <td><span className="ticket-num">#{v.numero_ticket}</span></td>
-                      <td style={{ color: 'var(--text-500)', fontSize: '0.85rem' }}>{fmtHora(v.created_at)}</td>
-                      <td>
-                        {v.cajero ? `${v.cajero.nombre} ${v.cajero.apellido}` : '—'}
-                      </td>
-                      <td>
-                        <span className={`badge ${metodoBadge(v.metodo_pago)}`}>
-                          {metodoPagoIcon(v.metodo_pago)}
-                          {v.metodo_pago}
+                {productosVendidos && productosVendidos.length > 0 ? (
+                  productosVendidos.map((p: any, idx: number) => (
+                    <tr key={idx}>
+                      <td><strong>{p.nombre}</strong></td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className="badge badge-green" style={{ fontSize: '0.9rem', padding: '4px 10px' }}>
+                          {p.cantidad} unid.
                         </span>
                       </td>
-                      <td><strong>Bs. {fmt(Number(v.total))}</strong></td>
-                      <td>
-                        <span className={`badge ${estadoBadge(v.estado)}`}>
-                          {v.estado}
-                        </span>
-                      </td>
+                      <td style={{ textAlign: 'right' }}>Bs. {fmt(p.subtotal)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-600)', padding: '32px' }}>
-                      Sin ventas registradas hoy
+                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-600)', padding: '32px' }}>
+                      Sin platos vendidos hoy
                     </td>
                   </tr>
                 )}

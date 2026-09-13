@@ -378,7 +378,7 @@ export default function PosClient({
         total: totalReal,
         metodo_pago: payload.metodo === 'consumo_interno' ? 'efectivo' : payload.metodo,
         monto_recibido: payload.metodo === 'consumo_interno' ? 0 : payload.montoRecibido,
-        vuelto: payload.metodo === 'efectivo' ? (payload.montoRecibido - totalPedido) : 0,
+        vuelto: (payload.metodo === 'efectivo' && !payload.esMixto) ? (payload.montoRecibido - totalPedido) : 0,
         tipo_pedido: payload.tipoVenta,
         nombre_cliente: payload.metodo === 'consumo_interno' ? 'Consumo Interno' : (payload.nombreCliente || null),
         carnet_cliente: payload.carnetCliente || null,

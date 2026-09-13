@@ -374,6 +374,20 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
   const countCompletadas = ventas.filter(v => v.estado === 'completada').length
   const countAnuladas = ventas.filter(v => v.estado === 'anulada').length
 
+  // Agrupar platos vendidos en el turno (solo ventas completadas)
+  const productosDelTurno = ventas
+    .filter(v => v.estado === 'completada')
+    .flatMap(v => v.detalle_ventas)
+    .reduce((acc: Record<string, { nombre: string; cantidad: number; subtotal: number }>, item) => {
+      if (!acc[item.nombre_producto]) {
+        acc[item.nombre_producto] = { nombre: item.nombre_producto, cantidad: 0, subtotal: 0 }
+      }
+      acc[item.nombre_producto].cantidad += item.cantidad
+      acc[item.nombre_producto].subtotal += item.subtotal
+      return acc
+    }, {})
+  const productosOrdenados = Object.values(productosDelTurno).sort((a, b) => b.cantidad - a.cantidad)
+
   return (
     <div className="pedidos-tab">
 
@@ -400,6 +414,21 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           <RefreshCw size={16} className={loading ? 'spin' : ''} />
         </button>
       </div>
+      {/* Resumen de platos del turno */}
+      {productosOrdenados.length > 0 && (
+        <div className="pedidos-platos-resumen">
+          <div className="pedidos-platos-titulo">🍗 Platos vendidos en este turno</div>
+          <div className="pedidos-platos-lista">
+            {productosOrdenados.map((p) => (
+              <div key={p.nombre} className="pedidos-plato-item">
+                <span className="pedidos-plato-nombre">{p.nombre}</span>
+                <span className="pedidos-plato-cantidad">{p.cantidad} unid.</span>
+                <span className="pedidos-plato-monto">Bs. {fmt(p.subtotal)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filtros y Buscador */}
       <div className="pedidos-filtros">
@@ -803,6 +832,63 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spin { animation: spin 0.8s linear infinite; }
+
+        .pedidos-platos-resumen {
+          margin: 10px 16px;
+          background: var(--bg-800);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          overflow: hidden;
+        }
+        .pedidos-platos-titulo {
+          font-size: 0.72rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--text-400);
+          padding: 8px 14px;
+          border-bottom: 1px solid var(--border);
+          background: var(--bg-900);
+        }
+        .pedidos-platos-lista {
+          display: flex;
+          flex-direction: column;
+          max-height: 160px;
+          overflow-y: auto;
+        }
+        .pedidos-plato-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px;
+          border-bottom: 1px solid var(--border);
+          font-size: 0.8rem;
+        }
+        .pedidos-plato-item:last-child { border-bottom: none; }
+        .pedidos-plato-nombre {
+          flex: 1;
+          font-weight: 600;
+          color: var(--text-200);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .pedidos-plato-cantidad {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--yellow);
+          background: rgba(255, 193, 7, 0.1);
+          border-radius: var(--radius-full);
+          padding: 2px 8px;
+          white-space: nowrap;
+        }
+        .pedidos-plato-monto {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #4CAF50;
+          white-space: nowrap;
+        }
+
 
         .pedidos-filtros {
           display: flex;

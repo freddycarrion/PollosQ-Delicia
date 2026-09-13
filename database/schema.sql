@@ -415,23 +415,48 @@ CREATE TRIGGER trg_sincronizar_rol_enum
 
 CREATE OR REPLACE FUNCTION actualizar_totales_turno()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+    v_monto1 NUMERIC(10, 2);
+    v_monto2 NUMERIC(10, 2);
 BEGIN
+    v_monto2 := COALESCE(NEW.monto_pago_2, 0);
+    v_monto1 := NEW.total - v_monto2;
+
     IF NEW.estado = 'completada' THEN
         UPDATE turnos SET
-            total_efectivo      = CASE WHEN NEW.metodo_pago = 'efectivo'      THEN total_efectivo + NEW.total      ELSE total_efectivo      END,
-            total_tarjeta       = CASE WHEN NEW.metodo_pago = 'tarjeta'       THEN total_tarjeta + NEW.total       ELSE total_tarjeta       END,
-            total_qr            = CASE WHEN NEW.metodo_pago = 'qr'            THEN total_qr + NEW.total            ELSE total_qr            END,
-            total_transferencia = CASE WHEN NEW.metodo_pago = 'transferencia' THEN total_transferencia + NEW.total ELSE total_transferencia END,
+            total_efectivo      = total_efectivo 
+                                  + CASE WHEN NEW.metodo_pago = 'efectivo' THEN v_monto1 ELSE 0 END
+                                  + CASE WHEN NEW.metodo_pago_2 = 'efectivo' THEN v_monto2 ELSE 0 END,
+            total_tarjeta       = total_tarjeta 
+                                  + CASE WHEN NEW.metodo_pago = 'tarjeta' THEN v_monto1 ELSE 0 END
+                                  + CASE WHEN NEW.metodo_pago_2 = 'tarjeta' THEN v_monto2 ELSE 0 END,
+            total_qr            = total_qr 
+                                  + CASE WHEN NEW.metodo_pago = 'qr' THEN v_monto1 ELSE 0 END
+                                  + CASE WHEN NEW.metodo_pago_2 = 'qr' THEN v_monto2 ELSE 0 END,
+            total_transferencia = total_transferencia 
+                                  + CASE WHEN NEW.metodo_pago = 'transferencia' THEN v_monto1 ELSE 0 END
+                                  + CASE WHEN NEW.metodo_pago_2 = 'transferencia' THEN v_monto2 ELSE 0 END,
             num_ventas          = num_ventas + 1
         WHERE id = NEW.turno_id;
     END IF;
 
     IF OLD IS NOT NULL AND OLD.estado = 'completada' AND NEW.estado = 'anulada' THEN
+        v_monto2 := COALESCE(OLD.monto_pago_2, 0);
+        v_monto1 := OLD.total - v_monto2;
+
         UPDATE turnos SET
-            total_efectivo      = CASE WHEN OLD.metodo_pago = 'efectivo'      THEN total_efectivo - OLD.total      ELSE total_efectivo      END,
-            total_tarjeta       = CASE WHEN OLD.metodo_pago = 'tarjeta'       THEN total_tarjeta - OLD.total       ELSE total_tarjeta       END,
-            total_qr            = CASE WHEN OLD.metodo_pago = 'qr'            THEN total_qr - OLD.total            ELSE total_qr            END,
-            total_transferencia = CASE WHEN OLD.metodo_pago = 'transferencia' THEN total_transferencia - OLD.total ELSE total_transferencia END,
+            total_efectivo      = total_efectivo 
+                                  - CASE WHEN OLD.metodo_pago = 'efectivo' THEN v_monto1 ELSE 0 END
+                                  - CASE WHEN OLD.metodo_pago_2 = 'efectivo' THEN v_monto2 ELSE 0 END,
+            total_tarjeta       = total_tarjeta 
+                                  - CASE WHEN OLD.metodo_pago = 'tarjeta' THEN v_monto1 ELSE 0 END
+                                  - CASE WHEN OLD.metodo_pago_2 = 'tarjeta' THEN v_monto2 ELSE 0 END,
+            total_qr            = total_qr 
+                                  - CASE WHEN OLD.metodo_pago = 'qr' THEN v_monto1 ELSE 0 END
+                                  - CASE WHEN OLD.metodo_pago_2 = 'qr' THEN v_monto2 ELSE 0 END,
+            total_transferencia = total_transferencia 
+                                  - CASE WHEN OLD.metodo_pago = 'transferencia' THEN v_monto1 ELSE 0 END
+                                  - CASE WHEN OLD.metodo_pago_2 = 'transferencia' THEN v_monto2 ELSE 0 END,
             num_ventas          = GREATEST(num_ventas - 1, 0)
         WHERE id = OLD.turno_id;
     END IF;

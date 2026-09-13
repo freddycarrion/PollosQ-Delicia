@@ -132,7 +132,7 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
       onConfirmar({
         metodo,
         tipoVenta: tipo,
-        montoRecibido: metodo === 'efectivo' ? monto1 : total,
+        montoRecibido: monto1,
         nombreCliente: nombreCliente.trim() || undefined,
         carnetCliente: carnetCliente.trim() || undefined,
         esMixto: true,

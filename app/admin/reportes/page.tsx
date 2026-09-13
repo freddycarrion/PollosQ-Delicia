@@ -27,7 +27,7 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   const { data: ventas } = await supabase
     .from('ventas')
     .select(`
-      id, created_at, total, metodo_pago, estado, sucursal_id, cajero_id,
+      id, created_at, total, metodo_pago, metodo_pago_2, monto_pago_2, estado, sucursal_id, cajero_id,
       sucursales(nombre), cajero:perfiles!ventas_cajero_id_fkey(nombre, apellido)
     `)
     .gte('created_at', desde)
@@ -103,10 +103,20 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
       if (v.estado === 'completada') {
         dictVentasDiarias[keyDiaria].num_ventas += 1
         dictVentasDiarias[keyDiaria].total_bs += Number(v.total)
-        if (v.metodo_pago === 'efectivo')      dictVentasDiarias[keyDiaria].total_efectivo += Number(v.total)
-        if (v.metodo_pago === 'tarjeta')       dictVentasDiarias[keyDiaria].total_tarjeta += Number(v.total)
-        if (v.metodo_pago === 'qr')            dictVentasDiarias[keyDiaria].total_qr += Number(v.total)
-        if (v.metodo_pago === 'transferencia') dictVentasDiarias[keyDiaria].total_transferencia += Number(v.total)
+        const monto2 = Number(v.monto_pago_2 || 0)
+        const monto1 = Number(v.total) - monto2
+
+        if (v.metodo_pago === 'efectivo')      dictVentasDiarias[keyDiaria].total_efectivo += monto1
+        if (v.metodo_pago === 'tarjeta')       dictVentasDiarias[keyDiaria].total_tarjeta += monto1
+        if (v.metodo_pago === 'qr')            dictVentasDiarias[keyDiaria].total_qr += monto1
+        if (v.metodo_pago === 'transferencia') dictVentasDiarias[keyDiaria].total_transferencia += monto1
+
+        if (v.metodo_pago_2) {
+          if (v.metodo_pago_2 === 'efectivo')      dictVentasDiarias[keyDiaria].total_efectivo += monto2
+          if (v.metodo_pago_2 === 'tarjeta')       dictVentasDiarias[keyDiaria].total_tarjeta += monto2
+          if (v.metodo_pago_2 === 'qr')            dictVentasDiarias[keyDiaria].total_qr += monto2
+          if (v.metodo_pago_2 === 'transferencia') dictVentasDiarias[keyDiaria].total_transferencia += monto2
+        }
       } else if (v.estado === 'anulada') {
         dictVentasDiarias[keyDiaria].num_anuladas += 1
       }
