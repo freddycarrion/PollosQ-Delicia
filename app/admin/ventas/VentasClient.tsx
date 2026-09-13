@@ -35,16 +35,24 @@ interface Venta {
 
 interface Props {
   initialVentas: any[] // Mapped internally to Venta[]
+  globalStats?: {
+    totalGeneral: number
+    totalEfectivo: number
+    totalQR: number
+    ticketsEmitidos: number
+  }
 }
 
-export default function VentasClient({ initialVentas }: Props) {
+export default function VentasClient({ initialVentas, globalStats }: Props) {
   const ventas: Venta[] = initialVentas || []
 
+  // Si no vienen globalStats (fallback), calculamos con las ventas cargadas (max 150)
   const ventasCompletadas = ventas.filter(v => v.estado === 'completada')
-  const totalHoy = ventasCompletadas.reduce((acc, v) => acc + v.total, 0)
-  const totalEfectivo = ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'efectivo' ? v.total : 0), 0)
-  const totalQR = ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'qr' ? v.total : 0), 0)
-  const ticketsEmitidos = ventas.length
+  
+  const totalHoy = globalStats?.totalGeneral ?? ventasCompletadas.reduce((acc, v) => acc + v.total, 0)
+  const totalEfectivo = globalStats?.totalEfectivo ?? ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'efectivo' ? v.total : 0), 0)
+  const totalQR = globalStats?.totalQR ?? ventasCompletadas.reduce((acc, v) => acc + (v.metodo_pago === 'qr' ? v.total : 0), 0)
+  const ticketsEmitidos = globalStats?.ticketsEmitidos ?? ventas.length
 
   // Routing para filtros
   const router = useRouter()

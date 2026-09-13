@@ -70,6 +70,27 @@ export default async function VentasAdminPage({
     console.error("Error al cargar ventas:", error)
   }
 
+  // --- QUERY SECUNDARIA PARA TOTALES GLOBALES (sin límite) ---
+  let totalesQuery = supabase.from('ventas').select('total, metodo_pago, estado')
+  if (desde) {
+    totalesQuery = totalesQuery.gte('created_at', `${desde}T05:00:00-04:00`)
+  }
+  if (hasta) {
+    const dateHasta = new Date(`${hasta}T12:00:00Z`)
+    dateHasta.setUTCDate(dateHasta.getUTCDate() + 1)
+    const hastaStrSig = dateHasta.toISOString().split('T')[0]
+    totalesQuery = totalesQuery.lte('created_at', `${hastaStrSig}T04:59:59-04:00`)
+  }
+  const { data: ventasParaTotales } = await totalesQuery
+  
+  const completadasTotales = (ventasParaTotales || []).filter(v => v.estado === 'completada')
+  const globalStats = {
+    totalGeneral: completadasTotales.reduce((acc, v) => acc + Number(v.total), 0),
+    totalEfectivo: completadasTotales.reduce((acc, v) => acc + (v.metodo_pago === 'efectivo' ? Number(v.total) : 0), 0),
+    totalQR: completadasTotales.reduce((acc, v) => acc + (v.metodo_pago === 'qr' ? Number(v.total) : 0), 0),
+    ticketsEmitidos: (ventasParaTotales || []).length
+  }
+
   return (
     <div className="admin-page animate-fade-in text-white">
       <div className="page-header" style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -84,7 +105,7 @@ export default async function VentasAdminPage({
         </div>
       </div>
 
-      <VentasClient initialVentas={ventas || []} />
+      <VentasClient initialVentas={ventas || []} globalStats={globalStats} />
     </div>
   )
 }
