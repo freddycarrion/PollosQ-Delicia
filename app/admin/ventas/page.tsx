@@ -101,7 +101,13 @@ export default async function VentasAdminPage({
     .from('ventas')
     .select(`
       id, estado, nombre_cliente,
-      detalle_ventas ( nombre_producto, cantidad )
+      detalle_ventas ( 
+        nombre_producto, 
+        cantidad,
+        productos (
+          categorias ( nombre )
+        )
+      )
     `)
     .eq('nombre_cliente', 'Consumo Interno')
     .eq('estado', 'completada')
@@ -110,18 +116,34 @@ export default async function VentasAdminPage({
 
   const { data: ventasConsumo } = await consumoQuery
 
-  // Agrupar por producto
+  // Agrupar por producto y calcular totales
+  let totalComida = 0
+  let totalBebida = 0
+
   type ConsumoItem = { nombre: string; cantidad: number }
   const consumoAgrupado: Record<string, ConsumoItem> = {}
   ;(ventasConsumo || []).forEach((v: any) => {
     ;(v.detalle_ventas || []).forEach((d: any) => {
+      // Agrupar
       if (!consumoAgrupado[d.nombre_producto]) {
         consumoAgrupado[d.nombre_producto] = { nombre: d.nombre_producto, cantidad: 0 }
       }
       consumoAgrupado[d.nombre_producto].cantidad += d.cantidad
+
+      // Clasificar entre comida y bebida
+      const catNombre = d.productos?.categorias?.nombre?.toLowerCase() || ''
+      const esBebida = catNombre.includes('bebida') || catNombre.includes('gaseosa') || catNombre.includes('refresco') 
+                       || /coca|fanta|sprite|pepsi|7up|mendocina|jugo|agua|soda|litro/i.test(d.nombre_producto)
+      
+      if (esBebida) {
+        totalBebida += d.cantidad
+      } else {
+        totalComida += d.cantidad
+      }
     })
   })
   const consumoStats: ConsumoItem[] = Object.values(consumoAgrupado).sort((a, b) => b.cantidad - a.cantidad)
+  const consumoResumen = { totalComida, totalBebida }
 
   return (
     <div className="admin-page animate-fade-in text-white">
@@ -141,6 +163,7 @@ export default async function VentasAdminPage({
         initialVentas={ventas || []} 
         globalStats={globalStats} 
         consumoStats={consumoStats}
+        consumoResumen={consumoResumen}
         desdeDefault={desdeEfectivo}
         hastaDefault={hastaEfectivo}
       />

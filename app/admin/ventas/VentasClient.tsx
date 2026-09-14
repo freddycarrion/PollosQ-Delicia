@@ -42,11 +42,12 @@ interface Props {
     ticketsEmitidos: number
   }
   consumoStats?: { nombre: string; cantidad: number }[]
+  consumoResumen?: { totalComida: number; totalBebida: number }
   desdeDefault?: string
   hastaDefault?: string
 }
 
-export default function VentasClient({ initialVentas, globalStats, consumoStats, desdeDefault, hastaDefault }: Props) {
+export default function VentasClient({ initialVentas, globalStats, consumoStats, consumoResumen, desdeDefault, hastaDefault }: Props) {
   const ventas: Venta[] = initialVentas || []
 
   // Si no vienen globalStats (fallback), calculamos con las ventas cargadas (max 150)
@@ -163,13 +164,28 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
       {consumoStats && consumoStats.length > 0 && (
         <div className="consumo-card">
           <div className="consumo-header">
-            <div className="consumo-icon-wrap">
-              <span style={{ fontSize: '1.4rem' }}>🍽️</span>
+            <div className="flex items-center gap-4">
+              <div className="consumo-icon-wrap">
+                <span style={{ fontSize: '1.4rem' }}>🍽️</span>
+              </div>
+              <div>
+                <p className="consumo-title">Consumo Interno</p>
+                <p className="consumo-sub">Productos consumidos sin cobro (período seleccionado)</p>
+              </div>
             </div>
-            <div>
-              <p className="consumo-title">Consumo Interno</p>
-              <p className="consumo-sub">Productos consumidos sin cobro (período seleccionado)</p>
-            </div>
+            
+            {consumoResumen && (
+              <div className="flex gap-4 ml-auto" style={{ borderLeft: '1px solid rgba(123,104,238,0.3)', paddingLeft: '16px' }}>
+                <div className="text-center">
+                  <span className="block text-xs uppercase tracking-wider text-gray-400 font-bold">Platos</span>
+                  <span className="block text-xl font-mono text-white font-bold">{consumoResumen.totalComida}</span>
+                </div>
+                <div className="text-center">
+                  <span className="block text-xs uppercase tracking-wider text-gray-400 font-bold">Bebidas</span>
+                  <span className="block text-xl font-mono" style={{ color: '#9f8fff', fontWeight: 'bold' }}>{consumoResumen.totalBebida}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="consumo-items">
             {consumoStats.map((p, i) => (
@@ -423,7 +439,7 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
         .consumo-header {
           display: flex;
           align-items: center;
-          gap: 14px;
+          justify-content: space-between;
           margin-bottom: 16px;
         }
         .consumo-icon-wrap {
