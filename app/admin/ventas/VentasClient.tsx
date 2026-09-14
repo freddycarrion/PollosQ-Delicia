@@ -221,37 +221,62 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
             </button>
 
             {showDatePicker && (
-              <div className="date-picker-popover" style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: '8px', zIndex: 50,
-                background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-                padding: '16px', width: '280px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
-              }}>
-                <h4 className="text-white font-bold mb-3">Rango de Fechas</h4>
-                <div className="mb-3">
-                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Desde</label>
-                  <input 
-                    type="date" 
-                    value={dateDesde}
-                    onChange={(e) => setDateDesde(e.target.value)}
-                    className="search-input"
-                    style={{ padding: '8px 12px' }}
-                  />
+              <>
+                {/* Backdrop para cerrar al hacer clic fuera */}
+                <div 
+                  style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+                  onClick={() => setShowDatePicker(false)}
+                />
+                <div className="date-picker-popover" style={{
+                  position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 1000,
+                  background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px',
+                  padding: '20px', width: '300px', boxShadow: '0 -4px 30px rgba(0,0,0,0.7)'
+                }}>
+                  <h4 style={{ color: '#fff', fontWeight: 700, marginBottom: '16px', fontSize: '1rem' }}>Rango de Fechas</h4>
+                  <div style={{ marginBottom: '14px' }}>
+                    <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Desde</label>
+                    <input 
+                      type="date" 
+                      value={dateDesde}
+                      onChange={(e) => setDateDesde(e.target.value)}
+                      style={{ 
+                        width: '100%', padding: '10px 12px', borderRadius: '8px',
+                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                        color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Hasta</label>
+                    <input 
+                      type="date" 
+                      value={dateHasta}
+                      onChange={(e) => setDateHasta(e.target.value)}
+                      style={{ 
+                        width: '100%', padding: '10px 12px', borderRadius: '8px',
+                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                        color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button 
+                      className="btn btn-ghost" 
+                      onClick={limpiarFiltroFechas} 
+                      style={{ padding: '8px 16px', fontSize: '0.875rem' }}
+                    >
+                      Limpiar
+                    </button>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={aplicarFiltroFechas} 
+                      style={{ padding: '8px 16px', fontSize: '0.875rem' }}
+                    >
+                      Aplicar
+                    </button>
+                  </div>
                 </div>
-                <div className="mb-4">
-                  <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Hasta</label>
-                  <input 
-                    type="date" 
-                    value={dateHasta}
-                    onChange={(e) => setDateHasta(e.target.value)}
-                    className="search-input"
-                    style={{ padding: '8px 12px' }}
-                  />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <button className="btn btn-ghost" onClick={limpiarFiltroFechas} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Limpiar</button>
-                  <button className="btn btn-primary" onClick={aplicarFiltroFechas} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Aplicar</button>
-                </div>
-              </div>
+              </>
             )}
           </div>
         </div>
