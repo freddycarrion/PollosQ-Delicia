@@ -79,6 +79,7 @@ export default function PosClient({
   const [busqueda, setBusqueda] = useState("");
   const [pedido, setPedido] = useState<ItemPedido[]>([]);
   const [tabActivo, setTabActivo] = useState<'catalogo' | 'carrito' | 'pedidos'>('catalogo');
+  const [cajaCerrada, setCajaCerrada] = useState(false);
 
   const supabase = createClient();
   const router = useRouter();
@@ -104,6 +105,35 @@ export default function PosClient({
   useEffect(() => {
     cargarStockBebidas();
   }, [cargarStockBebidas]);
+
+  // ── Monitoreo en tiempo real del estado del turno ─────────────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel(`turno-estado-${turnoId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'turnos',
+          filter: `id=eq.${turnoId}`,
+        },
+        (payload) => {
+          if (payload.new?.estado && payload.new.estado !== 'abierto') {
+            setCajaCerrada(true);
+            toast.error('⚠️ Tu turno fue cerrado. No puedes registrar más ventas.', {
+              duration: 0, // No desaparece solo
+              id: 'turno-cerrado',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [turnoId, supabase]);
 
   // Ref para la barra de categorías
   const catBarRef = useRef<HTMLDivElement>(null)
@@ -189,6 +219,10 @@ export default function PosClient({
 
   // ── Agregar al pedido ─────────────────────────────────────────────────────
   const agregarAlPedido = (producto: Producto) => {
+    if (cajaCerrada) {
+      toast.error('La caja está cerrada. No puedes agregar productos.', { id: 'turno-cerrado' });
+      return;
+    }
     if (producto.requiere_presas) {
       // Abrir modal de selección de presas
       setPresasModalProducto(producto);
@@ -599,7 +633,7 @@ export default function PosClient({
           )}
 
           {/* Grid de Productos */}
-          <div className="pos-productos-grid">
+          <div className="pos-productos-grid" style={cajaCerrada ? { pointerEvents: 'none', opacity: 0.5 } : {}}>
             {productosFiltrados.length > 0 ? (
               productosFiltrados.map((prod) => {
                 const precioMostrar = getPrecioUnitario(prod);
@@ -611,8 +645,8 @@ export default function PosClient({
                   <div
                     key={prod.id}
                     className={`pos-product-card card-hover ${sinStock ? 'sin-stock' : ''}`}
-                    onClick={() => !sinStock && agregarAlPedido(prod)}
-                    style={sinStock ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    onClick={() => !sinStock && !cajaCerrada && agregarAlPedido(prod)}
+                    style={sinStock ? { opacity: 0.5, cursor: 'not-allowed' } : cajaCerrada ? { cursor: 'not-allowed' } : {}}
                   >
                     <div className="pos-product-img-wrap">
                       {prod.imagen_url ? (
@@ -824,8 +858,14 @@ export default function PosClient({
                 ) : (
                   <button
                     className="btn btn-primary btn-lg w-full ticket-cobrar-btn"
-                    disabled={pedido.length === 0}
-                    onClick={() => setIsModalOpen(true)}
+                    disabled={pedido.length === 0 || cajaCerrada}
+                    onClick={() => {
+                      if (cajaCerrada) {
+                        toast.error('La caja está cerrada. No puedes cobrar.', { id: 'turno-cerrado' });
+                        return;
+                      }
+                      setIsModalOpen(true);
+                    }}
                   >
                     <span>Cobrar Pedido</span>
                     <ArrowRight size={20} />
@@ -855,6 +895,38 @@ export default function PosClient({
               sucursalNombre={sucursalNombre}
               onReimprimir={handleReimprimir}
             />
+          </div>
+        )}
+
+        {/* Overlay Caja Cerrada */}
+        {cajaCerrada && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 99999,
+              background: 'rgba(0,0,0,0.82)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <div style={{ fontSize: '3.5rem' }}>🔒</div>
+            <h2 style={{ color: '#fff', fontSize: '1.6rem', fontWeight: 800, margin: 0 }}>Caja Cerrada</h2>
+            <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 340, margin: 0 }}>
+              Tu turno fue cerrado. No puedes registrar nuevas ventas.
+              Por favor, contacta al administrador o recarga la página.
+            </p>
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: 8 }}
+              onClick={() => router.refresh()}
+            >
+              Recargar página
+            </button>
           </div>
         )}
 
