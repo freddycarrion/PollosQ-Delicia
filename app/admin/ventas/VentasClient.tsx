@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, Eye, Filter, CalendarDays, ShoppingBag, Receipt } from 'lucide-react'
 
@@ -71,6 +71,19 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [dateDesde, setDateDesde] = useState(searchParams.get('desde') || desdeDefault || '')
   const [dateHasta, setDateHasta] = useState(searchParams.get('hasta') || hastaDefault || '')
+  const [popoverPos, setPopoverPos] = useState({ top: 0, right: 0 })
+  const filterBtnRef = useRef<HTMLButtonElement>(null)
+
+  const toggleDatePicker = () => {
+    if (!showDatePicker && filterBtnRef.current) {
+      const rect = filterBtnRef.current.getBoundingClientRect()
+      setPopoverPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    setShowDatePicker(prev => !prev)
+  }
 
   const aplicarFiltroFechas = () => {
     const params = new URLSearchParams(searchParams.toString())
@@ -214,8 +227,9 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
           
           <div style={{ position: 'relative' }}>
             <button 
+              ref={filterBtnRef}
               className={`btn ${searchParams.get('desde') ? 'btn-primary' : 'btn-ghost'} btn-icon`}
-              onClick={() => setShowDatePicker(!showDatePicker)}
+              onClick={toggleDatePicker}
             >
               <Filter size={18} /> {searchParams.get('desde') ? 'Fechas Filtradas' : 'Filtrar Fechas'}
             </button>
@@ -227,12 +241,20 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
                   style={{ position: 'fixed', inset: 0, zIndex: 999 }}
                   onClick={() => setShowDatePicker(false)}
                 />
-                <div className="date-picker-popover" style={{
-                  position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 1000,
-                  background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px',
-                  padding: '20px', width: '300px', boxShadow: '0 -4px 30px rgba(0,0,0,0.7)'
+                {/* Popover con position:fixed para no ser cortado por overflow:hidden */}
+                <div style={{
+                  position: 'fixed',
+                  top: `${popoverPos.top}px`,
+                  right: `${popoverPos.right}px`,
+                  zIndex: 1000,
+                  background: '#1a1a2e',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '14px',
+                  padding: '20px',
+                  width: '300px',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.8)',
                 }}>
-                  <h4 style={{ color: '#fff', fontWeight: 700, marginBottom: '16px', fontSize: '1rem' }}>Rango de Fechas</h4>
+                  <h4 style={{ color: '#fff', fontWeight: 700, marginBottom: '16px', fontSize: '1rem', margin: '0 0 16px 0' }}>Rango de Fechas</h4>
                   <div style={{ marginBottom: '14px' }}>
                     <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Desde</label>
                     <input 
@@ -241,8 +263,9 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
                       onChange={(e) => setDateDesde(e.target.value)}
                       style={{ 
                         width: '100%', padding: '10px 12px', borderRadius: '8px',
-                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box'
+                        background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                        color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
+                        colorScheme: 'dark'
                       }}
                     />
                   </div>
@@ -254,8 +277,9 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
                       onChange={(e) => setDateHasta(e.target.value)}
                       style={{ 
                         width: '100%', padding: '10px 12px', borderRadius: '8px',
-                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box'
+                        background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                        color: '#fff', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
+                        colorScheme: 'dark'
                       }}
                     />
                   </div>
@@ -279,6 +303,7 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats,
               </>
             )}
           </div>
+
         </div>
 
         <div className="table-container">
