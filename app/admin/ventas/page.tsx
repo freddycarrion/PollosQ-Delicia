@@ -15,12 +15,29 @@ export default async function VentasAdminPage({
   const desde = params.desde
   const hasta = params.hasta
 
+  // ── Día de negocio actual (Bolivia UTC-4, el día empieza a las 05:00) ──────
+  // Si no hay filtros en la URL, usamos el día de negocio de hoy por defecto.
+  const ahoraBolivia   = new Date(Date.now() - (4 * 60 * 60 * 1000))
+  const fechaNegocio   = new Date(ahoraBolivia.getTime() - (5 * 60 * 60 * 1000))
+  const hoyNegocioStr  = fechaNegocio.toISOString().split('T')[0]
+  const mananaNegocio  = new Date(fechaNegocio.getTime() + 24 * 60 * 60 * 1000)
+  // mananaNegocio se usa solo internamente por buildHasta
+
+  // Fechas efectivas: si vienen por URL las usamos, si no usamos el día de negocio actual
+  const desdeEfectivo = desde ?? hoyNegocioStr
+  const hastaEfectivo = hasta ?? hoyNegocioStr
+
   // Helper para construir rango de fechas
   const buildDesde = (d: string) => `${d}T05:00:00-04:00`
   const buildHasta = (h: string) => {
-    const dt = new Date(`${h}T12:00:00Z`)
-    dt.setUTCDate(dt.getUTCDate() + 1)
-    return `${dt.toISOString().split('T')[0]}T04:59:59-04:00`
+    // La fecha "hasta" debe cubrir hasta las 04:59:59 del día SIGUIENTE
+    // para incluir las ventas de madrugada (p.ej. hasta las 2am)
+    const dt = new Date(`${h}T05:00:00-04:00`)
+    dt.setDate(dt.getDate() + 1)
+    const yyyy = dt.getFullYear()
+    const mm   = String(dt.getMonth() + 1).padStart(2, '0')
+    const dd   = String(dt.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}T04:59:59-04:00`
   }
 
   // Construir la consulta
@@ -54,14 +71,8 @@ export default async function VentasAdminPage({
       )
     `)
     .order('created_at', { ascending: false })
-
-  if (desde) query = query.gte('created_at', buildDesde(desde))
-  if (hasta)  query = query.lte('created_at', buildHasta(hasta))
-
-  // Si no hay filtro de fechas, limitamos a 150 para no sobrecargar
-  if (!desde && !hasta) {
-    query = query.limit(150)
-  }
+    .gte('created_at', buildDesde(desdeEfectivo))
+    .lte('created_at', buildHasta(hastaEfectivo))
 
   const { data: ventas, error } = await query
 
@@ -70,9 +81,11 @@ export default async function VentasAdminPage({
   }
 
   // --- QUERY SECUNDARIA PARA TOTALES GLOBALES (sin límite) ---
-  let totalesQuery = supabase.from('ventas').select('total, metodo_pago, estado, nombre_cliente')
-  if (desde) totalesQuery = totalesQuery.gte('created_at', buildDesde(desde))
-  if (hasta)  totalesQuery = totalesQuery.lte('created_at', buildHasta(hasta))
+  const totalesQuery = supabase
+    .from('ventas')
+    .select('total, metodo_pago, estado, nombre_cliente')
+    .gte('created_at', buildDesde(desdeEfectivo))
+    .lte('created_at', buildHasta(hastaEfectivo))
   const { data: ventasParaTotales } = await totalesQuery
 
   const completadasTotales = (ventasParaTotales || []).filter((v: any) => v.estado === 'completada' && v.nombre_cliente !== 'Consumo Interno')
@@ -84,7 +97,7 @@ export default async function VentasAdminPage({
   }
 
   // --- QUERY CONSUMO INTERNO: obtener detalles de productos consumidos ---
-  let consumoQuery = supabase
+  const consumoQuery = supabase
     .from('ventas')
     .select(`
       id, estado, nombre_cliente,
@@ -92,8 +105,8 @@ export default async function VentasAdminPage({
     `)
     .eq('nombre_cliente', 'Consumo Interno')
     .eq('estado', 'completada')
-  if (desde) consumoQuery = consumoQuery.gte('created_at', buildDesde(desde))
-  if (hasta)  consumoQuery = consumoQuery.lte('created_at', buildHasta(hasta))
+    .gte('created_at', buildDesde(desdeEfectivo))
+    .lte('created_at', buildHasta(hastaEfectivo))
 
   const { data: ventasConsumo } = await consumoQuery
 
@@ -124,7 +137,13 @@ export default async function VentasAdminPage({
         </div>
       </div>
 
-      <VentasClient initialVentas={ventas || []} globalStats={globalStats} consumoStats={consumoStats} />
+      <VentasClient 
+        initialVentas={ventas || []} 
+        globalStats={globalStats} 
+        consumoStats={consumoStats}
+        desdeDefault={desdeEfectivo}
+        hastaDefault={hastaEfectivo}
+      />
     </div>
   )
 }

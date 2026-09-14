@@ -42,9 +42,11 @@ interface Props {
     ticketsEmitidos: number
   }
   consumoStats?: { nombre: string; cantidad: number }[]
+  desdeDefault?: string
+  hastaDefault?: string
 }
 
-export default function VentasClient({ initialVentas, globalStats, consumoStats }: Props) {
+export default function VentasClient({ initialVentas, globalStats, consumoStats, desdeDefault, hastaDefault }: Props) {
   const ventas: Venta[] = initialVentas || []
 
   // Si no vienen globalStats (fallback), calculamos con las ventas cargadas (max 150)
@@ -66,8 +68,8 @@ export default function VentasClient({ initialVentas, globalStats, consumoStats 
   
   // Date filter state
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [dateDesde, setDateDesde] = useState(searchParams.get('desde') || '')
-  const [dateHasta, setDateHasta] = useState(searchParams.get('hasta') || '')
+  const [dateDesde, setDateDesde] = useState(searchParams.get('desde') || desdeDefault || '')
+  const [dateHasta, setDateHasta] = useState(searchParams.get('hasta') || hastaDefault || '')
 
   const aplicarFiltroFechas = () => {
     const params = new URLSearchParams(searchParams.toString())
