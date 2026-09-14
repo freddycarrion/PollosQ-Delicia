@@ -84,6 +84,23 @@ export default function PosClient({
   const supabase = createClient();
   const router = useRouter();
 
+  // ── Verificar estado del turno al montar (por si ya estaba cerrado) ──────
+  useEffect(() => {
+    const verificarEstadoTurno = async () => {
+      const { data } = await supabase
+        .from('turnos')
+        .select('estado')
+        .eq('id', turnoId)
+        .single();
+      if (data && data.estado !== 'abierto') {
+        setCajaCerrada(true);
+      }
+    };
+    verificarEstadoTurno();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnoId]);
+
+
   // ── Stock de Bebidas ──────────────────────────────────────────────────────
   // Mapa: producto_id -> { actual, inicial }
   const [stockBebidas, setStockBebidas] = useState<Record<string, { actual: number, inicial: number }>>({});
