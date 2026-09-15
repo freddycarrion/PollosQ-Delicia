@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   BarChart3, Wallet, ShoppingBag, Settings,
   ChevronRight, ChevronDown, LogOut, Store, X,
-  Clock, Bell, User, HandCoins
+  TrendingUp, Bell, User, HandCoins
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -24,7 +24,6 @@ const navItems: NavItem[] = [
   { label: 'Ventas',      href: '/admin/ventas',       icon: <ShoppingCart size={18} /> },
   { label: 'Caja',        href: '/admin/caja',         icon: <Wallet size={18} /> },
   { label: 'Empleados',   href: '/admin/empleados',    icon: <Users size={18} /> },
-  { label: 'Asistencia',  href: '/admin/asistencia',   icon: <Clock size={18} /> },
   { label: 'Avisos',      href: '/admin/comunicados',  icon: <Bell size={18} /> },
   { label: 'Menú',        href: '/admin/menu',         icon: <Package size={18} /> },
   { 
@@ -38,6 +37,7 @@ const navItems: NavItem[] = [
   },
   { label: 'Reportes',    href: '/admin/reportes',     icon: <BarChart3 size={18} /> },
   { label: 'Pagos Personal', href: '/admin/pagos-personal', icon: <HandCoins size={18} /> },
+  { label: 'Ingreso / Egreso', href: '/admin/finanzas-personales', icon: <TrendingUp size={18} /> },
   { label: 'Sucursales',  href: '/admin/sucursales',   icon: <Store size={18} /> },
   { label: 'Mi Perfil',   href: '/admin/perfil',       icon: <User size={18} /> },
   { label: 'Configuración', href: '/admin/configuracion', icon: <Settings size={18} /> },
