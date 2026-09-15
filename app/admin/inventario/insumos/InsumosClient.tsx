@@ -37,6 +37,7 @@ export default function InsumosClient({ initialData, sucursales }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingInsumo, setEditingInsumo] = useState<Insumo | null>(null)
   const [selectedSucursal, setSelectedSucursal] = useState<string>('all')
+  const [insumosList, setInsumosList] = useState<Insumo[]>(insumos)
   
   const handleSuccess = () => {
     router.refresh()
@@ -59,25 +60,26 @@ export default function InsumosClient({ initialData, sucursales }: Props) {
     }
   }
 
-  const handleEliminarConsumo = async (insumo: Insumo) => {
-    if (!confirm(`¿Seguro que quieres poner el consumo de "${insumo.nombre}" a 0? Esto pondrá el stock actual en 0.`)) return
+  const handleEliminarInsumo = async (insumo: Insumo) => {
+    if (!confirm(`¿Seguro que quieres eliminar "${insumo.nombre}" permanentemente? Esta acción no se puede deshacer.`)) return
     const supabase = createClient()
     try {
       const { error } = await supabase
         .from('insumos')
-        .update({ stock_actual: 0 })
+        .delete()
         .eq('id', insumo.id)
       if (error) throw error
-      toast.success(`Consumo de "${insumo.nombre}" eliminado. Stock en 0.`)
-      router.refresh()
+      // Eliminar de la lista local inmediatamente
+      setInsumosList(prev => prev.filter(i => i.id !== insumo.id))
+      toast.success(`"${insumo.nombre}" eliminado correctamente.`)
     } catch (error: any) {
-      toast.error('Error: ' + error.message)
+      toast.error('Error al eliminar: ' + error.message)
     }
   }
 
   const filteredInsumos = selectedSucursal === 'all' 
-    ? insumos 
-    : insumos.filter(i => i.sucursal_id === selectedSucursal)
+    ? insumosList 
+    : insumosList.filter(i => i.sucursal_id === selectedSucursal)
 
   return (
     <div className="insumos-client animate-fade-in">
@@ -194,27 +196,27 @@ export default function InsumosClient({ initialData, sucursales }: Props) {
                 >
                   {insumo.activo ? 'Inhabilitar / No usar más' : 'Activar Insumo'}
                 </button>
-                <button
-                  onClick={() => handleEliminarConsumo(insumo)}
-                  title="Eliminar consumo (poner stock en 0)"
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid rgba(239,83,80,0.3)',
-                    color: 'var(--red)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '4px 10px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                    transition: 'var(--transition)'
-                  }}
-                >
-                  <Trash2 size={13} /> Borrar consumo
-                </button>
+                  <button
+                    onClick={() => handleEliminarInsumo(insumo)}
+                    title="Eliminar insumo permanentemente"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(239,83,80,0.3)',
+                      color: 'var(--red)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      transition: 'var(--transition)'
+                    }}
+                  >
+                    <Trash2 size={13} /> Eliminar
+                  </button>
               </div>
             </div>
           )
