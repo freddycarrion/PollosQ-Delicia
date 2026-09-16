@@ -96,9 +96,22 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No autenticado')
 
+      let per_id = null;
+      let op_id = null;
+      
+      if (form.empleado_id) {
+        // Si el empleado está en personal operativo, lo guardamos en personal_operativo_id
+        if (personalOperativo.some(p => p.id === form.empleado_id)) {
+          op_id = form.empleado_id;
+        } else {
+          per_id = form.empleado_id;
+        }
+      }
+
       const payload = {
         sucursal_id:     form.sucursal_id,
-        empleado_id:     form.empleado_id || null,
+        empleado_id:     per_id,
+        personal_operativo_id: op_id,
         registrado_por:  user.id,
         nombre_empleado: form.nombre_empleado.trim(),
         concepto:        form.concepto.trim(),
@@ -109,6 +122,8 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         fecha_pago:      form.fecha_pago,
         observaciones:   form.observaciones.trim() || null,
       }
+      
+      console.log("Enviando payload a Supabase:", payload);
 
       const { data, error } = await supabase
         .from('pagos_personal')
