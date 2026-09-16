@@ -301,7 +301,7 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>Estado del Registro *</label>
               <select value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as 'pagado'|'pendiente' }))}
-                style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none', fontWeight: 800, color: form.estado === 'pagado' ? '#4CAF50' : '#FF9800' }}>
+                style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: '8px', outline: 'none', fontWeight: 800, color: form.estado === 'pagado' ? '#4CAF50' : '#FF9800' }}>
                 <option value="pagado">✅ Ya se entregó (Pagado)</option>
                 <option value="pendiente">⏳ Queda a deber (Pendiente)</option>
               </select>
