@@ -77,7 +77,7 @@ export async function guardarPerfil(perfilData: {
 
 /**
  * Server Action: Elimina un usuario de Supabase Auth usando la SERVICE_ROLE KEY.
- * Primero elimina el perfil, luego el usuario de Auth para evitar errores de cascade.
+ * Transfiere el historial al Admin antes de borrar para evitar errores de llaves foraneas.
  */
 export async function eliminarUsuarioAuth(userId: string): Promise<{ success: boolean; error?: string }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -91,35 +91,38 @@ export async function eliminarUsuarioAuth(userId: string): Promise<{ success: bo
     auth: { autoRefreshToken: false, persistSession: false }
   });
 
-  // Verificar si tiene turnos o ventas antes de proceder
-  const { count: turnosCount } = await adminClient
-    .from('turnos')
-    .select('id', { count: 'exact', head: true })
-    .eq('cajero_id', userId);
+  // Buscar un admin al que transferir el historial
+  const { data: adminPerfil } = await adminClient
+    .from('perfiles')
+    .select('id')
+    .eq('rol', 'admin')
+    .neq('id', userId)
+    .limit(1)
+    .single();
 
-  const { count: ventasCount } = await adminClient
-    .from('ventas')
-    .select('id', { count: 'exact', head: true })
-    .eq('cajero_id', userId);
+  const adminId = adminPerfil?.id;
 
-  if ((turnosCount ?? 0) > 0 || (ventasCount ?? 0) > 0) {
-    return {
-      success: false,
-      error: 'No se puede eliminar porque este usuario ya tiene historial de ventas o turnos registrados. Por favor, edítalo y suspende su acceso en su lugar.'
-    };
+  if (adminId) {
+    // Transferir turnos al admin
+    await adminClient
+      .from('turnos')
+      .update({ cajero_id: adminId })
+      .eq('cajero_id', userId);
+
+    // Transferir ventas al admin
+    await adminClient
+      .from('ventas')
+      .update({ cajero_id: adminId })
+      .eq('cajero_id', userId);
   }
 
-  // Primero eliminar el perfil manualmente (evita problemas con triggers)
-  const { error: perfilError } = await adminClient
+  // Eliminar el perfil primero
+  await adminClient
     .from('perfiles')
     .delete()
     .eq('id', userId);
 
-  if (perfilError && !perfilError.message.includes('No rows')) {
-    return { success: false, error: 'Error al eliminar perfil: ' + perfilError.message };
-  }
-
-  // Ahora eliminar el usuario de Auth
+  // Eliminar el usuario de Auth
   const { error } = await adminClient.auth.admin.deleteUser(userId);
 
   if (error) {
