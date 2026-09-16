@@ -76,8 +76,7 @@ export async function guardarPerfil(perfilData: {
 }
 
 /**
- * Server Action: Elimina un usuario de Supabase Auth usando la SERVICE_ROLE KEY.
- * Transfiere el historial al Admin antes de borrar para evitar errores de llaves foraneas.
+ * Server Action: Elimina un usuario llamando a la funcion SQL que maneja todo el historial.
  */
 export async function eliminarUsuarioAuth(userId: string): Promise<{ success: boolean; error?: string }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -91,42 +90,11 @@ export async function eliminarUsuarioAuth(userId: string): Promise<{ success: bo
     auth: { autoRefreshToken: false, persistSession: false }
   });
 
-  // Buscar un admin al que transferir el historial
-  const { data: adminPerfil } = await adminClient
-    .from('perfiles')
-    .select('id')
-    .eq('rol', 'admin')
-    .neq('id', userId)
-    .limit(1)
-    .single();
-
-  const adminId = adminPerfil?.id;
-
-  if (adminId) {
-    // Transferir turnos al admin
-    await adminClient
-      .from('turnos')
-      .update({ cajero_id: adminId })
-      .eq('cajero_id', userId);
-
-    // Transferir ventas al admin
-    await adminClient
-      .from('ventas')
-      .update({ cajero_id: adminId })
-      .eq('cajero_id', userId);
-  }
-
-  // Eliminar el perfil primero
-  await adminClient
-    .from('perfiles')
-    .delete()
-    .eq('id', userId);
-
-  // Eliminar el usuario de Auth
-  const { error } = await adminClient.auth.admin.deleteUser(userId);
+  // Llamar a la función SQL que transfiere historial y borra el usuario
+  const { error } = await adminClient.rpc('eliminar_usuario_sistema', { usuario_id: userId });
 
   if (error) {
-    return { success: false, error: 'Error al eliminar usuario: ' + error.message };
+    return { success: false, error: 'Error al eliminar: ' + error.message };
   }
 
   return { success: true };
