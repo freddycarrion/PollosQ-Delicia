@@ -10,7 +10,9 @@ interface Insumo { id: string, nombre: string, unidad: string, sucursal_id: stri
 interface Sucursal { id: string, nombre: string }
 
 interface CartItem {
-  insumo: Insumo
+  insumo_id: string | null
+  nombre_insumo: string
+  unidad: string
   cantidad: number
   precio_unitario: number
 }
@@ -32,8 +34,8 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
   const [factura, setFactura] = useState('')
   const [observaciones, setObservaciones] = useState('')
 
-  // Selección de Insumo temporal
-  const [selectedInsumoId, setSelectedInsumoId] = useState('')
+  // Selección de Insumo temporal (ahora texto libre)
+  const [nombreInsumoLibre, setNombreInsumoLibre] = useState('')
   const [cantidad, setCantidad] = useState(1)
   const [precioUnidad, setPrecioUnidad] = useState(0)
 
@@ -45,7 +47,7 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
     setFactura('')
     setObservaciones('')
     setCart([])
-    setSelectedInsumoId('')
+    setNombreInsumoLibre('')
     setCantidad(1)
     setPrecioUnidad(0)
   }
@@ -62,26 +64,39 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
   const getFilteredInsumos = () => insumos.filter(i => i.sucursal_id === sucursalId)
 
   const handleAddInsumo = () => {
-    if (!selectedInsumoId) return toast.error('Selecciona un insumo')
+    if (!nombreInsumoLibre.trim()) return toast.error('Ingresa qué compraste')
     if (cantidad <= 0) return toast.error('La cantidad debe ser mayor a 0')
     if (precioUnidad < 0) return toast.error('El precio no puede ser negativo')
 
-    const insumoItem = insumos.find(i => i.id === selectedInsumoId)
-    if (!insumoItem) return
+    // Ver si coincide con un insumo existente (ignorando mayúsculas/minúsculas)
+    const insumosDisponibles = getFilteredInsumos()
+    const insumoMatch = insumosDisponibles.find(i => i.nombre.toLowerCase() === nombreInsumoLibre.trim().toLowerCase())
+
+    const cartItem: CartItem = {
+      insumo_id: insumoMatch ? insumoMatch.id : null,
+      nombre_insumo: insumoMatch ? insumoMatch.nombre : nombreInsumoLibre.trim(),
+      unidad: insumoMatch ? insumoMatch.unidad : 'unid.',
+      cantidad: Number(cantidad),
+      precio_unitario: Number(precioUnidad)
+    }
 
     // Revisar si ya está en el carrito
-    const curIdx = cart.findIndex(c => c.insumo.id === selectedInsumoId)
+    const curIdx = cart.findIndex(c => 
+      (c.insumo_id && c.insumo_id === cartItem.insumo_id) || 
+      (!c.insumo_id && c.nombre_insumo.toLowerCase() === cartItem.nombre_insumo.toLowerCase())
+    )
+
     if (curIdx >= 0) {
       const newCart = [...cart]
-      newCart[curIdx].cantidad += Number(cantidad)
-      newCart[curIdx].precio_unitario = Number(precioUnidad) // actualiza precio
+      newCart[curIdx].cantidad += cartItem.cantidad
+      newCart[curIdx].precio_unitario = cartItem.precio_unitario // actualiza precio
       setCart(newCart)
     } else {
-      setCart([...cart, { insumo: insumoItem, cantidad: Number(cantidad), precio_unitario: Number(precioUnidad) }])
+      setCart([...cart, cartItem])
     }
 
     // Reset miniform
-    setSelectedInsumoId('')
+    setNombreInsumoLibre('')
     setCantidad(1)
     setPrecioUnidad(0)
   }
@@ -111,7 +126,8 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
       }
 
       const detallesData = cart.map(item => ({
-        insumo_id: item.insumo.id,
+        insumo_id: item.insumo_id,
+        nombre_insumo: item.nombre_insumo,
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
         subtotal: item.cantidad * item.precio_unitario
@@ -185,13 +201,23 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
               <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Agregar Insumos</h3>
               
               <div className="form-group">
-                <label className="form-label">Seleccionar Insumo *</label>
-                <select className="form-input" value={selectedInsumoId} onChange={e => setSelectedInsumoId(e.target.value)}>
-                  <option value="">-- Elige un insumo --</option>
+                <label className="form-label">¿Qué compraste? *</label>
+                <input 
+                  type="text"
+                  list="insumos-list"
+                  className="form-input" 
+                  value={nombreInsumoLibre} 
+                  onChange={e => setNombreInsumoLibre(e.target.value)}
+                  placeholder="Ej. Tomates, o escoba..."
+                />
+                <datalist id="insumos-list">
                   {getFilteredInsumos().map(ins => (
-                    <option key={ins.id} value={ins.id}>{ins.nombre} ({ins.unidad})</option>
+                    <option key={ins.id} value={ins.nombre} />
                   ))}
-                </select>
+                </datalist>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-500)', marginTop: '2px' }}>
+                  Escribe libremente o selecciona uno de la lista.
+                </span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -209,7 +235,7 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
                 type="button" 
                 className="btn btn-primary" 
                 onClick={handleAddInsumo}
-                disabled={!selectedInsumoId || cantidad <= 0}
+                disabled={!nombreInsumoLibre.trim() || cantidad <= 0}
                 style={{ marginTop: '8px' }}
               >
                 + Añadir a la lista
@@ -244,8 +270,11 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
                     <tbody>
                       {cart.map((item, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: '8px 12px' }}>{item.insumo.nombre}</td>
-                          <td style={{ padding: '8px 12px' }}>{item.cantidad} <span style={{fontSize:'0.7rem', color:'var(--text-500)'}}>{item.insumo.unidad}</span></td>
+                          <td style={{ padding: '8px 12px' }}>
+                            {item.nombre_insumo}
+                            {!item.insumo_id && <span style={{fontSize:'0.65rem', marginLeft:'4px', color:'var(--yellow)', textTransform:'uppercase'}}>(Texto Libre)</span>}
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>{item.cantidad} <span style={{fontSize:'0.7rem', color:'var(--text-500)'}}>{item.unidad}</span></td>
                           <td style={{ padding: '8px 12px' }}>{item.precio_unitario.toFixed(2)}</td>
                           <td style={{ padding: '8px 12px', fontWeight: 600 }}>{(item.cantidad * item.precio_unitario).toFixed(2)} Bs</td>
                           <td style={{ padding: '8px 12px' }}>
