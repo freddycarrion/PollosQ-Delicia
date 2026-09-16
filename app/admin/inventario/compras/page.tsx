@@ -19,7 +19,7 @@ export default async function ComprasAdminPage() {
   const { data: proveedores } = await supabase
     .from('proveedores')
     .select('id, nombre')
-    .eq('activa', true)
+    .eq('activo', true)
     .order('nombre', { ascending: true })
 
   // 3. Insumos activos (para el dropdown de compra)
