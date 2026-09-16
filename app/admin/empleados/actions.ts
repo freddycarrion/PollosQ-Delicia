@@ -74,3 +74,30 @@ export async function guardarPerfil(perfilData: {
   if (error) return { error: error.message }
   return { data }
 }
+
+/**
+ * Server Action: Elimina un usuario de Supabase Auth usando la SERVICE_ROLE KEY.
+ */
+export async function eliminarUsuarioAuth(userId: string): Promise<{ success: boolean; error?: string }> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    return { success: false, error: 'Faltan variables de entorno del servidor.' };
+  }
+
+  const adminClient = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+
+  const { error } = await adminClient.auth.admin.deleteUser(userId);
+
+  if (error) {
+    if (error.message.includes('foreign key constraint')) {
+      return { success: false, error: 'No se puede eliminar porque tiene historial. Por favor, edítalo y suspende su acceso.' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}

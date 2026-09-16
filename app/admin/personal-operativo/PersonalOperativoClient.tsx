@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, Search, Pencil, UserX, UserCheck, ChefHat, Users } from 'lucide-react'
+import { Plus, Search, Pencil, UserX, UserCheck, ChefHat, Users, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 import PersonalOperativoModal from './PersonalOperativoModal'
@@ -73,6 +73,28 @@ export default function PersonalOperativoClient({ initialData, sucursales, miSuc
     } else {
       setPersonal(prev => prev.map(x => x.id === p.id ? { ...x, activo: !x.activo } : x))
       toast.success(!p.activo ? 'Personal reactivado' : 'Personal desactivado')
+    }
+    setToggling(null)
+  }
+
+  const handleDelete = async (p: PersonalOperativo) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar a ${p.nombre} ${p.apellido}?`)) return
+    
+    setToggling(p.id)
+    const { error } = await supabase
+      .from('personal_operativo')
+      .delete()
+      .eq('id', p.id)
+      
+    if (error) {
+      if (error.message.includes('foreign key')) {
+        toast.error('No se puede eliminar porque este personal tiene pagos registrados. Solo puedes desactivarlo.')
+      } else {
+        toast.error('Error al eliminar: ' + error.message)
+      }
+    } else {
+      setPersonal(prev => prev.filter(x => x.id !== p.id))
+      toast.success('Personal eliminado correctamente')
     }
     setToggling(null)
   }
@@ -211,6 +233,12 @@ export default function PersonalOperativoClient({ initialData, sucursales, miSuc
                             onClick={() => handleToggleActivo(p)}
                             style={{ background: p.activo ? 'rgba(244,67,54,0.1)' : 'rgba(76,175,80,0.1)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', color: p.activo ? '#ef5350' : '#4CAF50', cursor: 'pointer' }}>
                             {p.activo ? <UserX size={15} /> : <UserCheck size={15} />}
+                          </button>
+                          <button title="Eliminar"
+                            disabled={toggling === p.id}
+                            onClick={() => handleDelete(p)}
+                            style={{ background: 'rgba(244,67,54,0.1)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', color: '#ef5350', cursor: 'pointer' }}>
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { PlusIcon, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle, XCircle } from 'lucide-react'
+import { PlusIcon, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 import EmpleadoModal from './EmpleadoModal'
+import { eliminarUsuarioAuth } from './actions'
 
 
 interface Props {
@@ -39,6 +40,17 @@ export default function EmpleadosClient({ empleados: initialData, sucursales }: 
       setData(copy)
     } else {
       setData([saved, ...data])
+    }
+  }
+
+  const handleDelete = async (emp: any) => {
+    if (!confirm(`¿Estás seguro de eliminar a ${emp.nombre}?`)) return
+    
+    const res = await eliminarUsuarioAuth(emp.id)
+    if (res.error) {
+      alert(res.error)
+    } else {
+      setData(data.filter(e => e.id !== emp.id))
     }
   }
 
@@ -178,7 +190,7 @@ export default function EmpleadosClient({ empleados: initialData, sucursales }: 
                      </div>
                   </td>
 
-                  <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                  <td style={{ padding: '16px 20px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <button 
                       onClick={() => handleEdit(emp)}
                       style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-400)', padding: '6px', borderRadius: '8px', transition: '0.2s' }}
@@ -186,6 +198,14 @@ export default function EmpleadosClient({ empleados: initialData, sucursales }: 
                       title="Editar Perfil"
                     >
                        <Edit2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(emp)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#F44336', padding: '6px', borderRadius: '8px', transition: '0.2s' }}
+                      className="hover:bg-gray-800"
+                      title="Eliminar Personal"
+                    >
+                       <Trash2 size={18} />
                     </button>
                   </td>
 
