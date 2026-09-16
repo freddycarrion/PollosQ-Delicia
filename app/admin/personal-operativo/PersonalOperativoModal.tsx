@@ -25,6 +25,7 @@ interface PersonalOperativo {
   salario_base: number | null
   activo: boolean
   observaciones: string | null
+  created_at: string
 }
 
 interface Sucursal { id: string; nombre: string }
