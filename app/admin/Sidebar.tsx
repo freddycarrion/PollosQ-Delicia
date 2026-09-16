@@ -23,7 +23,6 @@ const navItems: NavItem[] = [
   { label: 'Dashboard',   href: '/admin/dashboard',   icon: <LayoutDashboard size={18} /> },
   { label: 'Ventas',      href: '/admin/ventas',       icon: <ShoppingCart size={18} /> },
   { label: 'Caja',        href: '/admin/caja',         icon: <Wallet size={18} /> },
-  { label: 'Empleados',   href: '/admin/empleados',    icon: <Users size={18} /> },
   { label: 'Avisos',      href: '/admin/comunicados',  icon: <Bell size={18} /> },
   { label: 'Menú',        href: '/admin/menu',         icon: <Package size={18} /> },
   { 
@@ -38,10 +37,11 @@ const navItems: NavItem[] = [
   { label: 'Reportes',    href: '/admin/reportes',     icon: <BarChart3 size={18} /> },
   {
     label: 'Personal',
-    icon: <ChefHat size={18} />,
+    icon: <Users size={18} />,
     subItems: [
-      { label: 'Personal Operativo', href: '/admin/personal-operativo' },
-      { label: 'Pagos al Personal',  href: '/admin/pagos-personal' },
+      { label: 'Usuarios del Sistema', href: '/admin/empleados' },
+      { label: 'Personal Operativo',   href: '/admin/personal-operativo' },
+      { label: 'Pagos al Personal',    href: '/admin/pagos-personal' },
     ]
   },
   { label: 'Ingreso / Egreso', href: '/admin/finanzas-personales', icon: <TrendingUp size={18} /> },
@@ -63,7 +63,7 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
     'Inventario': pathname.startsWith('/admin/inventario'),
-    'Personal':   pathname.startsWith('/admin/personal-operativo') || pathname.startsWith('/admin/pagos-personal'),
+    'Personal':   pathname.startsWith('/admin/empleados') || pathname.startsWith('/admin/personal-operativo') || pathname.startsWith('/admin/pagos-personal'),
   })
 
   useEffect(() => {
