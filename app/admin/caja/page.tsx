@@ -75,6 +75,7 @@ export default async function CajaAdminPage() {
               <th>Sucursal</th>
               <th>Estado</th>
               <th>Apertura</th>
+              <th className="text-right">Monto Inicial</th>
               <th className="text-right">Efectivo Total</th>
               <th className="text-right">Cierre Físico</th>
               <th className="text-right">Diferencia</th>
@@ -114,7 +115,14 @@ export default async function CajaAdminPage() {
                     {new Date(turno.fecha_apertura).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}
                   </td>
                   
+                  <td className="text-right font-mono font-bold" style={{ color: 'var(--text-100)' }}>
+                  
+                    Bs. {fmt(base)}
+                  
+                  </td>
+                  
                   <td className="text-right font-mono" style={{ color: 'var(--text-200)' }}>
+                  
                     Bs. {fmt(cajaEsperada)}
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-500)', marginTop: '2px' }}>
                       (Base: {fmt(base)} + Ventas: {fmt(ventasEfectivo)})
@@ -261,3 +269,4 @@ export default async function CajaAdminPage() {
     </div>
   )
 }
+
