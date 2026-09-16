@@ -197,67 +197,10 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
 
         {/* Totales */}
         <div className="tk-totales">
-          <div className="tk-total-row">
-            <span>Subtotal</span>
-            <span>{esConsumoInterno ? 'Bs.0.00' : fmt(data.total)}</span>
-          </div>
-          <div className="tk-sep-dashed" style={{ margin: '5px 0' }} />
           <div className="tk-total-row tk-total-grande">
             <span>TOTAL</span>
             <span>{esConsumoInterno ? 'Bs.0.00' : fmt(data.total)}</span>
           </div>
-          <div className="tk-sep-dashed" style={{ margin: '5px 0' }} />
-
-          {/* Método(s) de pago */}
-          {esMixto ? (
-            <>
-              <div className="tk-total-row">
-                <span>Pago Mixto</span>
-                <span></span>
-              </div>
-              <div className="tk-total-row tk-mixto-row">
-                <span>  {data.metodoPago.toUpperCase()}</span>
-                <span>{fmt(data.total - (data.montoPago2 || 0))}</span>
-              </div>
-              <div className="tk-total-row tk-mixto-row">
-                <span>  {data.metodoPago2!.toUpperCase()}</span>
-                <span>{fmt(data.montoPago2 || 0)}</span>
-              </div>
-            </>
-          ) : (
-            <div className="tk-total-row">
-              <span>Pago</span>
-              <span>{metodoLabel}</span>
-            </div>
-          )}
-
-          {/* Efectivo: recibido y vuelto */}
-          {data.metodoPago === 'efectivo' && !esMixto && (
-            <>
-              <div className="tk-total-row">
-                <span>Recibido</span>
-                <span>{fmt(data.recibido)}</span>
-              </div>
-              <div className="tk-total-row tk-cambio">
-                <span>CAMBIO</span>
-                <span>{fmt(data.vuelto)}</span>
-              </div>
-            </>
-          )}
-          {esMixto && data.metodoPago === 'efectivo' && (
-            <>
-              <div className="tk-total-row">
-                <span>Recibido</span>
-                <span>{fmt(data.recibido)}</span>
-              </div>
-              {data.vuelto > 0 && (
-                <div className="tk-total-row tk-cambio">
-                  <span>CAMBIO</span>
-                  <span>{fmt(data.vuelto)}</span>
-                </div>
-              )}
-            </>
-          )}
         </div>
 
         <div className="tk-sep-dashed" />

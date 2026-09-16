@@ -135,12 +135,6 @@ export default function EmpleadoModal({ empleado, sucursales, onClose, onSaved }
                   <option value="cajero">Cajero (Punto de Venta)</option>
                   <option value="supervisor">Supervisor (Inventario)</option>
                   <option value="admin">Administrador (Total)</option>
-                  <optgroup label="Personal Operativo">
-                    <option value="mesero">Mesero</option>
-                    <option value="cocinero">Cocinero</option>
-                    <option value="repartidor">Repartidor (Delivery)</option>
-                    <option value="limpieza">Personal de Limpieza</option>
-                  </optgroup>
                </select>
             </div>
           </div>
