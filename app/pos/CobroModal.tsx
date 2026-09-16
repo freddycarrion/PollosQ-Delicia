@@ -92,6 +92,12 @@ export default function CobroModal({ isOpen, onClose, total, onConfirmar, cargan
 
     if (key === 'C') { setter(''); return }
     if (key === '⌫') { setter(prev => prev.slice(0, -1)); return }
+    if (key === 'DIVIDIR') {
+      const half = (total / 2).toFixed(2)
+      setMonto1Str(half)
+      setMonto2Str(half)
+      return
+    }
     if (key === 'RESTO') {
       // Autocalcular el faltante
       if (cual === 1) {
@@ -737,7 +743,7 @@ function MixtoKeypad({
           className="keypad-btn action"
           style={{ gridColumn: 'span 4' }}
           onClick={() => {
-            onKey('RESTO', 1)
+            onKey('DIVIDIR', 1)
           }}
         >
           Auto-dividir ({fmt(total / 2)} c/u)
