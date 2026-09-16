@@ -77,6 +77,7 @@ export async function guardarPerfil(perfilData: {
 
 /**
  * Server Action: Elimina un usuario de Supabase Auth usando la SERVICE_ROLE KEY.
+ * Primero elimina el perfil, luego el usuario de Auth para evitar errores de cascade.
  */
 export async function eliminarUsuarioAuth(userId: string): Promise<{ success: boolean; error?: string }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -90,13 +91,39 @@ export async function eliminarUsuarioAuth(userId: string): Promise<{ success: bo
     auth: { autoRefreshToken: false, persistSession: false }
   });
 
+  // Verificar si tiene turnos o ventas antes de proceder
+  const { count: turnosCount } = await adminClient
+    .from('turnos')
+    .select('id', { count: 'exact', head: true })
+    .eq('cajero_id', userId);
+
+  const { count: ventasCount } = await adminClient
+    .from('ventas')
+    .select('id', { count: 'exact', head: true })
+    .eq('cajero_id', userId);
+
+  if ((turnosCount ?? 0) > 0 || (ventasCount ?? 0) > 0) {
+    return {
+      success: false,
+      error: 'No se puede eliminar porque este usuario ya tiene historial de ventas o turnos registrados. Por favor, edítalo y suspende su acceso en su lugar.'
+    };
+  }
+
+  // Primero eliminar el perfil manualmente (evita problemas con triggers)
+  const { error: perfilError } = await adminClient
+    .from('perfiles')
+    .delete()
+    .eq('id', userId);
+
+  if (perfilError && !perfilError.message.includes('No rows')) {
+    return { success: false, error: 'Error al eliminar perfil: ' + perfilError.message };
+  }
+
+  // Ahora eliminar el usuario de Auth
   const { error } = await adminClient.auth.admin.deleteUser(userId);
 
   if (error) {
-    if (error.message.includes('foreign key constraint')) {
-      return { success: false, error: 'No se puede eliminar porque tiene historial de ventas o turnos. En su lugar, edítalo y suspende su acceso.' };
-    }
-    return { success: false, error: error.message };
+    return { success: false, error: 'Error al eliminar usuario: ' + error.message };
   }
 
   return { success: true };
