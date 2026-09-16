@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Calendar, Users, DollarSign, TrendingUp,
-  ChevronDown, ChevronUp, Filter, Printer, X
+  ChevronDown, ChevronUp, Filter, Printer, X, CheckCircle, Clock, Check
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
@@ -48,7 +48,9 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   const [desde, setDesde] = useState(initialDesde)
   const [hasta, setHasta] = useState(initialHasta)
   const [filtroPeriodo, setFiltroPeriodo] = useState<PeriodoPago | 'todos'>('todos')
+  const [filtroEstado, setFiltroEstado] = useState<'todos'|'pagado'|'pendiente'>('todos')
   const [showForm, setShowForm] = useState(false)
+  const [showLiquidar, setShowLiquidar] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Form state
@@ -58,6 +60,7 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
     sucursal_id:     miSucursalId || '',
     concepto:        '',
     periodo:         'diario' as PeriodoPago,
+    estado:          'pagado' as 'pagado' | 'pendiente',
     monto:           '',
     fecha_pago:      new Date().toISOString().split('T')[0],
     observaciones:   '',
@@ -100,6 +103,8 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         nombre_empleado: form.nombre_empleado.trim(),
         concepto:        form.concepto.trim(),
         periodo:         form.periodo,
+        estado:          form.estado,
+        fecha_pagado:    form.estado === 'pagado' ? new Date().toISOString() : null,
         monto:           Number(form.monto),
         fecha_pago:      form.fecha_pago,
         observaciones:   form.observaciones.trim() || null,
@@ -114,7 +119,7 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
       if (error) throw error
 
       setPagos(prev => [data as PagoPersonal, ...prev])
-      toast.success('Pago registrado correctamente')
+      toast.success(form.estado === 'pagado' ? 'Pago registrado correctamente' : 'Deuda registrada como pendiente')
       setShowForm(false)
       setForm(f => ({ ...f, nombre_empleado: '', empleado_id: '', concepto: '', monto: '', observaciones: '' }))
     } catch (err: any) {
@@ -125,14 +130,44 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   }
 
   // Filtrados y totales
-  const pagosFiltrados = useMemo(() => pagos.filter(p =>
-    filtroPeriodo === 'todos' ? true : p.periodo === filtroPeriodo
-  ), [pagos, filtroPeriodo])
+  const pagosFiltrados = useMemo(() => pagos.filter(p => {
+    const passPeriodo = filtroPeriodo === 'todos' ? true : p.periodo === filtroPeriodo
+    const passEstado  = filtroEstado === 'todos' ? true : p.estado === filtroEstado
+    return passPeriodo && passEstado
+  }), [pagos, filtroPeriodo, filtroEstado])
 
   const totalGeneral = pagosFiltrados.reduce((acc, p) => acc + Number(p.monto), 0)
-  const totalDiario  = pagos.filter(p => p.periodo === 'diario').reduce((acc, p) => acc + Number(p.monto), 0)
-  const totalSemanal = pagos.filter(p => p.periodo === 'semanal').reduce((acc, p) => acc + Number(p.monto), 0)
-  const totalMensual = pagos.filter(p => p.periodo === 'mensual').reduce((acc, p) => acc + Number(p.monto), 0)
+  const totalPagado  = pagos.filter(p => p.estado === 'pagado').reduce((acc, p) => acc + Number(p.monto), 0)
+  const totalPendiente = pagos.filter(p => p.estado === 'pendiente').reduce((acc, p) => acc + Number(p.monto), 0)
+
+  // Para modal de liquidación
+  const empleadosPendientes = useMemo(() => {
+    const pendientes = pagos.filter(p => p.estado === 'pendiente')
+    const grouped = pendientes.reduce((acc, p) => {
+      const id = p.empleado_id || p.nombre_empleado // Agrupar por ID si existe, sino por nombre
+      if (!acc[id]) acc[id] = { nombre: p.nombre_empleado, total: 0, count: 0, ids: [] }
+      acc[id].total += Number(p.monto)
+      acc[id].count += 1
+      acc[id].ids.push(p.id)
+      return acc
+    }, {} as Record<string, { nombre: string, total: number, count: number, ids: string[] }>)
+    return Object.values(grouped)
+  }, [pagos])
+
+  const handlePagarIds = async (ids: string[]) => {
+    try {
+      const now = new Date().toISOString()
+      const { error } = await supabase
+        .from('pagos_personal')
+        .update({ estado: 'pagado', fecha_pagado: now })
+        .in('id', ids)
+      if (error) throw error
+      toast.success(ids.length === 1 ? 'Pago liquidado' : 'Deuda liquidada correctamente')
+      setPagos(prev => prev.map(p => ids.includes(p.id) ? { ...p, estado: 'pagado', fecha_pagado: now } : p))
+    } catch (err: any) {
+      toast.error('Error al liquidar: ' + err.message)
+    }
+  }
 
   const periodoColor = (p: PeriodoPago) => PERIODOS.find(x => x.value === p)?.color || '#fff'
   const periodoLabel = (p: PeriodoPago) => PERIODOS.find(x => x.value === p)?.label || p
@@ -143,10 +178,9 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
       {/* ── KPIs ───────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
         {[
-          { label: 'Total del Período', value: `Bs. ${fmt(totalGeneral)}`, icon: <DollarSign size={22}/>, color: 'var(--yellow)' },
-          { label: 'Pagos Diarios',     value: `Bs. ${fmt(totalDiario)}`,  icon: <Calendar size={22}/>,   color: '#4CAF50' },
-          { label: 'Pagos Semanales',   value: `Bs. ${fmt(totalSemanal)}`, icon: <TrendingUp size={22}/>, color: '#2196F3' },
-          { label: 'Pagos Mensuales',   value: `Bs. ${fmt(totalMensual)}`, icon: <Users size={22}/>,      color: '#FF9800' },
+          { label: 'Total del Filtro',  value: `Bs. ${fmt(totalGeneral)}`, icon: <DollarSign size={22}/>, color: 'var(--blue)' },
+          { label: 'Total Pagado',      value: `Bs. ${fmt(totalPagado)}`,  icon: <CheckCircle size={22}/>,   color: '#4CAF50' },
+          { label: 'Total Pendiente',   value: `Bs. ${fmt(totalPendiente)}`, icon: <Clock size={22}/>, color: '#FF9800' },
         ].map(k => (
           <div key={k.label} className="kpi-card" style={{ background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: '16px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: 50, height: 50, borderRadius: '12px', background: `${k.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: k.color }}>
@@ -174,11 +208,12 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         ))}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <label style={{ fontSize: '0.7rem', color: 'var(--text-500)', fontWeight: 700, textTransform: 'uppercase' }}>Tipo de Pago</label>
-          <select value={filtroPeriodo} onChange={e => setFiltroPeriodo(e.target.value as any)}
+          <label style={{ fontSize: '0.7rem', color: 'var(--text-500)', fontWeight: 700, textTransform: 'uppercase' }}>Estado</label>
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value as any)}
             style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none' }}>
             <option value="todos">Todos</option>
-            {PERIODOS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+            <option value="pagado">Pagados</option>
+            <option value="pendiente">Pendientes</option>
           </select>
         </div>
 
@@ -186,9 +221,15 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         <button onClick={() => window.print()} className="btn btn-ghost" style={{ padding: '8px 14px', alignSelf: 'flex-end', display: 'flex', gap: '6px', alignItems: 'center', border: '1px solid var(--border)' }}>
           <Printer size={16}/> Exportar
         </button>
-        <button onClick={() => setShowForm(s => !s)} className="btn btn-primary" style={{ marginLeft: 'auto', padding: '8px 20px', alignSelf: 'flex-end', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {showForm ? <><X size={16}/> Cerrar</> : <><Plus size={16}/> Registrar Pago</>}
-        </button>
+
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
+          <button onClick={() => setShowLiquidar(true)} className="btn btn-ghost" style={{ padding: '8px 16px', display: 'flex', gap: '8px', alignItems: 'center', border: '1px solid var(--yellow)', color: 'var(--yellow)' }}>
+            <DollarSign size={16}/> Liquidar Pendientes
+          </button>
+          <button onClick={() => setShowForm(s => !s)} className="btn btn-primary" style={{ padding: '8px 20px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {showForm ? <><X size={16}/> Cerrar Formulario</> : <><Plus size={16}/> Nuevo Registro</>}
+          </button>
+        </div>
       </div>
 
       {/* ── Formulario de nuevo pago ───────────────────────────────── */}
@@ -257,6 +298,15 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
                 style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none' }} />
             </div>
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>Estado del Registro *</label>
+              <select value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as 'pagado'|'pendiente' }))}
+                style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none', fontWeight: 800, color: form.estado === 'pagado' ? '#4CAF50' : '#FF9800' }}>
+                <option value="pagado">✅ Ya se entregó (Pagado)</option>
+                <option value="pendiente">⏳ Queda a deber (Pendiente)</option>
+              </select>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>Concepto / Descripción *</label>
               <input type="text" placeholder="Ej: Sueldo semanal, Horas extra, Bono por productividad..." value={form.concepto} onChange={e => setForm(f => ({ ...f, concepto: e.target.value }))}
@@ -300,8 +350,8 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-900)', color: 'var(--text-400)', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                  {['Fecha', 'Empleado', 'Concepto', 'Tipo', 'Sucursal', 'Monto'].map(h => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
+                  {['Fecha', 'Empleado', 'Concepto', 'Tipo', 'Sucursal', 'Estado', 'Monto', 'Acciones'].map(h => (
+                    <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Monto' ? 'right' : 'left', fontWeight: 700, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -321,15 +371,32 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
                     <td style={{ padding: '14px 16px', color: 'var(--text-400)', fontSize: '0.85rem' }}>
                       {(pago.sucursales as any)?.nombre || '—'}
                     </td>
-                    <td style={{ padding: '14px 16px', fontWeight: 900, fontFamily: 'monospace', color: '#4CAF50', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ 
+                        background: pago.estado === 'pagado' ? 'rgba(76,175,80,0.1)' : 'rgba(255,152,0,0.1)', 
+                        color: pago.estado === 'pagado' ? '#4CAF50' : '#FF9800', 
+                        padding: '4px 10px', borderRadius: '99px', fontWeight: 800, fontSize: '0.75rem', whiteSpace: 'nowrap',
+                        display: 'inline-flex', alignItems: 'center', gap: '4px'
+                      }}>
+                        {pago.estado === 'pagado' ? <><CheckCircle size={12}/> Pagado</> : <><Clock size={12}/> Pendiente</>}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 16px', fontWeight: 900, fontFamily: 'monospace', color: pago.estado === 'pagado' ? '#4CAF50' : '#FF9800', textAlign: 'right', whiteSpace: 'nowrap' }}>
                       Bs. {fmt(pago.monto)}
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      {pago.estado === 'pendiente' && (
+                        <button onClick={() => handlePagarIds([pago.id])} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.75rem', border: '1px solid #4CAF50', color: '#4CAF50', display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                          <Check size={14} /> Pagar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr style={{ background: 'var(--bg-900)', borderTop: '2px solid var(--border)' }}>
-                  <td colSpan={5} style={{ padding: '14px 16px', fontWeight: 800, color: 'var(--text-300)' }}>TOTAL</td>
+                  <td colSpan={6} style={{ padding: '14px 16px', fontWeight: 800, color: 'var(--text-300)' }}>TOTAL</td>
                   <td style={{ padding: '14px 16px', fontWeight: 900, fontFamily: 'monospace', color: 'var(--yellow)', textAlign: 'right', fontSize: '1.05rem' }}>
                     Bs. {fmt(totalGeneral)}
                   </td>
@@ -339,6 +406,51 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
           </div>
         )}
       </div>
+
+      {/* ── Modal de Liquidación ───────────────────────────────────── */}
+      {showLiquidar && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: '16px', width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(253,216,53,0.05)' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--yellow)' }}>
+                <DollarSign size={22} /> Liquidar Pendientes
+              </h2>
+              <button onClick={() => setShowLiquidar(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-400)', cursor: 'pointer' }}><X size={20}/></button>
+            </div>
+            
+            <div style={{ padding: '24px', overflowY: 'auto', maxHeight: '60vh' }}>
+              {empleadosPendientes.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-400)' }}>
+                  <CheckCircle size={48} style={{ opacity: 0.2, margin: '0 auto 12px' }} />
+                  <p>No hay deudas pendientes en este momento.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {empleadosPendientes.map(emp => (
+                    <div key={emp.nombre} style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-100)' }}>{emp.nombre}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '4px' }}>
+                          <Clock size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-2px' }}/> 
+                          {emp.count} pago(s) pendiente(s)
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                        <div style={{ fontWeight: 900, color: 'var(--yellow)', fontFamily: 'monospace', fontSize: '1.2rem' }}>
+                          Bs. {fmt(emp.total)}
+                        </div>
+                        <button onClick={() => handlePagarIds(emp.ids)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <Check size={14} /> Pagar Todo
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @media print {

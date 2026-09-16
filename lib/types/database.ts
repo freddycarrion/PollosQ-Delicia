@@ -338,6 +338,8 @@ export interface PagoPersonal {
   periodo:         PeriodoPago
   monto:           number
   fecha_pago:      string       // DATE: 'YYYY-MM-DD'
+  estado:          'pagado' | 'pendiente'
+  fecha_pagado:    string | null
   observaciones:   string | null
   created_at:      string
   // Relaciones opcionales
