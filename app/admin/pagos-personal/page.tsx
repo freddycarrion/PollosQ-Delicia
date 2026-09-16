@@ -19,6 +19,14 @@ export default async function PagosPersonalPage({ searchParams }: PageProps) {
   const desdeStr = params.desde || primerDiaMes.toISOString().split('T')[0]
   const hastaStr = params.hasta || today.toISOString().split('T')[0]
 
+  // Obtener perfil del usuario actual (primero para aplicar filtros de sucursal)
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: miPerfil } = user ? await supabase
+    .from('perfiles')
+    .select('sucursal_id, rol')
+    .eq('id', user.id)
+    .single() : { data: null }
+
   // Obtener pagos con relaciones
   const { data: pagos } = await supabase
     .from('pagos_personal')
@@ -31,7 +39,7 @@ export default async function PagosPersonalPage({ searchParams }: PageProps) {
     .lte('fecha_pago', hastaStr)
     .order('fecha_pago', { ascending: false })
 
-  // Obtener perfiles para el formulario
+  // Obtener perfiles para el formulario (usuarios del sistema)
   const { data: perfiles } = await supabase
     .from('perfiles')
     .select('id, nombre, apellido, rol')
@@ -44,13 +52,18 @@ export default async function PagosPersonalPage({ searchParams }: PageProps) {
     .select('id, nombre')
     .eq('activa', true)
 
-  // Obtener perfil del usuario actual para preseleccionar sucursal
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: miPerfil } = user ? await supabase
-    .from('perfiles')
-    .select('sucursal_id, rol')
-    .eq('id', user.id)
-    .single() : { data: null }
+  // Obtener personal operativo activo (cocineros, meseros, etc.)
+  let queryPersonal = supabase
+    .from('personal_operativo')
+    .select('id, nombre, apellido, cargo, sucursal_id')
+    .eq('activo', true)
+    .order('nombre')
+
+  if (miPerfil?.rol === 'supervisor' && miPerfil.sucursal_id) {
+    queryPersonal = queryPersonal.eq('sucursal_id', miPerfil.sucursal_id)
+  }
+
+  const { data: personalOperativo } = await queryPersonal
 
   return (
     <div className="admin-page animate-fade-in text-white">
@@ -70,6 +83,7 @@ export default async function PagosPersonalPage({ searchParams }: PageProps) {
         initialPagos={(pagos || []) as any[]}
         perfiles={(perfiles || []) as any[]}
         sucursales={(sucursales || []) as any[]}
+        personalOperativo={(personalOperativo || []) as any[]}
         miSucursalId={miPerfil?.sucursal_id || null}
         initialDesde={desdeStr}
         initialHasta={hastaStr}

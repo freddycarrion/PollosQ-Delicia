@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Package,
   BarChart3, Wallet, ShoppingBag, Settings,
   ChevronRight, ChevronDown, LogOut, Store, X,
-  TrendingUp, Bell, User, HandCoins
+  TrendingUp, Bell, User, HandCoins, ChefHat
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -36,7 +36,14 @@ const navItems: NavItem[] = [
     ]
   },
   { label: 'Reportes',    href: '/admin/reportes',     icon: <BarChart3 size={18} /> },
-  { label: 'Pagos Personal', href: '/admin/pagos-personal', icon: <HandCoins size={18} /> },
+  {
+    label: 'Personal',
+    icon: <ChefHat size={18} />,
+    subItems: [
+      { label: 'Personal Operativo', href: '/admin/personal-operativo' },
+      { label: 'Pagos al Personal',  href: '/admin/pagos-personal' },
+    ]
+  },
   { label: 'Ingreso / Egreso', href: '/admin/finanzas-personales', icon: <TrendingUp size={18} /> },
   { label: 'Sucursales',  href: '/admin/sucursales',   icon: <Store size={18} /> },
   { label: 'Mi Perfil',   href: '/admin/perfil',       icon: <User size={18} /> },
@@ -55,7 +62,8 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
   
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
-    'Inventario': pathname.startsWith('/admin/inventario')
+    'Inventario': pathname.startsWith('/admin/inventario'),
+    'Personal':   pathname.startsWith('/admin/personal-operativo') || pathname.startsWith('/admin/pagos-personal'),
   })
 
   useEffect(() => {

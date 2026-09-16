@@ -12,14 +12,25 @@ import type { PagoPersonal, PeriodoPago } from '@/lib/types/database'
 
 interface Perfil { id: string; nombre: string; apellido: string; rol: string }
 interface Sucursal { id: string; nombre: string }
+interface PersonalOp { id: string; nombre: string; apellido: string; cargo: string; sucursal_id: string }
+
+const CARGO_LABELS: Record<string, string> = {
+  cocinero:         '🍳 Cocinero/a',
+  mesero:           '🍽️ Mesero/a',
+  ayudante_cocina:  '🥄 Ayudante de Cocina',
+  cajero_operativo: '💰 Cajero/a Operativo',
+  limpieza:         '🧹 Limpieza',
+  otro:             '👤 Otro',
+}
 
 interface Props {
-  initialPagos:  PagoPersonal[]
-  perfiles:      Perfil[]
-  sucursales:    Sucursal[]
-  miSucursalId:  string | null
-  initialDesde:  string
-  initialHasta:  string
+  initialPagos:       PagoPersonal[]
+  perfiles:           Perfil[]
+  sucursales:         Sucursal[]
+  personalOperativo:  PersonalOp[]
+  miSucursalId:       string | null
+  initialDesde:       string
+  initialHasta:       string
 }
 
 const fmt = (n: number) => Number(n).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -29,7 +40,7 @@ const PERIODOS: { value: PeriodoPago; label: string; color: string }[] = [
   { value: 'mensual',  label: 'Pago Mensual',  color: '#FF9800' },
 ]
 
-export default function PagosPersonalClient({ initialPagos, perfiles, sucursales, miSucursalId, initialDesde, initialHasta }: Props) {
+export default function PagosPersonalClient({ initialPagos, perfiles, sucursales, personalOperativo, miSucursalId, initialDesde, initialHasta }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -57,6 +68,12 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   }
 
   const handleEmpleadoChange = (id: string) => {
+    // Buscar primero en personal operativo, luego en perfiles del sistema
+    const op = personalOperativo.find(p => `op_${p.id}` === id)
+    if (op) {
+      setForm(f => ({ ...f, empleado_id: op.id, nombre_empleado: `${op.nombre} ${op.apellido}`.trim() }))
+      return
+    }
     const p = perfiles.find(p => p.id === id)
     setForm(f => ({
       ...f,
@@ -184,11 +201,24 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
 
             {/* Empleado (select + nombre manual) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>Empleado (opcional)</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-400)' }}>Empleado</label>
               <select value={form.empleado_id} onChange={e => handleEmpleadoChange(e.target.value)}
                 style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none' }}>
-                <option value="">— Seleccionar del sistema —</option>
-                {perfiles.map(p => <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>)}
+                <option value="">— Escribir nombre manualmente —</option>
+                {personalOperativo.length > 0 && (
+                  <optgroup label="👷 Personal Operativo">
+                    {personalOperativo.map(p => (
+                      <option key={`op_${p.id}`} value={`op_${p.id}`}>
+                        {p.nombre} {p.apellido} · {CARGO_LABELS[p.cargo] || p.cargo}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {perfiles.length > 0 && (
+                  <optgroup label="👤 Usuarios del Sistema">
+                    {perfiles.map(p => <option key={p.id} value={p.id}>{p.nombre} {p.apellido} ({p.rol})</option>)}
+                  </optgroup>
+                )}
               </select>
             </div>
 
