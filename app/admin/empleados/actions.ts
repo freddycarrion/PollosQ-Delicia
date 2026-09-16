@@ -94,7 +94,7 @@ export async function eliminarUsuarioAuth(userId: string): Promise<{ success: bo
 
   if (error) {
     if (error.message.includes('foreign key constraint')) {
-      return { success: false, error: 'No se puede eliminar porque tiene historial. Por favor, edítalo y suspende su acceso.' };
+      return { success: false, error: 'No se puede eliminar porque tiene historial de ventas o turnos. En su lugar, edÃ­talo y suspende su acceso.' };
     }
     return { success: false, error: error.message };
   }
