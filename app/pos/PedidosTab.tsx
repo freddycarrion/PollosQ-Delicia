@@ -326,7 +326,54 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
       if (updError) throw updError
 
-      // 4. Si hay diferencia positiva, registrarla en el turno
+      // 4. Ajustar stock de bebidas por los cambios en el pedido
+      //    Comparamos cantidades originales vs nuevas por nombre_producto.
+      //    Si se quitó una bebida → se devuelve al stock (delta negativo).
+      //    Si se agregó una bebida nueva → se descuenta del stock (delta positivo).
+      {
+        const originalCantidades: Record<string, number> = {}
+        for (const item of ventaEditando.detalle_ventas) {
+          originalCantidades[item.nombre_producto] =
+            (originalCantidades[item.nombre_producto] || 0) + item.cantidad
+        }
+        const nuevasCantidades: Record<string, number> = {}
+        for (const item of itemsEditables) {
+          nuevasCantidades[item.nombre_producto] =
+            (nuevasCantidades[item.nombre_producto] || 0) + item.cantidadEditada
+        }
+
+        const { data: stockRows } = await supabase
+          .from('stock_bebidas_turno')
+          .select('producto_id, nombre_producto, stock_actual')
+          .eq('turno_id', turnoId)
+
+        if (stockRows && stockRows.length > 0) {
+          const todosNombres = new Set([
+            ...Object.keys(originalCantidades),
+            ...Object.keys(nuevasCantidades),
+          ])
+
+          for (const nombre of todosNombres) {
+            const original = originalCantidades[nombre] || 0
+            const nueva    = nuevasCantidades[nombre]   || 0
+            const delta    = nueva - original // + se descontó más, - se devuelve
+
+            if (delta === 0) continue
+
+            const stockEntry = stockRows.find(s => s.nombre_producto === nombre)
+            if (!stockEntry) continue // No es una bebida registrada en stock
+
+            const nuevoStock = Math.max(0, stockEntry.stock_actual - delta)
+            await supabase
+              .from('stock_bebidas_turno')
+              .update({ stock_actual: nuevoStock })
+              .eq('turno_id', turnoId)
+              .eq('producto_id', stockEntry.producto_id)
+          }
+        }
+      }
+
+      // 5. Si hay diferencia positiva de precio, registrarla en el turno
       if (diferencia > 0 && payloadDiferencia) {
         const { data: turno } = await supabase.from('turnos').select('*').eq('id', turnoId).single()
         if (turno) {
