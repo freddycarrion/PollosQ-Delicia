@@ -302,12 +302,11 @@ export default function FinanzasClient() {
         .fp-title {
           font-size: 1.8rem;
           font-weight: 900;
-          color: #fff;
+          color: var(--text-100);
           margin: 0 0 4px;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .fp-subtitle {
-          color: rgba(255,255,255,0.75);
+          color: var(--text-400);
           font-size: 0.9rem;
           margin: 0;
         }
@@ -338,9 +337,8 @@ export default function FinanzasClient() {
         }
         @media (max-width: 600px) { .fp-cards { grid-template-columns: 1fr; } }
         .fp-card {
-          background: rgba(255,255,255,0.12);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255,255,255,0.2);
+          background: var(--bg-800);
+          border: 1px solid var(--border);
           border-radius: 14px;
           padding: 16px 18px;
           display: flex;
@@ -355,14 +353,14 @@ export default function FinanzasClient() {
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
-        .fp-card-ingreso .fp-card-icon  { background: rgba(46,213,115,0.25); color: #2ed573; }
-        .fp-card-egreso  .fp-card-icon  { background: rgba(255,107,107,0.25); color: #ff6b6b; }
-        .fp-card-balance-pos .fp-card-icon { background: rgba(251,192,45,0.25); color: #FBC02D; }
-        .fp-card-balance-neg .fp-card-icon { background: rgba(255,107,107,0.25); color: #ff6b6b; }
+        .fp-card-ingreso .fp-card-icon  { background: rgba(46,213,115,0.2); color: #2ed573; }
+        .fp-card-egreso  .fp-card-icon  { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+        .fp-card-balance-pos .fp-card-icon { background: rgba(251,192,45,0.2); color: #FBC02D; }
+        .fp-card-balance-neg .fp-card-icon { background: rgba(255,107,107,0.2); color: #ff6b6b; }
         .fp-card-label {
           display: block;
           font-size: 0.72rem;
-          color: rgba(255,255,255,0.65);
+          color: var(--text-500);
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -372,7 +370,7 @@ export default function FinanzasClient() {
           display: block;
           font-size: 1.1rem;
           font-weight: 800;
-          color: #fff;
+          color: var(--text-100);
         }
 
         /* Filtros */
@@ -385,19 +383,19 @@ export default function FinanzasClient() {
         .fp-filter-btn {
           padding: 7px 16px;
           border-radius: 20px;
-          border: 1.5px solid rgba(255,255,255,0.25);
-          background: transparent;
-          color: rgba(255,255,255,0.7);
+          border: 1.5px solid var(--border);
+          background: var(--bg-800);
+          color: var(--text-400);
           font-size: 0.85rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
         }
-        .fp-filter-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .fp-filter-btn:hover { background: var(--bg-700); color: var(--text-100); }
         .fp-filter-btn.active {
-          background: #fff;
-          color: #B71C1C;
-          border-color: #fff;
+          background: var(--bg-600);
+          color: var(--text-100);
+          border-color: var(--border-hover);
         }
         .fp-filter-ingreso.active { background: #2ed573; color: #fff; border-color: #2ed573; }
         .fp-filter-egreso.active  { background: #ff6b6b; color: #fff; border-color: #ff6b6b; }
