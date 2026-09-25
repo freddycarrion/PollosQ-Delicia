@@ -42,6 +42,7 @@ interface Producto {
   imagen_url: string | null;
   disponible: boolean;
   requiere_presas: boolean;
+  tipo_presas: 'pierna_contra' | 'pecho_ala' | null;
 }
 
 interface ItemPedido {
@@ -1049,6 +1050,7 @@ export default function PosClient({
           <PresasModal
             nombreProducto={presasModalProducto.nombre}
             precio={getPrecioUnitario(presasModalProducto)}
+            tipoPresasFijo={presasModalProducto.tipo_presas ?? null}
             onConfirmar={handlePresasConfirmar}
             onCancelar={() => setPresasModalProducto(null)}
           />

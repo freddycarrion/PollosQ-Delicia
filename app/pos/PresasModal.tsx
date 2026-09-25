@@ -32,6 +32,7 @@ export interface SeleccionPremiun {
 interface Props {
   nombreProducto: string
   precio?: number
+  tipoPresasFijo?: 'pierna_contra' | 'pecho_ala' | null  // Campo fijo de BD, tiene prioridad sobre nombre/precio
   onConfirmar: (seleccion: SeleccionPremiun, tipo: 'mesa' | 'llevar' | 'consumo_interno') => void
   onCancelar: () => void
 }
@@ -70,7 +71,7 @@ export function detectarTipoBroasterSpiedo(
   return null
 }
 
-export default function PresasModal({ nombreProducto, precio, onConfirmar, onCancelar }: Props) {
+export default function PresasModal({ nombreProducto, precio, tipoPresasFijo, onConfirmar, onCancelar }: Props) {
   const [presasSeleccionadas, setPresasSeleccionadas] = useState<string[]>([])
   const [acompañamientosSeleccionados, setAcompañamientosSeleccionados] = useState<string[]>([])
 
@@ -86,20 +87,27 @@ export default function PresasModal({ nombreProducto, precio, onConfirmar, onCan
     )
   }
 
-  // ── Filtrar presas según nombre o precio ──────────────────────────────────
+  // ── Filtrar presas según campo fijo de BD (prioridad) o nombre/precio (fallback) ──
   let presasA_Mostrar = PRESAS_DISPONIBLES;
   const nombreMinus = nombreProducto.toLowerCase();
   const precioNum = precio !== undefined ? Number(precio) : 0;
 
-  if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
-    // Nombre dice "pierna" o "contra" → solo Pierna y Contra
+  if (tipoPresasFijo === 'pierna_contra') {
+    // Campo fijo: Pierna y Contra (independiente del precio)
+    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
+  } else if (tipoPresasFijo === 'pecho_ala') {
+    // Campo fijo: Pecho y Ala (independiente del precio)
+    presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
+  } else if (nombreMinus.includes('pierna') || nombreMinus.includes('contra')) {
+    // Fallback por nombre
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
   } else if (nombreMinus.includes('pecho') || nombreMinus.includes('pechuga') || nombreMinus.includes('ala')) {
-    // Nombre dice "pecho", "pechuga" o "ala" → solo Pechuga y Ala
+    // Fallback por nombre
     presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))
   } else if (nombreMinus.includes('econom') || nombreMinus.includes('económ')) {
-    // Si es Económico, filtrar por precio
-    if (precioNum <= 14) {
+    // Fallback por precio (solo si no hay campo fijo ni nombre específico)
+    // Pierna/Contra = 17 o menos | Pecho/Ala = 18 o más
+    if (precioNum <= 17) {
       presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pierna') || p.id.includes('contra'))
     } else {
       presasA_Mostrar = PRESAS_DISPONIBLES.filter(p => p.id.includes('pechuga') || p.id.includes('ala'))

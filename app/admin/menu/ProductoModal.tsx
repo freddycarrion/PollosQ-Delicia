@@ -22,6 +22,7 @@ interface Producto {
   disponible: boolean
   orden: number
   requiere_presas: boolean
+  tipo_presas: 'pierna_contra' | 'pecho_ala' | null
 }
 
 interface Props {
@@ -46,6 +47,7 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
     disponible: true,
     orden: 1,
     requiere_presas: false,
+    tipo_presas: null,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploadingExt, setIsUploadingExt] = useState(false)
@@ -65,6 +67,7 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
         disponible: true,
         orden: 1,
         requiere_presas: false,
+        tipo_presas: null,
       })
     }
   }, [productoToEdit, isOpen, categorias])
@@ -136,7 +139,8 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
         imagen_url: formData.imagen_url || null,
         disponible: formData.disponible,
         orden: formData.orden,
-        requiere_presas: formData.requiere_presas
+        requiere_presas: formData.requiere_presas,
+        tipo_presas: formData.requiere_presas ? (formData.tipo_presas ?? null) : null,
       }
 
       if (productoToEdit?.id) {
@@ -329,6 +333,57 @@ export default function ProductoModal({ isOpen, onClose, productoToEdit, categor
               <label htmlFor="chk-presas" style={{ cursor: 'pointer', fontWeight: 600 }}>Requiere elegir presas/acompañamientos</label>
             </div>
           </div>
+
+          {/* Selector de tipo de presas — sólo visible si requiere_presas está activo */}
+          {formData.requiere_presas && (
+            <div className="form-group" style={{ marginTop: '12px', background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+              <label className="form-label" style={{ marginBottom: '10px', display: 'block' }}>🍗 Tipo de Presas Asignadas</label>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-500)', marginBottom: '12px' }}>
+                Selecciona qué presas se ofrecen para este producto. Esto no cambiará aunque modifiques el precio.
+              </p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, tipo_presas: 'pierna_contra' })}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', border: '2px solid',
+                    borderColor: formData.tipo_presas === 'pierna_contra' ? 'var(--red)' : 'var(--border)',
+                    background: formData.tipo_presas === 'pierna_contra' ? 'rgba(211,47,47,0.12)' : 'var(--bg-700)',
+                    color: formData.tipo_presas === 'pierna_contra' ? 'var(--text-100)' : 'var(--text-400)',
+                    fontWeight: 700, cursor: 'pointer', transition: 'var(--transition)'
+                  }}
+                >
+                  🦵 Pierna y Contra
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, tipo_presas: 'pecho_ala' })}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', border: '2px solid',
+                    borderColor: formData.tipo_presas === 'pecho_ala' ? 'var(--red)' : 'var(--border)',
+                    background: formData.tipo_presas === 'pecho_ala' ? 'rgba(211,47,47,0.12)' : 'var(--bg-700)',
+                    color: formData.tipo_presas === 'pecho_ala' ? 'var(--text-100)' : 'var(--text-400)',
+                    fontWeight: 700, cursor: 'pointer', transition: 'var(--transition)'
+                  }}
+                >
+                  🍗 Pecho y Ala
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, tipo_presas: null })}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', border: '2px solid',
+                    borderColor: formData.tipo_presas === null ? 'var(--yellow)' : 'var(--border)',
+                    background: formData.tipo_presas === null ? 'rgba(253,216,53,0.08)' : 'var(--bg-700)',
+                    color: formData.tipo_presas === null ? 'var(--yellow)' : 'var(--text-400)',
+                    fontWeight: 700, cursor: 'pointer', transition: 'var(--transition)'
+                  }}
+                >
+                  🍽️ Todas
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="modal-footer" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
             <button type="button" onClick={onClose} className="btn btn-ghost">Cancelar</button>

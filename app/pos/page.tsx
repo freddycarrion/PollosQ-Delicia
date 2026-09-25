@@ -61,7 +61,7 @@ export default async function PosPage() {
   // Obtener productos disponibles (ordenados por 'orden')
   const { data: productos, error: prodError } = await supabase
     .from('productos')
-    .select('id, categoria_id, nombre, descripcion, precio, precio_oferta, en_oferta, imagen_url, disponible, requiere_presas')
+    .select('id, categoria_id, nombre, descripcion, precio, precio_oferta, en_oferta, imagen_url, disponible, requiere_presas, tipo_presas')
     .eq('disponible', true)
     .order('orden', { ascending: true })
 

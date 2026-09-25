@@ -123,6 +123,7 @@ export interface Producto {
   disponible: boolean
   orden: number
   requiere_presas: boolean       // Si TRUE, solicita presas al agregar al POS
+  tipo_presas: 'pierna_contra' | 'pecho_ala' | null  // Presas fijas sin depender del precio
   created_at: string
   updated_at: string
   // Relaciones
