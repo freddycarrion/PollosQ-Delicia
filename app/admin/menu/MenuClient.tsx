@@ -30,6 +30,7 @@ interface Producto {
   disponible: boolean
   orden: number
   requiere_presas: boolean
+  tipo_presas: 'pierna_contra' | 'pecho_ala' | null
   categorias: { nombre: string }
 }
 
