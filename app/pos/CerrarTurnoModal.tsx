@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { X, Lock, CheckCircle2 } from 'lucide-react'
@@ -16,10 +16,31 @@ interface Props {
 
 export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombre, cajeroRol }: Props) {
   const [cargando, setCargando] = useState(false)
+  const [datosTurno, setDatosTurno] = useState<{ apertura: number; ventas: number } | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
+  // Cargar datos al abrir
+  useEffect(() => {
+    if (isOpen) {
+      supabase.from('turnos').select('monto_apertura, total_efectivo').eq('id', turnoId).single()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setDatosTurno({
+              apertura: data.monto_apertura || 0,
+              ventas: data.total_efectivo || 0
+            })
+          }
+        })
+    } else {
+      setDatosTurno(null)
+    }
+  }, [isOpen, turnoId, supabase])
+
   if (!isOpen) return null
+
+  const esperado = datosTurno ? datosTurno.apertura + datosTurno.ventas : 0
+  const fmt = (n: number) => new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(n)
 
   async function handleCerrar(e: React.FormEvent) {
     e.preventDefault()
@@ -31,17 +52,17 @@ export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombr
 
       if (!userId) throw new Error("No autenticado")
 
-      // Calcular cierre exacto
+      // Calcular cierre exacto nuevamente por seguridad
       const { data: turno } = await supabase.from('turnos')
         .select('monto_apertura, total_efectivo')
         .eq('id', turnoId).single()
       
-      const esperado = (turno?.monto_apertura || 0) + (turno?.total_efectivo || 0)
+      const cierreFinal = (turno?.monto_apertura || 0) + (turno?.total_efectivo || 0)
 
       // Cerrar Turno automáticamente cuadrado
       const { error } = await supabase.from('turnos').update({
         estado: 'cerrado',
-        monto_cierre: esperado,
+        monto_cierre: cierreFinal,
         fecha_cierre: new Date().toISOString()
       }).eq('id', turnoId)
 
@@ -52,7 +73,7 @@ export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombr
         usuario_origen_id: userId,
         rol_origen: cajeroRol,
         tipo: 'caja',
-        mensaje: `El/La Cajero(a) ${cajeroNombre} acaba de CERRAR su caja y terminar su turno.`
+        mensaje: `El/La Cajero(a) ${cajeroNombre} acaba de CERRAR su caja y terminar su turno con Bs. ${fmt(cierreFinal)}.`
       })
 
       toast.success('Turno cerrado correctamente')
@@ -86,14 +107,33 @@ export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombr
             <h3 style={{ margin: '0 0 12px', fontSize: '1.2rem', color: 'var(--text-100)' }}>
               ¿Finalizar turno de caja?
             </h3>
-            <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
-              Esta acción declarará la caja como cerrada y enviará una notificación instantánea de control a Administración. El arqueo final se realizará automáticamente mediante el sistema.
+            <p style={{ color: 'var(--text-400)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0, marginBottom: '20px' }}>
+              Esta acción declarará la caja como cerrada. Debes contar tu efectivo y asegurarte de tener el monto exacto antes de continuar.
             </p>
+
+            {datosTurno ? (
+              <div style={{ background: 'var(--bg-900)', borderRadius: '8px', padding: '16px', textAlign: 'left', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-400)', fontSize: '0.9rem' }}>
+                  <span>Monto de Apertura:</span>
+                  <span>Bs. {fmt(datosTurno.apertura)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: 'var(--text-400)', fontSize: '0.9rem' }}>
+                  <span>Ventas en Efectivo:</span>
+                  <span>+ Bs. {fmt(datosTurno.ventas)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '12px', color: 'var(--text-100)', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                  <span>Total Exacto a Entregar:</span>
+                  <span style={{ color: 'var(--green)' }}>Bs. {fmt(esperado)}</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: 'var(--text-500)', fontSize: '0.9rem' }}>Calculando montos...</div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             <button type="button" onClick={onClose} disabled={cargando} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
-            <button type="submit" disabled={cargando} className="btn btn-primary" style={{ flex: 1, background: 'var(--red)', borderColor: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <button type="submit" disabled={cargando || !datosTurno} className="btn btn-primary" style={{ flex: 1, background: 'var(--red)', borderColor: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               {cargando ? 'Cerrando...' : <><CheckCircle2 size={18} /> Confirmar Cierre</>}
             </button>
           </div>
