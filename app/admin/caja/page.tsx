@@ -78,6 +78,7 @@ export default async function CajaAdminPage() {
               <th>Apertura / Cierre</th>
               <th className="text-right">Monto Inicial</th>
               <th className="text-right">Ventas Efectivo</th>
+              <th className="text-right">Ventas QR</th>
               <th className="text-right">Monto Cierre</th>
             </tr>
           </thead>
@@ -88,6 +89,7 @@ export default async function CajaAdminPage() {
               
               const base = turno.monto_apertura || 0
               const ventasEfectivo = turno.total_efectivo || 0
+              const ventasQR = turno.total_qr || 0
               const montoCierre = base + ventasEfectivo
 
               const isAbierto = turno.estado === 'abierto'
@@ -134,6 +136,9 @@ export default async function CajaAdminPage() {
                   
                   <td className="text-right font-mono" style={{ color: 'var(--text-200)' }}>
                     Bs. {fmt(ventasEfectivo)}
+                  </td>
+                  <td className="text-right font-mono" style={{ color: 'var(--text-200)' }}>
+                    Bs. {fmt(ventasQR)}
                   </td>
                   
                   <td className="text-right font-mono font-bold" style={{ color: 'var(--text-100)' }}>
