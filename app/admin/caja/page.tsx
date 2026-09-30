@@ -107,10 +107,20 @@ export default async function CajaAdminPage() {
                     )}
                   </td>
                   <td className="text-sm text-gray font-mono">
-                    <div>{new Date(turno.fecha_apertura).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+                    <div>
+                      {(() => {
+                        const d = new Date(turno.fecha_apertura); d.setHours(d.getUTCHours() - 4);
+                        const horas = d.getUTCHours();
+                        return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${String(d.getUTCFullYear()).slice(-2)}, ${horas % 12 || 12}:${String(d.getUTCMinutes()).padStart(2,'0')} ${horas >= 12 ? 'p.m.' : 'a.m.'}`;
+                      })()}
+                    </div>
                     {!isAbierto && turno.fecha_cierre && (
                       <div style={{ color: 'var(--text-500)', fontSize: '0.75rem', marginTop: '2px' }}>
-                        {new Date(turno.fecha_cierre).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}
+                        {(() => {
+                          const d = new Date(turno.fecha_cierre); d.setHours(d.getUTCHours() - 4);
+                          const horas = d.getUTCHours();
+                          return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${String(d.getUTCFullYear()).slice(-2)}, ${horas % 12 || 12}:${String(d.getUTCMinutes()).padStart(2,'0')} ${horas >= 12 ? 'p.m.' : 'a.m.'}`;
+                        })()}
                       </div>
                     )}
                   </td>
