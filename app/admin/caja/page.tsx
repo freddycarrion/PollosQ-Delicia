@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Clock, CheckCircle2, AlertCircle, DollarSign, Wallet } from 'lucide-react'
 
+export const dynamic = "force-dynamic";
 export default async function CajaAdminPage() {
   const supabase = await createClient()
 
