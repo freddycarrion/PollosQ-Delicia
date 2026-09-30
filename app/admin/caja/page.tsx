@@ -90,7 +90,7 @@ export default async function CajaAdminPage() {
               const base = turno.monto_apertura || 0
               const ventasEfectivo = turno.total_efectivo || 0
               const ventasQR = turno.total_qr || 0
-              const montoCierre = base + ventasEfectivo
+              const montoCierre = base + ventasEfectivo + ventasQR
 
               const isAbierto = turno.estado === 'abierto'
 
