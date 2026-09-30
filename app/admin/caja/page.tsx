@@ -74,11 +74,10 @@ export default async function CajaAdminPage() {
               <th>Empleado</th>
               <th>Sucursal</th>
               <th>Estado</th>
-              <th>Apertura</th>
+              <th>Apertura / Cierre</th>
               <th className="text-right">Monto Inicial</th>
-              <th className="text-right">Efectivo Total</th>
-              <th className="text-right">Cierre Físico</th>
-              <th className="text-right">Diferencia</th>
+              <th className="text-right">Ventas Efectivo</th>
+              <th className="text-right">Monto Cierre</th>
             </tr>
           </thead>
           <tbody>
@@ -88,13 +87,9 @@ export default async function CajaAdminPage() {
               
               const base = turno.monto_apertura || 0
               const ventasEfectivo = turno.total_efectivo || 0
-              const cajaEsperada = base + ventasEfectivo
-              
-              const cajaFisica = turno.monto_cierre || 0
-              const diferencia = cajaFisica - cajaEsperada
+              const montoCierre = base + ventasEfectivo
 
               const isAbierto = turno.estado === 'abierto'
-              const difColor = isAbierto ? 'var(--text-400)' : diferencia < 0 ? 'var(--red)' : diferencia > 0 ? 'var(--yellow)' : '#4CAF50'
 
               return (
                 <tr key={turno.id}>
@@ -112,7 +107,12 @@ export default async function CajaAdminPage() {
                     )}
                   </td>
                   <td className="text-sm text-gray font-mono">
-                    {new Date(turno.fecha_apertura).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}
+                    <div>{new Date(turno.fecha_apertura).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+                    {!isAbierto && turno.fecha_cierre && (
+                      <div style={{ color: 'var(--text-500)', fontSize: '0.75rem', marginTop: '2px' }}>
+                        {new Date(turno.fecha_cierre).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}
+                      </div>
+                    )}
                   </td>
                   
                   <td className="text-right font-mono font-bold" style={{ color: 'var(--text-100)' }}>
@@ -122,31 +122,15 @@ export default async function CajaAdminPage() {
                   </td>
                   
                   <td className="text-right font-mono" style={{ color: 'var(--text-200)' }}>
-                  
-                    Bs. {fmt(cajaEsperada)}
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-500)', marginTop: '2px' }}>
-                      (Base: {fmt(base)} + Ventas: {fmt(ventasEfectivo)})
-                    </div>
+                    Bs. {fmt(ventasEfectivo)}
                   </td>
                   
-                  <td className="text-right font-mono font-bold">
-                    {isAbierto ? '--' : `Bs. ${fmt(cajaFisica)}`}
-                  </td>
-
-                  <td className="text-right font-mono font-bold">
-                     {isAbierto ? (
-                        <span style={{ color: 'var(--text-500)' }}>En curso</span>
-                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', color: difColor }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {diferencia < 0 ? <AlertCircle size={14}/> : diferencia === 0 ? <CheckCircle2 size={14}/> : null}
-                            {diferencia > 0 ? '+' : ''}{fmt(diferencia)}
-                          </span>
-                          {diferencia < 0 && <span style={{ fontSize: '0.7rem', fontWeight: 500 }}>Faltante</span>}
-                          {diferencia > 0 && <span style={{ fontSize: '0.7rem', fontWeight: 500 }}>Sobrante</span>}
-                          {diferencia === 0 && <span style={{ fontSize: '0.7rem', fontWeight: 500 }}>Cuadre Perfecto</span>}
-                        </div>
-                     )}
+                  <td className="text-right font-mono font-bold" style={{ color: 'var(--text-100)' }}>
+                    {isAbierto ? (
+                      <span style={{ color: 'var(--text-500)' }}>En curso</span>
+                    ) : (
+                      <span style={{ color: 'var(--green)' }}>Bs. {fmt(montoCierre)}</span>
+                    )}
                   </td>
                 </tr>
               )
