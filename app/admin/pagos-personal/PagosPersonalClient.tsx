@@ -159,11 +159,17 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   const empleadosPendientes = useMemo(() => {
     const pendientes = pagos.filter(p => p.estado === 'pendiente')
     const grouped = pendientes.reduce((acc, p) => {
-      const id = p.empleado_id || p.nombre_empleado // Agrupar por ID si existe, sino por nombre
-      if (!acc[id]) acc[id] = { nombre: p.nombre_empleado, total: 0, count: 0, ids: [] }
-      acc[id].total += Number(p.monto)
-      acc[id].count += 1
-      acc[id].ids.push(p.id)
+      // Clave única: priorizar IDs reales. Si no hay ninguno, usar el nombre guardado.
+      // Esto evita que empleados de personal_operativo (empleado_id=null) colisionen entre sí.
+      const key = (p as any).personal_operativo_id
+        ? `op_${(p as any).personal_operativo_id}`
+        : p.empleado_id
+          ? `per_${p.empleado_id}`
+          : `nombre_${p.nombre_empleado}`
+      if (!acc[key]) acc[key] = { nombre: p.nombre_empleado, total: 0, count: 0, ids: [] }
+      acc[key].total += Number(p.monto)
+      acc[key].count += 1
+      acc[key].ids.push(p.id)
       return acc
     }, {} as Record<string, { nombre: string, total: number, count: number, ids: string[] }>)
     return Object.values(grouped)
@@ -441,8 +447,8 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {empleadosPendientes.map(emp => (
-                    <div key={emp.nombre} style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  {empleadosPendientes.map((emp, idx) => (
+                    <div key={`${emp.nombre}_${idx}`} style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
                         <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-100)' }}>{emp.nombre}</div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-400)', marginTop: '4px' }}>
