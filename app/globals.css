@@ -674,3 +674,20 @@ ul, ol {
 }
 
 
+/* ============================================================
+   SELECT OPTION — colores adaptativos por tema
+   Los <option> nativos no respetan CSS variables en todos los
+   navegadores, así que forzamos los colores por clase de tema.
+   ============================================================ */
+
+/* Tema claro: fondo blanco, texto oscuro */
+select option {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+/* Tema oscuro: fondo oscuro, texto claro */
+:root.dark select option {
+  background-color: #1E2128;
+  color: #F9FAFB;
+}
