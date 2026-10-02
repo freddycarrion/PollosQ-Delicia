@@ -48,7 +48,7 @@ BEGIN
   ON CONFLICT (sucursal_id)
   DO UPDATE SET ultimo_numero =
     CASE
-      WHEN contador_tickets.ultimo_numero >= 99 THEN 1
+      WHEN contador_tickets.ultimo_numero >= 100 THEN 1
       ELSE contador_tickets.ultimo_numero + 1
     END
   RETURNING ultimo_numero INTO v_numero;
