@@ -464,7 +464,7 @@ export default function FinanzasClient() {
           font-family: inherit;
           text-transform: capitalize;
         }
-        .fp-mes-select option { background: #1a1a2e; color: #fff; }
+        .fp-mes-select option { /* usar colores del sistema del navegador */ }
 
         /* Lista */
         .fp-list {

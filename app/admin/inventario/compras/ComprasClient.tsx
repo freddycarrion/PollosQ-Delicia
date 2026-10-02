@@ -108,16 +108,16 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
           <select
             value={filtroMes}
             onChange={e => setFiltroMes(e.target.value)}
-            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-100)', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'inherit', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            <option value="" style={{ background: '#1a1a2e' }}>📅 Todos los meses</option>
+            <option value="">📅 Todos los meses</option>
             {Array.from({ length: 12 }, (_, i) => {
               const d = new Date()
               d.setDate(1)
               d.setMonth(d.getMonth() - i)
               const val   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
               const label = d.toLocaleDateString('es-BO', { month: 'long', year: 'numeric' })
-              return <option key={val} value={val} style={{ background: '#1a1a2e' }}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>
+              return <option key={val} value={val}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>
             })}
           </select>
         </div>
