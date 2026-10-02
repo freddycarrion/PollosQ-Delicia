@@ -43,6 +43,10 @@ export default function FinanzasClient() {
   const [saving, setSaving]         = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'ingreso' | 'egreso'>('todos')
+  const [filtroMes, setFiltroMes]   = useState<string>(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
   const [error, setError]           = useState('')
 
   const fetchRegistros = useCallback(async () => {
@@ -92,13 +96,24 @@ export default function FinanzasClient() {
     setRegistros(prev => prev.filter(r => r.id !== id))
   }
 
-  const filtrados = filtroTipo === 'todos'
-    ? registros
-    : registros.filter(r => r.tipo === filtroTipo)
+  // Registros del mes seleccionado
+  const registrosMes = filtroMes
+    ? registros.filter(r => r.fecha.slice(0, 7) === filtroMes)
+    : registros
 
-  const totalIngresos = registros.filter(r => r.tipo === 'ingreso').reduce((s, r) => s + r.monto, 0)
-  const totalEgresos  = registros.filter(r => r.tipo === 'egreso').reduce((s, r) => s + r.monto, 0)
+  const filtrados = registrosMes.filter(r =>
+    filtroTipo === 'todos' ? true : r.tipo === filtroTipo
+  )
+
+  // KPIs reflejan el mes seleccionado
+  const totalIngresos = registrosMes.filter(r => r.tipo === 'ingreso').reduce((s, r) => s + r.monto, 0)
+  const totalEgresos  = registrosMes.filter(r => r.tipo === 'egreso').reduce((s, r) => s + r.monto, 0)
   const balance       = totalIngresos - totalEgresos
+
+  // Label del mes para mostrar en el selector
+  const mesLabel = filtroMes
+    ? new Date(filtroMes + '-15').toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
+    : 'Todos los meses'
 
   function fmtMonto(n: number) {
     return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
@@ -157,6 +172,26 @@ export default function FinanzasClient() {
             {f === 'todos' ? 'Todos' : f === 'ingreso' ? 'Ingresos' : 'Egresos'}
           </button>
         ))}
+
+        {/* Filtro por mes */}
+        <div className="fp-mes-selector">
+          <Calendar size={14} />
+          <select
+            value={filtroMes}
+            onChange={e => setFiltroMes(e.target.value)}
+            className="fp-mes-select"
+          >
+            {/* Generar opciones: mes actual + 11 meses anteriores */}
+            {Array.from({ length: 12 }, (_, i) => {
+              const d = new Date()
+              d.setDate(1)
+              d.setMonth(d.getMonth() - i)
+              const val   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+              const label = d.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
+              return <option key={val} value={val}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>
+            })}
+          </select>
+        </div>
       </div>
 
       {/* Lista */}
@@ -379,6 +414,7 @@ export default function FinanzasClient() {
           gap: 8px;
           margin-bottom: 16px;
           flex-wrap: wrap;
+          align-items: center;
         }
         .fp-filter-btn {
           padding: 7px 16px;
@@ -399,6 +435,38 @@ export default function FinanzasClient() {
         }
         .fp-filter-ingreso.active { background: #2ed573; color: #fff; border-color: #2ed573; }
         .fp-filter-egreso.active  { background: #ff6b6b; color: #fff; border-color: #ff6b6b; }
+
+        /* Selector de mes */
+        .fp-mes-selector {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-left: auto;
+          background: var(--bg-800);
+          border: 1.5px solid var(--border);
+          border-radius: 20px;
+          padding: 5px 14px;
+          color: var(--text-400);
+          font-size: 0.85rem;
+          font-weight: 600;
+          transition: border-color 0.2s;
+        }
+        .fp-mes-selector:focus-within {
+          border-color: var(--border-hover);
+          color: var(--text-100);
+        }
+        .fp-mes-select {
+          background: transparent;
+          border: none;
+          outline: none;
+          color: inherit;
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: inherit;
+          text-transform: capitalize;
+        }
+        .fp-mes-select option { background: #1a1a2e; color: #fff; }
 
         /* Lista */
         .fp-list {
