@@ -43,10 +43,7 @@ export default function FinanzasClient() {
   const [saving, setSaving]         = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'ingreso' | 'egreso'>('todos')
-  const [filtroMes, setFiltroMes]   = useState<string>(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  })
+  const [filtroMes, setFiltroMes]   = useState<string>('')
   const [error, setError]           = useState('')
 
   const fetchRegistros = useCallback(async () => {
@@ -181,6 +178,7 @@ export default function FinanzasClient() {
             onChange={e => setFiltroMes(e.target.value)}
             className="fp-mes-select"
           >
+            <option value="">📅 Todos los meses</option>
             {/* Generar opciones: mes actual + 11 meses anteriores */}
             {Array.from({ length: 12 }, (_, i) => {
               const d = new Date()

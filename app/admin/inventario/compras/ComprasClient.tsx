@@ -48,10 +48,7 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filtroMes, setFiltroMes] = useState<string>(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  })
+  const [filtroMes, setFiltroMes] = useState<string>('')
 
   const handleSuccess = (nuevaCompra: any) => {
     // Optimistic UI: agregamos la nueva compra al instante
@@ -113,6 +110,7 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
             onChange={e => setFiltroMes(e.target.value)}
             style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-100)', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
           >
+            <option value="" style={{ background: '#1a1a2e' }}>📅 Todos los meses</option>
             {Array.from({ length: 12 }, (_, i) => {
               const d = new Date()
               d.setDate(1)
