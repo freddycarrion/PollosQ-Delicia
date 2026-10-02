@@ -48,6 +48,10 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filtroMes, setFiltroMes] = useState<string>(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
 
   const handleSuccess = (nuevaCompra: any) => {
     // Optimistic UI: agregamos la nueva compra al instante
@@ -62,6 +66,9 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
   }
 
   const filteredCompras = compras.filter(c => {
+    // Filtro por mes
+    if (filtroMes && c.fecha_compra.slice(0, 7) !== filtroMes) return false
+    // Filtro por búsqueda de texto
     if (!searchTerm) return true
     const term = searchTerm.toLowerCase()
     return (
@@ -71,12 +78,14 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
     )
   })
 
+  const totalFiltrado = filteredCompras.reduce((sum, c) => sum + Number(c.total), 0)
+
   return (
     <div className="compras-client animate-fade-in">
-      <div className="toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+      <div className="toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
         
         {/* Buscador */}
-        <div className="search-box" style={{ position: 'relative', flex: 1, minWidth: '250px', maxWidth: '400px' }}>
+        <div className="search-box" style={{ position: 'relative', flex: 1, minWidth: '220px', maxWidth: '380px' }}>
           <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-500)' }} />
           <input 
             type="text" 
@@ -96,6 +105,25 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
           />
         </div>
 
+        {/* Filtro por mes */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-900)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '0 16px', height: '46px' }}>
+          <Calendar size={16} style={{ color: 'var(--text-400)', flexShrink: 0 }} />
+          <select
+            value={filtroMes}
+            onChange={e => setFiltroMes(e.target.value)}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-100)', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            {Array.from({ length: 12 }, (_, i) => {
+              const d = new Date()
+              d.setDate(1)
+              d.setMonth(d.getMonth() - i)
+              const val   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+              const label = d.toLocaleDateString('es-BO', { month: 'long', year: 'numeric' })
+              return <option key={val} value={val} style={{ background: '#1a1a2e' }}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>
+            })}
+          </select>
+        </div>
+
         <button 
           className="btn btn-primary" 
           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', fontSize: '0.95rem' }}
@@ -103,6 +131,16 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
         >
           <Plus size={18} /> Registrar Nueva Compra
         </button>
+      </div>
+
+      {/* Resumen del mes */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 20px', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <span style={{ color: 'var(--text-400)', fontSize: '0.9rem', fontWeight: 600 }}>
+          {filteredCompras.length} compra{filteredCompras.length !== 1 ? 's' : ''} en el período
+        </span>
+        <span style={{ color: '#4CAF50', fontWeight: 900, fontSize: '1.15rem', fontFamily: 'monospace' }}>
+          Total invertido: {totalFiltrado.toFixed(2)} Bs
+        </span>
       </div>
 
       <div className="compras-stack" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
