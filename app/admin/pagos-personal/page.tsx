@@ -31,8 +31,8 @@ export default async function PagosPersonalPage({ searchParams }: PageProps) {
   const { data: pagos } = await supabase
     .from('pagos_personal')
     .select(`
-      id, sucursal_id, empleado_id, registrado_por, nombre_empleado,
-      concepto, periodo, monto, fecha_pago, observaciones, created_at,
+      id, sucursal_id, empleado_id, personal_operativo_id, registrado_por, nombre_empleado,
+      concepto, periodo, monto, fecha_pago, estado, fecha_pagado, observaciones, created_at,
       sucursales(nombre)
     `)
     .gte('fecha_pago', desdeStr)
