@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import ReportesClient from './ReportesClient'
 import { LineChart } from 'lucide-react'
 
@@ -33,6 +34,15 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   dateHasta.setUTCDate(dateHasta.getUTCDate() + 1)
   const hastaStrSig = dateHasta.toISOString().split('T')[0]
   const hasta = `${hastaStrSig}T04:59:59-04:00`
+
+  // Client Admin para omitir limitaciones RLS y permitir relaciones
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: perfil } = user ? await adminClient.from('perfiles').select('rol, sucursal_id').eq('id', user.id).single() : { data: null }
 
   // 2. Ventas del período filtrado
   const { data: ventas } = await supabase
@@ -75,23 +85,35 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
     .order('created_at', { ascending: true })
 
   // 6. Compras del período
-  const { data: compras } = await supabase
+  let comprasQuery = adminClient
     .from('compras')
     .select(`
       id, fecha_compra, total, numero_factura, observaciones,
       proveedores(nombre), sucursales(nombre),
-      perfiles!compras_registrado_por_fkey(nombre, apellido)
+      perfiles(nombre, apellido)
     `)
     .gte('fecha_compra', desdeStr)
     .lte('fecha_compra', hastaStr)
     .order('fecha_compra', { ascending: false })
 
+  if (perfil?.rol === 'supervisor' && perfil.sucursal_id) {
+    comprasQuery = comprasQuery.eq('sucursal_id', perfil.sucursal_id)
+  }
+
+  const { data: compras, error: errorCompras } = await comprasQuery
+  if (errorCompras) {
+    console.error("Error al obtener compras en reportes:", errorCompras)
+  }
+
   // 7. Pagos de Personal del período
-  const { data: pagosPersonal } = await supabase
+  const { data: pagosPersonal, error: errorPagos } = await adminClient
     .from('pagos_personal')
     .select('monto, fecha_pago, periodo')
     .gte('fecha_pago', desdeStr)
     .lte('fecha_pago', hastaStr)
+  if (errorPagos) {
+    console.error("Error al obtener pagos_personal en reportes:", errorPagos)
+  }
 
   // ─── Procesamiento local ──────────────────────────────────────────────
 
