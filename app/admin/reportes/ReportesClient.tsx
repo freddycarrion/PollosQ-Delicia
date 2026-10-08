@@ -50,6 +50,55 @@ export default function ReportesClient({
 
   const handleFiltrar = () => router.push(`/admin/reportes?desde=${desde}&hasta=${hasta}`)
 
+  const handleSelectMes = (yearMonthStr: string) => {
+    if (!yearMonthStr) return
+    const [y, m] = yearMonthStr.split('-').map(Number)
+    const startDate = `${y}-${String(m).padStart(2, '0')}-01`
+    const lastDayNum = new Date(y, m, 0).getDate()
+    const endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`
+    setDesde(startDate)
+    setHasta(endDate)
+    router.push(`/admin/reportes?desde=${startDate}&hasta=${endDate}`)
+  }
+
+  const handlePreset = (key: string) => {
+    const now = new Date()
+    let d = desde
+    let h = hasta
+
+    if (key === 'este_mes') {
+      const y = now.getFullYear()
+      const m = now.getMonth() + 1
+      d = `${y}-${String(m).padStart(2, '0')}-01`
+      const lastDay = new Date(y, m, 0).getDate()
+      h = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    } else if (key === 'mes_anterior') {
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const y = prev.getFullYear()
+      const m = prev.getMonth() + 1
+      d = `${y}-${String(m).padStart(2, '0')}-01`
+      const lastDay = new Date(y, m, 0).getDate()
+      h = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    } else if (key === 'ultimos_3_meses') {
+      const past = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+      const y = past.getFullYear()
+      const m = past.getMonth() + 1
+      d = `${y}-${String(m).padStart(2, '0')}-01`
+      const hY = now.getFullYear()
+      const hM = now.getMonth() + 1
+      const lastDay = new Date(hY, hM, 0).getDate()
+      h = `${hY}-${String(hM).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    } else if (key === 'este_ano') {
+      const y = now.getFullYear()
+      d = `${y}-01-01`
+      h = `${y}-12-31`
+    }
+
+    setDesde(d)
+    setHasta(h)
+    router.push(`/admin/reportes?desde=${d}&hasta=${h}`)
+  }
+
   // ─── Datos Tab Resumen ────────────────────────────────────────────────
   const dailyChartData = useMemo(() => {
     const dict: Record<string, any> = {}
@@ -109,25 +158,67 @@ export default function ReportesClient({
         ))}
       </div>
 
-      {/* ── Toolbar de Fechas (solo para tabs que lo necesitan) ─── */}
-      {(activeTab === 'resumen' || activeTab === 'compras') && (
-        <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'var(--bg-800)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+      {/* ── Toolbar de Fechas y Filtros de Mes (Disponible en todos los tabs) ─── */}
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'var(--bg-800)', padding: '16px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+        
+        {/* Selector Rápido por Mes */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-400)' }}>
-            <CalIcon size={18}/> <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Período:</span>
+            <CalIcon size={18} style={{ color: 'var(--yellow)' }} /> 
+            <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>Filtrar por Mes:</span>
           </div>
+
+          <select
+            onChange={e => handleSelectMes(e.target.value)}
+            style={{
+              background: 'var(--bg-900)',
+              border: '1px solid var(--border)',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              color: 'var(--text-100)',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>📅 Seleccionar Mes...</option>
+            {Array.from({ length: 12 }, (_, i) => {
+              const d = new Date()
+              d.setDate(1)
+              d.setMonth(d.getMonth() - i)
+              const val   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+              const label = d.toLocaleDateString('es-BO', { month: 'long', year: 'numeric' })
+              return <option key={val} value={val}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>
+            })}
+          </select>
+
+          {/* Presets de Período */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <button onClick={() => handlePreset('este_mes')} className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, border: '1px solid var(--border)', background: 'var(--bg-900)' }}>Este Mes</button>
+            <button onClick={() => handlePreset('mes_anterior')} className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, border: '1px solid var(--border)', background: 'var(--bg-900)' }}>Mes Anterior</button>
+            <button onClick={() => handlePreset('ultimos_3_meses')} className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, border: '1px solid var(--border)', background: 'var(--bg-900)' }}>Últimos 3 Meses</button>
+            <button onClick={() => handlePreset('este_ano')} className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, border: '1px solid var(--border)', background: 'var(--bg-900)' }}>Año {new Date().getFullYear()}</button>
+          </div>
+        </div>
+
+        {/* Controles de Fecha Desde / Hasta */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {[{ key: 'desde', val: desde, set: setDesde }, { key: 'hasta', val: hasta, set: setHasta }].map(f => (
-            <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-500)', fontWeight: 700, textTransform: 'uppercase' }}>{f.key === 'desde' ? 'Desde' : 'Hasta'}</label>
+            <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-500)', fontWeight: 800, textTransform: 'uppercase' }}>{f.key === 'desde' ? 'Desde' : 'Hasta'}</label>
               <input type="date" value={f.val} onChange={e => f.set(e.target.value)}
-                style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none' }} />
+                style={{ background: 'var(--bg-900)', border: '1px solid var(--border)', padding: '6px 10px', borderRadius: '8px', color: 'var(--text-100)', outline: 'none', fontSize: '0.85rem' }} />
             </div>
           ))}
-          <button onClick={handleFiltrar} className="btn btn-primary" style={{ padding: '8px 20px', height: '42px', fontWeight: 700 }}>Aplicar</button>
-          <button onClick={() => window.print()} className="btn btn-ghost" style={{ padding: '8px 14px', height: '42px', display: 'flex', gap: '8px', alignItems: 'center', border: '1px solid var(--border)' }}>
+          <button onClick={handleFiltrar} className="btn btn-primary" style={{ padding: '8px 18px', height: '36px', fontWeight: 800, marginTop: '14px' }}>Aplicar</button>
+          <button onClick={() => window.print()} className="btn btn-ghost" style={{ padding: '8px 12px', height: '36px', display: 'flex', gap: '6px', alignItems: 'center', border: '1px solid var(--border)', marginTop: '14px' }}>
             <Printer size={16}/> PDF
           </button>
         </div>
-      )}
+
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════
           TAB 1: RESUMEN GENERAL

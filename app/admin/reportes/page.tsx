@@ -74,13 +74,16 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
     .lte('ventas.created_at', hasta)
     .eq('ventas.estado', 'completada')
 
-  // 5. Ventas históricas mensuales (últimos 12 meses, sin filtro de fecha)
+  // 5. Ventas históricas mensuales (según filtro o últimos 12 meses)
   const doceAgo = new Date()
   doceAgo.setFullYear(doceAgo.getFullYear() - 1)
+  const fechaDesdeMensual = params.desde ? desde : doceAgo.toISOString()
+
   const { data: ventasHistoricas } = await supabase
     .from('ventas')
     .select('created_at, total, estado')
-    .gte('created_at', doceAgo.toISOString())
+    .gte('created_at', fechaDesdeMensual)
+    .lte('created_at', hasta)
     .eq('estado', 'completada')
     .order('created_at', { ascending: true })
 
