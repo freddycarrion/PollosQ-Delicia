@@ -119,6 +119,8 @@ export default function PresasModal({ nombreProducto, precio, tipoPresasFijo, on
   
   // Ocultar presas para mixta
   const esMixta = nombreMinus.includes('mixta');
+  // La porción mixta permite combinar guarniciones aunque sea una porción.
+  const mostrarAcompañamientos = !esPorcionOPresa || esMixta;
 
   // Mostrar botones de todo broaster / spiedo para entero y medio
   const esEnteroOMedio = nombreMinus.includes('entero') || nombreMinus.includes('medio');
@@ -127,7 +129,7 @@ export default function PresasModal({ nombreProducto, precio, tipoPresasFijo, on
     const tipoSimplificado = detectarTipoBroasterSpiedo(nombreProducto, presasSeleccionadas, presasA_Mostrar)
     onConfirmar({
       presas: presasSeleccionadas.map(id => PRESAS_DISPONIBLES.find(p => p.id === id)!.label),
-      acompañamientos: esPorcionOPresa ? [] : acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label),
+      acompañamientos: mostrarAcompañamientos ? acompañamientosSeleccionados.map(id => ACOMPAÑAMIENTOS_DISPONIBLES.find(a => a.id === id)!.label) : [],
       tipoSimplificado: tipoSimplificado ?? undefined,
     }, tipo)
   }
@@ -198,7 +200,7 @@ export default function PresasModal({ nombreProducto, precio, tipoPresasFijo, on
             </div>
           )}
 
-          {!esPorcionOPresa && (
+          {mostrarAcompañamientos && (
             <>
               {!esMixta && <div className="presas-divider" />}
 
