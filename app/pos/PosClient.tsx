@@ -402,20 +402,42 @@ export default function PosClient({
   };
 
   // ── Confirmar venta ───────────────────────────────────────────────────────
+  const ventaEnProceso = useRef(false);
   const handleConfirmarVenta = async (payload: ConfirmarVentaPayload) => {
+    if (ventaEnProceso.current) return;
+    ventaEnProceso.current = true;
     setIsProcessing(true);
 
     try {
-      // 0. Verificar que el turno sigue activo antes de insertar
+      // Verificar la identidad actual: otra pestaña puede haber cambiado la cuenta.
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        toast.error('No se pudo validar tu sesión. Verifica tu conexión o vuelve a iniciar sesión con el mismo cajero. El pedido se mantiene en esta pantalla.', { duration: 8000 });
+        return;
+      }
+      if (user.id !== cajeroId) {
+        toast.error('La cuenta cambió en otra pestaña. Vuelve a iniciar sesión con el cajero de este pedido antes de cobrar. El pedido se mantiene en esta pantalla.', { duration: 8000 });
+        return;
+      }
+
+      // Verificar también que el turno pertenece al cajero y a la sucursal.
       const { data: turnoActivo, error: turnoCheckError } = await supabase
         .from('turnos')
-        .select('id, estado')
+        .select('id, estado, cajero_id, sucursal_id')
         .eq('id', turnoId)
         .single();
 
-      if (turnoCheckError || !turnoActivo || turnoActivo.estado !== 'abierto') {
-        toast.error('Tu turno fue cerrado. Recargando...', { duration: 4000, icon: '🔒' });
-        setTimeout(() => router.refresh(), 2000);
+      if (turnoCheckError || !turnoActivo) {
+        toast.error('No se pudo verificar el turno. Revisa tu conexión y tu sesión antes de reintentar. El pedido se mantiene.', { duration: 8000 });
+        return;
+      }
+      if (turnoActivo.estado !== 'abierto') {
+        setCajaCerrada(true);
+        toast.error('Tu turno está cerrado. No se registró la venta. El pedido se mantiene.', { duration: 8000 });
+        return;
+      }
+      if (turnoActivo.cajero_id !== user.id || turnoActivo.sucursal_id !== sucursalId) {
+        toast.error('El turno no corresponde al cajero o a la sucursal de esta pantalla. Revisa la cuenta antes de cobrar. El pedido se mantiene.', { duration: 8000 });
         return;
       }
 
@@ -423,7 +445,7 @@ export default function PosClient({
       const totalReal = payload.metodo === 'consumo_interno' ? 0 : totalPedido;
       const ventaData: any = {
         turno_id: turnoId,
-        cajero_id: cajeroId,
+        cajero_id: user.id,
         sucursal_id: sucursalId,
         subtotal: totalReal,
         descuento: 0,
@@ -449,7 +471,14 @@ export default function PosClient({
         .select("id, numero_ticket")
         .single();
 
-      if (ventaError) throw ventaError;
+      if (ventaError) {
+        if (ventaError.code === '42501') {
+          console.error('Permisos rechazados al crear la venta:', ventaError);
+          toast.error('Supabase rechazó el registro por permisos. No se guardó la venta ni se imprimió el ticket. El administrador debe revisar las políticas de ventas. El pedido se mantiene.', { duration: 10000 });
+          return;
+        }
+        throw ventaError;
+      }
 
       // 2. Crear los Detalles de Venta
       // Guardar las notas finales por separado para el ticket
@@ -552,6 +581,7 @@ export default function PosClient({
       console.error(err);
       toast.error("Error al registrar la venta: " + err.message);
     } finally {
+      ventaEnProceso.current = false;
       setIsProcessing(false);
     }
   };
