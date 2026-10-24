@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { createCheckoutClient } from "@/lib/supabase/checkout";
 import { toast } from "react-hot-toast";
 import CobroModal, { ConfirmarVentaPayload, TipoVenta } from "./CobroModal";
 import TicketVenta, { TicketData } from "./TicketVenta";
@@ -409,16 +410,8 @@ export default function PosClient({
     setIsProcessing(true);
 
     try {
-      // Verificar la identidad actual: otra pestaña puede haber cambiado la cuenta.
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        toast.error('No se pudo validar tu sesión. Verifica tu conexión o vuelve a iniciar sesión con el mismo cajero. El pedido se mantiene en esta pantalla.', { duration: 8000 });
-        return;
-      }
-      if (user.id !== cajeroId) {
-        toast.error('La cuenta cambió en otra pestaña. Vuelve a iniciar sesión con el cajero de este pedido antes de cobrar. El pedido se mantiene en esta pantalla.', { duration: 8000 });
-        return;
-      }
+      // Fijar la identidad para todo el cobro, incluidos detalles y stock.
+      const { client: supabase, user } = await createCheckoutClient(createClient(), cajeroId);
 
       // Verificar también que el turno pertenece al cajero y a la sucursal.
       const { data: turnoActivo, error: turnoCheckError } = await supabase
