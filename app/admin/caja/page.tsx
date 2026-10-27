@@ -1,11 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { Clock, CheckCircle2, AlertCircle, DollarSign, Wallet } from 'lucide-react'
+import { leerTotalesTurnos } from '@/lib/supabase/turnos-totales'
+import { turnoSinVentas } from '@/lib/turnos-totales'
+import ActualizarCaja from './ActualizarCaja'
 
 export const dynamic = "force-dynamic";
 export default async function CajaAdminPage() {
   const supabase = await createClient()
 
-  const { data: turnos, error } = await supabase
+  const { data: turnosGuardados, error } = await supabase
     .from('turnos')
     .select(`
       id,
@@ -27,7 +30,13 @@ export default async function CajaAdminPage() {
 
   if (error) {
     console.error("Error cargando caja", error)
+    return <div className="admin-page"><p role="alert">No se pudieron cargar las cajas.</p><ActualizarCaja /></div>
   }
+
+  let totales: Awaited<ReturnType<typeof leerTotalesTurnos>>
+  try { totales = await leerTotalesTurnos(supabase, (turnosGuardados || []).map(t => t.id)) }
+  catch { return <div className="admin-page"><p role="alert">No se pudieron cargar las ventas reales. Actualiza para consultar los montos.</p><ActualizarCaja /></div> }
+  const turnos = (turnosGuardados || []).map(t => ({ ...t, ...(totales[t.id] || turnoSinVentas) }))
 
   const fmt = (n: number | null | undefined) => new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(n || 0)
 
@@ -44,6 +53,7 @@ export default async function CajaAdminPage() {
           </h1>
           <p className="page-subtitle">Controla el flujo de dinero, aperturas y cierres de turno de tus empleados.</p>
         </div>
+        <ActualizarCaja />
       </div>
 
       <div className="stats-grid">
@@ -79,7 +89,7 @@ export default async function CajaAdminPage() {
               <th className="text-right">Monto Inicial</th>
               <th className="text-right">Ventas Efectivo</th>
               <th className="text-right">Ventas QR</th>
-              <th className="text-right">Monto Cierre</th>
+              <th className="text-right">Efectivo esperado al cierre</th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +100,7 @@ export default async function CajaAdminPage() {
               const base = turno.monto_apertura || 0
               const ventasEfectivo = turno.total_efectivo || 0
               const ventasQR = turno.total_qr || 0
-              const montoCierre = base + ventasEfectivo + ventasQR
+              const montoCierre = Number(base) + Number(ventasEfectivo)
 
               const isAbierto = turno.estado === 'abierto'
 
@@ -154,7 +164,7 @@ export default async function CajaAdminPage() {
             
             {turnos?.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center" style={{ padding: '40px', color: 'var(--text-500)' }}>
+                <td colSpan={8} className="text-center" style={{ padding: '40px', color: 'var(--text-500)' }}>
                   No hay turnos registrados en el sistema.
                 </td>
               </tr>

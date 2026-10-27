@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { X, Lock, CheckCircle2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { consultarCierreTurno, cerrarTurnoReal } from './turnos-actions'
 
 interface Props {
   isOpen: boolean
@@ -16,26 +17,27 @@ interface Props {
 
 export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombre, cajeroRol }: Props) {
   const [cargando, setCargando] = useState(false)
-  const [datosTurno, setDatosTurno] = useState<{ apertura: number; ventas: number } | null>(null)
+  const [datosTurno, setDatosTurno] = useState<{ apertura: number; ventas: number; qr: number } | null>(null)
+  const [errorCarga, setErrorCarga] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
   // Cargar datos al abrir
   useEffect(() => {
+    let vigente = true
     if (isOpen) {
-      supabase.from('turnos').select('monto_apertura, total_efectivo').eq('id', turnoId).single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setDatosTurno({
-              apertura: data.monto_apertura || 0,
-              ventas: data.total_efectivo || 0
-            })
-          }
-        })
+      setDatosTurno(null)
+      setErrorCarga('')
+      consultarCierreTurno(turnoId).then(({ data, error }) => {
+        if (!vigente) return
+        if (data) setDatosTurno(data)
+        else setErrorCarga(error || 'No se pudieron consultar las ventas.')
+      }).catch(() => { if (vigente) setErrorCarga('No se pudo conectar. Cierra este cuadro y vuelve a intentarlo.') })
     } else {
       setDatosTurno(null)
     }
-  }, [isOpen, turnoId, supabase])
+    return () => { vigente = false }
+  }, [isOpen, turnoId])
 
   if (!isOpen) return null
 
@@ -47,26 +49,10 @@ export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombr
     setCargando(true)
 
     try {
-      const authData = await supabase.auth.getUser()
-      const userId = authData.data.user?.id
-
-      if (!userId) throw new Error("No autenticado")
-
-      // Calcular cierre exacto nuevamente por seguridad
-      const { data: turno } = await supabase.from('turnos')
-        .select('monto_apertura, total_efectivo')
-        .eq('id', turnoId).single()
-      
-      const cierreFinal = (turno?.monto_apertura || 0) + (turno?.total_efectivo || 0)
-
-      // Cerrar Turno automáticamente cuadrado
-      const { error } = await supabase.from('turnos').update({
-        estado: 'cerrado',
-        monto_cierre: cierreFinal,
-        fecha_cierre: new Date().toISOString()
-      }).eq('id', turnoId)
-
-      if (error) throw error
+      const { data, error } = await cerrarTurnoReal(turnoId)
+      if (error || !data) throw new Error(error || 'No se confirmó el cierre')
+      const cierreFinal = data.cierre
+      const userId = data.userId
 
       // Enviar Notificación al Admin
       await supabase.from('notificaciones').insert({
@@ -121,13 +107,14 @@ export default function CerrarTurnoModal({ isOpen, onClose, turnoId, cajeroNombr
                   <span>Ventas en Efectivo:</span>
                   <span>+ Bs. {fmt(datosTurno.ventas)}</span>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, color: 'var(--text-400)' }}><span>Ventas QR (fuera del efectivo):</span><span>Bs. {fmt(datosTurno.qr)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '12px', color: 'var(--text-100)', fontWeight: 'bold', fontSize: '1.1rem' }}>
                   <span>Total Exacto a Entregar:</span>
                   <span style={{ color: 'var(--green)' }}>Bs. {fmt(esperado)}</span>
                 </div>
               </div>
             ) : (
-              <div style={{ color: 'var(--text-500)', fontSize: '0.9rem' }}>Calculando montos...</div>
+              <div role="status" style={{ color: 'var(--text-500)', fontSize: '0.9rem' }}>{errorCarga || 'Calculando montos...'}</div>
             )}
           </div>
 
