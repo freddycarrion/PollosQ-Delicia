@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import ReportesClient from './ReportesClient'
 import { LineChart } from 'lucide-react'
-import { agruparProductosVendidos } from '@/lib/reportes-productos'
+import { resumirProductosVendidos } from '@/lib/reportes-productos'
 
 export const dynamic = 'force-dynamic'
 
@@ -183,7 +183,8 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   }))
 
   // Top productos
-  const arrTopProductos = agruparProductosVendidos(detallesVentas || []).slice(0, 10)
+  const resumenProductos = resumirProductosVendidos(detallesVentas || [])
+  const arrTopProductos = resumenProductos.identificados.slice(0, 10)
 
   // Por categoría
   const dictCategoria: Record<string, any> = {}
@@ -237,6 +238,7 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
       <ReportesClient
         ventasDiarias={arrVentasDiarias}
         topProductos={arrTopProductos}
+        productosSinReferencia={resumenProductos.sinReferencia}
         desempenoCajeros={arrCajeros}
         ventasMensuales={arrVentasMensuales}
         ventasPorCategoria={arrCategorias}

@@ -38,3 +38,11 @@ export function agruparProductosVendidos(detalles: DetalleProducto[]) {
   }
   return [...grupos.values()].sort((a, b) => b.total_unidades - a.total_unidades)
 }
+
+export function resumirProductosVendidos(detalles: DetalleProducto[]) {
+  const grupos = agruparProductosVendidos(detalles)
+  return {
+    identificados: grupos.filter(p => p.producto_id !== null),
+    sinReferencia: grupos.filter(p => p.producto_id === null),
+  }
+}

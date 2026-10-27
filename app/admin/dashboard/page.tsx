@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { agruparProductosVendidos } from '@/lib/reportes-productos'
+import { resumirProductosVendidos } from '@/lib/reportes-productos'
 import {
   TrendingUp, ShoppingCart, Users, Package,
   AlertTriangle, Banknote, CreditCard, Smartphone, ArrowUpRight
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
 
   type ProdResumen = { nombre: string; cantidad: number; subtotal: number }
 
-  const productosVendidos: ProdResumen[] = agruparProductosVendidos(detallesHoyRaw || [])
+  const productosVendidos: ProdResumen[] = resumirProductosVendidos(detallesHoyRaw || []).identificados
     .map(p => ({ nombre: p.nombre_producto, cantidad: p.total_unidades, subtotal: p.total_bs }))
 
   // Top 5 para la tarjeta de la derecha

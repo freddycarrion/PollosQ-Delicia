@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { agruparProductosVendidos } from '../lib/reportes-productos.ts'
+import { agruparProductosVendidos, resumirProductosVendidos } from '../lib/reportes-productos.ts'
 
 test('distingue productos renombrados conservando unidades e importes originales', () => {
   const datos = [
@@ -32,4 +32,18 @@ test('separa productos sin ID y unifica solo variantes de escritura históricas'
 test('tolera catálogo ausente y reporte vacío', () => {
   assert.deepEqual(agruparProductosVendidos([]), [])
   assert.equal(agruparProductosVendidos([{ producto_id: 'eliminado', nombre_producto: 'Producto anterior', cantidad: 1, subtotal: 10, productos: null }])[0].nombre_producto, 'Producto anterior')
+})
+
+test('el ranking no repite productos por filas sin referencia y conserva todo el detalle', () => {
+  const datos = [
+    { producto_id: 'economico', nombre_producto: 'Economico 16BS', cantidad: 10, subtotal: 160, productos: { nombre: 'Economico 16BS' } },
+    { producto_id: null, nombre_producto: 'Economico 16BS', cantidad: 2, subtotal: 32 },
+    { producto_id: null, nombre_producto: 'Soda Pop', cantidad: 1, subtotal: 5 },
+  ]
+  const { identificados, sinReferencia } = resumirProductosVendidos(datos)
+  assert.equal(identificados.length, 1)
+  assert.equal(identificados[0].total_unidades, 10)
+  assert.equal(sinReferencia.length, 2)
+  assert.equal([...identificados, ...sinReferencia].reduce((s, p) => s + p.total_bs, 0), 197)
+  assert.equal([...identificados, ...sinReferencia].reduce((s, p) => s + p.total_unidades, 0), 13)
 })

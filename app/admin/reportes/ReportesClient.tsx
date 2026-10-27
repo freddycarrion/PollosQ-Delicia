@@ -15,6 +15,7 @@ import EstadoResultadosPrint from './EstadoResultadosPrint'
 interface Props {
   ventasDiarias:      any[]
   topProductos:       any[]
+  productosSinReferencia: { nombre_producto: string; total_unidades: number; total_bs: number }[]
   desempenoCajeros:   any[]
   ventasMensuales:    any[]
   ventasPorCategoria: any[]
@@ -39,7 +40,7 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
 ]
 
 export default function ReportesClient({
-  ventasDiarias, topProductos, desempenoCajeros,
+  ventasDiarias, topProductos, productosSinReferencia, desempenoCajeros,
   ventasMensuales, ventasPorCategoria, compras, pagosPersonal,
   initialDesde, initialHasta
 }: Props) {
@@ -276,7 +277,6 @@ export default function ReportesClient({
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
             <div className="chart-panel" style={{ flex: '1 1 400px' }}>
               <h3 className="panel-title">Top 10 Productos Más Vendidos</h3>
-              <p style={{ color: 'var(--text-400)', fontSize: '0.8rem', marginBottom: 12 }}>Se muestra el nombre actual del producto. «Sin referencia» identifica ventas antiguas sin producto asociado. Los ingresos conservan el importe original.</p>
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={topProductsChartData} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false}/>
@@ -288,6 +288,20 @@ export default function ReportesClient({
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              {productosSinReferencia.length > 0 && (
+                <details style={{ marginTop: 16, fontSize: '0.85rem' }}>
+                  <summary style={{ cursor: 'pointer', color: 'var(--text-400)' }}>Ventas antiguas sin producto asociado: {productosSinReferencia.reduce((s, p) => s + p.total_unidades, 0)} unidades · Bs. {fmt(productosSinReferencia.reduce((s, p) => s + p.total_bs, 0))}</summary>
+                  <p style={{ color: 'var(--text-400)', margin: '12px 0' }}>Estas ventas están incluidas en los totales generales. Su detalle se conserva aquí porque no se puede determinar a qué producto del menú pertenecían.</p>
+                  <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead><tr><th style={{ textAlign: 'left', padding: 8 }}>Nombre registrado</th><th style={{ padding: 8 }}>Unidades</th><th style={{ padding: 8 }}>Importe</th></tr></thead>
+                    <tbody>{productosSinReferencia.map(p => <tr key={p.nombre_producto}>
+                      <td style={{ padding: 8 }}>{p.nombre_producto.replace(/ \(sin referencia\)$/, '')}</td>
+                      <td style={{ padding: 8, textAlign: 'center' }}>{p.total_unidades}</td>
+                      <td style={{ padding: 8, textAlign: 'right', whiteSpace: 'nowrap' }}>Bs. {fmt(p.total_bs)}</td>
+                    </tr>)}</tbody>
+                  </table></div>
+                </details>
+              )}
             </div>
 
             <div className="chart-panel" style={{ flex: '1 1 360px' }}>
