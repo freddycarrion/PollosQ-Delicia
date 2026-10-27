@@ -80,6 +80,7 @@ export default async function PagosPersonalPage({ searchParams }: PageProps) {
       </div>
 
       <PagosPersonalClient
+        puedeModificar={miPerfil?.rol === 'admin'}
         initialPagos={(pagos || []) as any[]}
         perfiles={(perfiles || []) as any[]}
         sucursales={(sucursales || []) as any[]}

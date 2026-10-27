@@ -333,6 +333,7 @@ export interface PagoPersonal {
   id:              string
   sucursal_id:     string
   empleado_id:     string | null
+  personal_operativo_id: string | null
   registrado_por:  string
   nombre_empleado: string
   concepto:        string

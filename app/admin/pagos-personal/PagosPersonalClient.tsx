@@ -4,9 +4,9 @@ import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Calendar, Users, DollarSign, TrendingUp,
-  ChevronDown, ChevronUp, Filter, Printer, X, CheckCircle, Clock, Check
+  ChevronDown, ChevronUp, Filter, Printer, X, CheckCircle, Clock, Check, Pencil, Trash2
 } from 'lucide-react'
-import { registrarPagoPersonal, liquidarPagosPersonal } from './actions'
+import { registrarPagoPersonal, liquidarPagosPersonal, eliminarPagoPersonal } from './actions'
 import { toast } from 'react-hot-toast'
 import type { PagoPersonal, PeriodoPago } from '@/lib/types/database'
 
@@ -24,6 +24,7 @@ const CARGO_LABELS: Record<string, string> = {
 }
 
 interface Props {
+  puedeModificar: boolean
   initialPagos:       PagoPersonal[]
   perfiles:           Perfil[]
   sucursales:         Sucursal[]
@@ -40,7 +41,7 @@ const PERIODOS: { value: PeriodoPago; label: string; color: string }[] = [
   { value: 'mensual',  label: 'Pago Mensual',  color: '#FF9800' },
 ]
 
-export default function PagosPersonalClient({ initialPagos, perfiles, sucursales, personalOperativo, miSucursalId, initialDesde, initialHasta }: Props) {
+export default function PagosPersonalClient({ puedeModificar, initialPagos, perfiles, sucursales, personalOperativo, miSucursalId, initialDesde, initialHasta }: Props) {
   const router = useRouter()
   const operacionEnCurso = useRef(false)
 
@@ -52,6 +53,51 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   const [showForm, setShowForm] = useState(false)
   const [showLiquidar, setShowLiquidar] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
+  const formularioRef = useRef<HTMLDivElement>(null)
+
+  const cerrarFormulario = () => {
+    if (operacionEnCurso.current) return
+    setShowForm(false)
+    setEditandoId(null)
+    setForm(f => ({ ...f, nombre_empleado: '', empleado_id: '', concepto: '', monto: '', observaciones: '' }))
+  }
+
+  const handleEditar = (pago: PagoPersonal) => {
+    if (operacionEnCurso.current) return
+    setEditandoId(pago.id)
+    setForm({
+      nombre_empleado: pago.nombre_empleado,
+      empleado_id: pago.personal_operativo_id ? `op_${pago.personal_operativo_id}` : pago.empleado_id || '',
+      sucursal_id: pago.sucursal_id,
+      concepto: pago.concepto,
+      periodo: pago.periodo,
+      estado: pago.estado,
+      monto: String(pago.monto),
+      fecha_pago: pago.fecha_pago,
+      observaciones: pago.observaciones || '',
+    })
+    setShowForm(true)
+    requestAnimationFrame(() => formularioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const handleEliminar = async (pago: PagoPersonal) => {
+    if (operacionEnCurso.current || !window.confirm(`¿Eliminar el pago de ${pago.nombre_empleado} por Bs. ${fmt(pago.monto)}? Esta acción no se puede deshacer.`)) return
+    operacionEnCurso.current = true
+    setSaving(true)
+    try {
+      const { data, error } = await eliminarPagoPersonal(pago.id)
+      if (error || !data) throw new Error(error || 'No se confirmó la eliminación')
+      setPagos(prev => prev.filter(p => p.id !== data.id))
+      if (editandoId === data.id) { setShowForm(false); setEditandoId(null) }
+      toast.success('Pago eliminado')
+    } catch (error: any) {
+      toast.error(error.message || 'No se pudo eliminar el pago')
+    } finally {
+      operacionEnCurso.current = false
+      setSaving(false)
+    }
+  }
 
   // Form state
   const [form, setForm] = useState({
@@ -74,7 +120,7 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
     // Buscar primero en personal operativo, luego en perfiles del sistema
     const op = personalOperativo.find(p => `op_${p.id}` === id)
     if (op) {
-      setForm(f => ({ ...f, empleado_id: op.id, nombre_empleado: `${op.nombre} ${op.apellido}`.trim() }))
+      setForm(f => ({ ...f, empleado_id: id, nombre_empleado: `${op.nombre} ${op.apellido}`.trim() }))
       return
     }
     const p = perfiles.find(p => p.id === id)
@@ -101,8 +147,8 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
       
       if (form.empleado_id) {
         // Si el empleado está en personal operativo, lo guardamos en personal_operativo_id
-        if (personalOperativo.some(p => p.id === form.empleado_id)) {
-          op_id = form.empleado_id;
+        if (form.empleado_id.startsWith('op_')) {
+          op_id = form.empleado_id.slice(3);
         } else {
           per_id = form.empleado_id;
         }
@@ -122,13 +168,14 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         observaciones:   form.observaciones.trim() || null,
       }
       
-      const { data, error } = await registrarPagoPersonal(payload)
+      const { data, error } = await registrarPagoPersonal(payload, editandoId || undefined)
 
       if (error || !data) throw new Error(error || 'No se confirmó el registro del pago')
 
-      setPagos(prev => [data as PagoPersonal, ...prev])
-      toast.success(form.estado === 'pagado' ? 'Pago registrado correctamente' : 'Deuda registrada como pendiente')
+      setPagos(prev => editandoId ? prev.map(p => p.id === editandoId ? data as PagoPersonal : p) : [data as PagoPersonal, ...prev])
+      toast.success(editandoId ? 'Pago actualizado correctamente' : form.estado === 'pagado' ? 'Pago registrado correctamente' : 'Deuda registrada como pendiente')
       setShowForm(false)
+      setEditandoId(null)
       setForm(f => ({ ...f, nombre_empleado: '', empleado_id: '', concepto: '', monto: '', observaciones: '' }))
     } catch (err: any) {
       toast.error(err.message || 'Error al guardar el pago')
@@ -248,7 +295,7 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
           <button onClick={() => setShowLiquidar(true)} className="btn btn-ghost" style={{ padding: '8px 16px', display: 'flex', gap: '8px', alignItems: 'center', border: '1px solid var(--yellow)', color: 'var(--yellow)' }}>
             <DollarSign size={16}/> Liquidar Pendientes
           </button>
-          <button onClick={() => setShowForm(s => !s)} className="btn btn-primary" style={{ padding: '8px 20px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button disabled={saving} onClick={() => { if (showForm) cerrarFormulario(); else { setEditandoId(null); setShowForm(true) } }} className="btn btn-primary" style={{ padding: '8px 20px', display: 'flex', gap: '8px', alignItems: 'center' }}>
             {showForm ? <><X size={16}/> Cerrar Formulario</> : <><Plus size={16}/> Nuevo Registro</>}
           </button>
         </div>
@@ -256,9 +303,9 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
 
       {/* ── Formulario de nuevo pago ───────────────────────────────── */}
       {showForm && (
-        <div style={{ background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
+        <div ref={formularioRef} style={{ background: 'var(--bg-800)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
           <h3 style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Plus size={20} style={{ color: 'var(--yellow)' }}/> Registrar Nuevo Pago
+            <Plus size={20} style={{ color: 'var(--yellow)' }}/>{editandoId ? 'Editar Pago' : 'Registrar Nuevo Pago'}
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
 
@@ -343,9 +390,9 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-            <button onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ padding: '10px 20px' }}>Cancelar</button>
+            <button disabled={saving} onClick={cerrarFormulario} className="btn btn-ghost" style={{ padding: '10px 20px' }}>Cancelar</button>
             <button onClick={handleGuardar} disabled={saving} className="btn btn-primary" style={{ padding: '10px 28px', opacity: saving ? 0.7 : 1 }}>
-              {saving ? 'Guardando...' : 'Registrar Pago'}
+              {saving ? 'Guardando...' : editandoId ? 'Guardar Cambios' : 'Registrar Pago'}
             </button>
           </div>
         </div>
@@ -407,6 +454,12 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
                       Bs. {fmt(pago.monto)}
                     </td>
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      {puedeModificar && (
+                        <div style={{ display: 'inline-flex', gap: '6px', marginRight: '6px' }}>
+                          <button disabled={saving} onClick={() => handleEditar(pago)} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.75rem' }}><Pencil size={14} /> Editar</button>
+                          <button disabled={saving} onClick={() => handleEliminar(pago)} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.75rem', color: 'var(--red)' }}><Trash2 size={14} /> Eliminar</button>
+                        </div>
+                      )}
                       {pago.estado === 'pendiente' && (
                         <button onClick={() => handlePagarIds([pago.id])} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.75rem', border: '1px solid #4CAF50', color: '#4CAF50', display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
                           <Check size={14} /> Pagar

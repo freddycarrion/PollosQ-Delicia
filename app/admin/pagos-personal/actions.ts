@@ -34,7 +34,7 @@ function mensaje(error: unknown) {
   return 'No se pudo confirmar la operación. Conserva los datos y revisa el listado antes de reintentar para evitar duplicados.'
 }
 
-export async function registrarPagoPersonal(pago: NuevoPago) {
+export async function registrarPagoPersonal(pago: NuevoPago, pagoId?: string) {
   try {
     if (!pago || !pago.nombre_empleado?.trim() || !pago.concepto?.trim()
       || !Number.isFinite(pago.monto) || pago.monto <= 0
@@ -45,30 +45,55 @@ export async function registrarPagoPersonal(pago: NuevoPago) {
       return { error: 'Revisa el empleado, concepto, monto, fecha y sucursal del pago.' }
     }
     const { supabase, user, perfil } = await contexto()
+    if (pagoId && perfil.rol !== 'admin') return { error: 'Solo un administrador puede editar pagos.' }
     if (perfil.rol === 'supervisor' && pago.sucursal_id !== perfil.sucursal_id) {
       return { error: 'Solo puedes registrar pagos en tu sucursal.' }
     }
-    // El autor se obtiene de la sesión del servidor, nunca del formulario.
-    const { data, error } = await supabase.from('pagos_personal').insert({
+    let fechaPagado = pago.estado === 'pagado' ? new Date().toISOString() : null
+    if (pagoId) {
+      const { data: anterior, error } = await supabase.from('pagos_personal')
+        .select('id, estado, fecha_pagado').eq('id', pagoId).single()
+      if (error || !anterior) return { error: 'No se encontró el pago que deseas editar.' }
+      if (pago.estado === 'pagado' && anterior.estado === 'pagado') fechaPagado = anterior.fecha_pagado
+    }
+    const valores = {
       sucursal_id: pago.sucursal_id,
       empleado_id: pago.empleado_id || null,
       personal_operativo_id: pago.personal_operativo_id || null,
-      registrado_por: user.id,
       nombre_empleado: pago.nombre_empleado.trim(),
       concepto: pago.concepto.trim(),
       periodo: pago.periodo,
       estado: pago.estado,
-      fecha_pagado: pago.estado === 'pagado' ? new Date().toISOString() : null,
+      fecha_pagado: fechaPagado,
       monto: pago.monto,
       fecha_pago: pago.fecha_pago,
       observaciones: pago.observaciones?.trim() || null,
-    }).select('*, sucursales(nombre)').single()
+    }
+    // Editar conserva el autor original; crear usa la sesión verificada.
+    const query = pagoId
+      ? supabase.from('pagos_personal').update(valores).eq('id', pagoId)
+      : supabase.from('pagos_personal').insert({ ...valores, registrado_por: user.id })
+    const { data, error } = await query.select('*, sucursales(nombre)').single()
     if (error) {
       console.error('Error al registrar pago personal:', error)
       return { error: error.code === '42501'
         ? 'La base de datos rechazó el pago por permisos. Revisa el acceso de esta cuenta a la sucursal.'
         : 'No se pudo confirmar el registro. Revisa el listado antes de reintentar para evitar duplicados.' }
     }
+    return { data }
+  } catch (error) {
+    return { error: mensaje(error) }
+  }
+}
+
+export async function eliminarPagoPersonal(id: string) {
+  try {
+    if (typeof id !== 'string' || !id) return { error: 'Selecciona un pago.' }
+    const { supabase, perfil } = await contexto()
+    if (perfil.rol !== 'admin') return { error: 'Solo un administrador puede eliminar pagos.' }
+    const { data, error } = await supabase.from('pagos_personal')
+      .delete().eq('id', id).select('id').single()
+    if (error || !data) return { error: 'No se confirmó la eliminación. Revisa si el pago todavía existe y los permisos de tu cuenta.' }
     return { data }
   } catch (error) {
     return { error: mensaje(error) }
