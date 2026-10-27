@@ -9,6 +9,7 @@ import CobroModal, { ConfirmarVentaPayload } from './CobroModal'
 
 interface DetalleVentaItem {
   id: string
+  producto_id: string | null
   nombre_producto: string
   precio_unitario: number
   cantidad: number
@@ -50,6 +51,7 @@ interface ItemEditable extends DetalleVentaItem {
 }
 
 interface Props {
+  inventarioSnacksActivo: boolean
   turnoId: string
   cajeroNombre: string
   sucursalNombre: string
@@ -62,7 +64,7 @@ const METODO_LABELS: Record<string, string> = {
   transferencia: 'Transferencia',
 }
 
-export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onReimprimir }: Props) {
+export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onReimprimir, inventarioSnacksActivo }: Props) {
   const supabase = createClient()
   const [ventas, setVentas] = useState<VentaTurno[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +101,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
           id, numero_ticket, total, metodo_pago, metodo_pago_2, monto_pago_2,
           monto_recibido, vuelto, tipo_pedido, estado, nombre_cliente, carnet_cliente, created_at,
           detalle_ventas (
-            id, nombre_producto, precio_unitario, cantidad, subtotal, notas_item
+            id, producto_id, nombre_producto, precio_unitario, cantidad, subtotal, notas_item
           )
         `)
         .eq('turno_id', turnoId)
@@ -213,6 +215,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
     } else {
       const nuevoItem: ItemEditable = {
         id: `nuevo-${Date.now()}-${Math.random()}`,
+        producto_id: prod.id,
         nombre_producto: prod.nombre,
         precio_unitario: precio,
         cantidad: 1,
@@ -280,14 +283,6 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
 
     setGuardandoEdicion(true)
     try {
-      // 1. Borrar todos los ítems actuales de la venta
-      const { error: delError } = await supabase
-        .from('detalle_ventas')
-        .delete()
-        .eq('venta_id', ventaEditando.id)
-
-      if (delError) throw delError
-
       // 2. Insertar los ítems editados (con tipo mesa/llevar en notas si aplica)
       const nuevosDetalles = itemsEditables.map(item => {
         let notas = item.notas_item || ''
@@ -300,7 +295,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         }
         return {
           venta_id: ventaEditando.id,
-          producto_id: null,
+          producto_id: item.producto_id,
           nombre_producto: item.nombre_producto,
           precio_unitario: item.precio_unitario,
           cantidad: item.cantidadEditada,
@@ -309,6 +304,14 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         }
       })
 
+      if (inventarioSnacksActivo) {
+        const { error } = await supabase.rpc('editar_venta_snacks', {
+          venta: ventaEditando.id, detalles: nuevosDetalles, total_nuevo: +nuevoTotalEditado.toFixed(2),
+        })
+        if (error) throw error
+      } else {
+      const { error: delError } = await supabase.from('detalle_ventas').delete().eq('venta_id', ventaEditando.id)
+      if (delError) throw delError
       const { error: insError } = await supabase
         .from('detalle_ventas')
         .insert(nuevosDetalles)
@@ -325,6 +328,7 @@ export default function PedidosTab({ turnoId, cajeroNombre, sucursalNombre, onRe
         .eq('id', ventaEditando.id)
 
       if (updError) throw updError
+      }
 
       // 4. Ajustar stock de bebidas por los cambios en el pedido
       //    Comparamos cantidades originales vs nuevas por nombre_producto.

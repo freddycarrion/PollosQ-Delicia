@@ -20,6 +20,8 @@ import {
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { createCheckoutClient } from "@/lib/supabase/checkout";
+import { esCategoriaSnack } from '@/lib/snacks';
+import { consultarStockSnacks } from './snacks-actions';
 import { toast } from "react-hot-toast";
 import CobroModal, { ConfirmarVentaPayload, TipoVenta } from "./CobroModal";
 import TicketVenta, { TicketData } from "./TicketVenta";
@@ -85,6 +87,23 @@ export default function PosClient({
 
   const supabase = createClient();
   const router = useRouter();
+  const categoriasSnack = useMemo(() => new Set(categorias.filter(c => esCategoriaSnack(c.nombre)).map(c => c.id)), [categorias]);
+  const [stockSnacks, setStockSnacks] = useState<Record<string, number> | null>(null);
+  const [errorSnacks, setErrorSnacks] = useState('');
+  const cargarStockSnacks = useCallback(async () => {
+    const result = await consultarStockSnacks(sucursalId);
+    if (!result.data) { setStockSnacks(null); setErrorSnacks(result.error || 'No se pudo cargar el stock de snacks.'); return; }
+    setStockSnacks(Object.fromEntries(result.data.map(s => [s.producto_id, s.cantidad])));
+    setErrorSnacks('');
+  }, [sucursalId]);
+  useEffect(() => {
+    if (!categoriasSnack.size) return;
+    void cargarStockSnacks();
+    const actualizar = () => { if (document.visibilityState === 'visible') void cargarStockSnacks(); };
+    const intervalo = setInterval(actualizar, 15000);
+    window.addEventListener('focus', actualizar);
+    return () => { clearInterval(intervalo); window.removeEventListener('focus', actualizar); };
+  }, [categoriasSnack, cargarStockSnacks]);
 
   // ── Verificar estado del turno al montar (por si ya estaba cerrado) ──────
   useEffect(() => {
@@ -106,6 +125,9 @@ export default function PosClient({
   // ── Stock de Bebidas ──────────────────────────────────────────────────────
   // Mapa: producto_id -> { actual, inicial }
   const [stockBebidas, setStockBebidas] = useState<Record<string, { actual: number, inicial: number }>>({});
+  const stockDisponible = (producto: Producto) => categoriasSnack.has(producto.categoria_id)
+    ? { actual: stockSnacks?.[producto.id] ?? 0 }
+    : stockBebidas[producto.id];
 
   const cargarStockBebidas = useCallback(async () => {
     const { data } = await supabase
@@ -265,7 +287,7 @@ export default function PosClient({
     const precioUnitario = getPrecioUnitario(producto);
 
     // ── Verificar stock de bebidas antes de agregar ────────────────────────
-    const stockData = stockBebidas[producto.id];
+    const stockData = stockDisponible(producto);
     if (stockData !== undefined) {
       // Calcular cuántas unidades de esta bebida ya están en el carrito
       const cantidadEnCarrito = pedido
@@ -278,12 +300,10 @@ export default function PosClient({
     }
 
     setPedido((prev) => {
+      if (stockData !== undefined && prev.filter(i => i.producto.id === producto.id).reduce((sum, i) => sum + i.cantidad, 0) >= stockData.actual) return prev;
       const index = prev.findIndex((i) => i.itemKey === itemKey);
       if (index >= 0) {
-        const nuevos = [...prev];
-        nuevos[index].cantidad += 1;
-        nuevos[index].subtotal = nuevos[index].cantidad * precioUnitario;
-        return nuevos;
+        return prev.map((item, idx) => idx === index ? { ...item, cantidad: item.cantidad + 1, subtotal: (item.cantidad + 1) * precioUnitario } : item);
       }
       return [...prev, { producto, cantidad: 1, subtotal: precioUnitario, notas, itemKey, tipoItem: tipo, nombreTicket }];
     });
@@ -361,9 +381,10 @@ export default function PosClient({
 
             // Si es bebida con stock, verificar que no exceda el stock disponible
             if (delta > 0) {
-              const stockData = stockBebidas[item.producto.id];
+              const stockData = stockDisponible(item.producto);
               if (stockData !== undefined) {
-                if (nuevaCant > stockData.actual) {
+                const cantidadTotal = prev.filter(i => i.producto.id === item.producto.id).reduce((sum, i) => sum + i.cantidad, 0) + delta;
+                if (cantidadTotal > stockData.actual) {
                   toast.error(
                     `No hay más ${item.producto.nombre} disponibles (stock: ${stockData.actual})`,
                     { duration: 3000 }
@@ -458,21 +479,6 @@ export default function PosClient({
         ventaData.monto_pago_2 = payload.monto2;
       }
 
-      const { data: venta, error: ventaError } = await supabase
-        .from("ventas")
-        .insert(ventaData)
-        .select("id, numero_ticket")
-        .single();
-
-      if (ventaError) {
-        if (ventaError.code === '42501') {
-          console.error('Permisos rechazados al crear la venta:', ventaError);
-          toast.error('Supabase rechazó el registro por permisos. No se guardó la venta ni se imprimió el ticket. El administrador debe revisar las políticas de ventas. El pedido se mantiene.', { duration: 10000 });
-          return;
-        }
-        throw ventaError;
-      }
-
       // 2. Crear los Detalles de Venta
       // Guardar las notas finales por separado para el ticket
       const notasParaTicket: string[] = [];
@@ -486,7 +492,6 @@ export default function PosClient({
         }
         notasParaTicket.push(notasFinales);
         return {
-          venta_id: venta.id,
           producto_id: item.producto.id,
           nombre_producto: item.producto.nombre,
           precio_unitario: getPrecioUnitario(item.producto),
@@ -496,11 +501,24 @@ export default function PosClient({
         };
       });
 
-      const { error: detalleError } = await supabase
-        .from("detalle_ventas")
-        .insert(detalles);
-
-      if (detalleError) throw detalleError;
+      const contieneSnacks = pedido.some(item => categoriasSnack.has(item.producto.categoria_id));
+      let venta: { id: string; numero_ticket: number };
+      if (contieneSnacks) {
+        // Una sola transacción: si falta stock, no queda una venta sin detalles.
+        const { data, error } = await supabase.rpc('registrar_venta_snacks', { datos: ventaData, detalles });
+        if (error || !data) {
+          void cargarStockSnacks();
+          throw new Error(error?.message || 'No se confirmó la venta de snacks');
+        }
+        venta = data;
+        void cargarStockSnacks();
+      } else {
+        const { data, error } = await supabase.from('ventas').insert(ventaData).select('id, numero_ticket').single();
+        if (error || !data) throw new Error(error?.code === '42501' ? 'Supabase rechazó la venta por permisos. Revisa la sesión y el acceso del cajero.' : error?.message || 'No se confirmó la venta');
+        venta = data;
+        const { error: detalleError } = await supabase.from('detalle_ventas').insert(detalles.map(d => ({ ...d, venta_id: venta.id })));
+        if (detalleError) throw detalleError;
+      }
 
       // 2b. Descontar stock de bebidas vendidas y notificar
       for (const item of pedido) {
@@ -673,12 +691,15 @@ export default function PosClient({
             </div>
           )}
 
+          {categoriasSnack.has(categoriaActiva) && (errorSnacks || stockSnacks === null) && (
+            <p role="status" style={{ color: 'var(--yellow)', padding: 12 }}>{errorSnacks || 'Cargando stock de snacks…'} <button className="btn btn-ghost" onClick={() => void cargarStockSnacks()}>Actualizar stock</button></p>
+          )}
           {/* Grid de Productos */}
           <div className="pos-productos-grid" style={cajaCerrada ? { pointerEvents: 'none', opacity: 0.5 } : {}}>
             {productosFiltrados.length > 0 ? (
               productosFiltrados.map((prod) => {
                 const precioMostrar = getPrecioUnitario(prod);
-                const stockData = stockBebidas[prod.id];
+                const stockData = stockDisponible(prod);
                 const stockActual = stockData ? stockData.actual : undefined;
                 const tieneStock = stockActual !== undefined; // es bebida con stock registrado
                 const sinStock = tieneStock && stockActual <= 0;
@@ -712,7 +733,7 @@ export default function PosClient({
                       )}
                       {tieneStock && (
                         <div className={`pos-stock-badge ${sinStock ? 'agotado' : stockActual <= 3 ? 'bajo' : 'ok'}`}>
-                          {sinStock ? 'AGOTADO' : `🥤 ${stockActual}`}
+                          {categoriasSnack.has(prod.categoria_id) && stockSnacks === null ? 'SIN DATOS' : sinStock ? 'AGOTADO' : `${categoriasSnack.has(prod.categoria_id) ? '🍿' : '🥤'} ${stockActual}`}
                         </div>
                       )}
                     </div>
@@ -919,6 +940,7 @@ export default function PosClient({
           {/* Vista Pedidos */}
           {tabActivo === 'pedidos' && (
             <PedidosTab
+              inventarioSnacksActivo={categoriasSnack.size > 0 || stockSnacks !== null}
               turnoId={turnoId}
               cajeroNombre={cajeroNombre}
               sucursalNombre={sucursalNombre}
@@ -931,6 +953,7 @@ export default function PosClient({
         {tabActivo === 'pedidos' && (
           <div className="pos-pedidos-desktop-panel">
             <PedidosTab
+              inventarioSnacksActivo={categoriasSnack.size > 0 || stockSnacks !== null}
               turnoId={turnoId}
               cajeroNombre={cajeroNombre}
               sucursalNombre={sucursalNombre}
