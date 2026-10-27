@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Calendar, Users, DollarSign, TrendingUp,
   ChevronDown, ChevronUp, Filter, Printer, X, CheckCircle, Clock, Check
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { registrarPagoPersonal, liquidarPagosPersonal } from './actions'
 import { toast } from 'react-hot-toast'
 import type { PagoPersonal, PeriodoPago } from '@/lib/types/database'
 
@@ -42,7 +42,7 @@ const PERIODOS: { value: PeriodoPago; label: string; color: string }[] = [
 
 export default function PagosPersonalClient({ initialPagos, perfiles, sucursales, personalOperativo, miSucursalId, initialDesde, initialHasta }: Props) {
   const router = useRouter()
-  const supabase = createClient()
+  const operacionEnCurso = useRef(false)
 
   const [pagos, setPagos] = useState<PagoPersonal[]>(initialPagos)
   const [desde, setDesde] = useState(initialDesde)
@@ -86,15 +86,15 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   }
 
   const handleGuardar = async () => {
+    if (operacionEnCurso.current) return
     if (!form.nombre_empleado.trim()) return toast.error('Ingresa el nombre del empleado')
     if (!form.concepto.trim())        return toast.error('Ingresa el concepto del pago')
-    if (!form.monto || Number(form.monto) <= 0) return toast.error('Ingresa un monto válido')
+    if (!form.monto || !Number.isFinite(Number(form.monto)) || Number(form.monto) <= 0) return toast.error('Ingresa un monto válido')
     if (!form.sucursal_id)            return toast.error('Selecciona una sucursal')
 
+    operacionEnCurso.current = true
     setSaving(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No autenticado')
 
       let per_id = null;
       let op_id = null;
@@ -112,7 +112,6 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         sucursal_id:     form.sucursal_id,
         empleado_id:     per_id,
         personal_operativo_id: op_id,
-        registrado_por:  user.id,
         nombre_empleado: form.nombre_empleado.trim(),
         concepto:        form.concepto.trim(),
         periodo:         form.periodo,
@@ -123,15 +122,9 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
         observaciones:   form.observaciones.trim() || null,
       }
       
-      console.log("Enviando payload a Supabase:", payload);
+      const { data, error } = await registrarPagoPersonal(payload)
 
-      const { data, error } = await supabase
-        .from('pagos_personal')
-        .insert(payload)
-        .select('*, sucursales(nombre)')
-        .single()
-
-      if (error) throw error
+      if (error || !data) throw new Error(error || 'No se confirmó el registro del pago')
 
       setPagos(prev => [data as PagoPersonal, ...prev])
       toast.success(form.estado === 'pagado' ? 'Pago registrado correctamente' : 'Deuda registrada como pendiente')
@@ -140,6 +133,7 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
     } catch (err: any) {
       toast.error(err.message || 'Error al guardar el pago')
     } finally {
+      operacionEnCurso.current = false
       setSaving(false)
     }
   }
@@ -176,17 +170,24 @@ export default function PagosPersonalClient({ initialPagos, perfiles, sucursales
   }, [pagos])
 
   const handlePagarIds = async (ids: string[]) => {
+    if (operacionEnCurso.current) return
+    operacionEnCurso.current = true
+    setSaving(true)
     try {
-      const now = new Date().toISOString()
-      const { error } = await supabase
-        .from('pagos_personal')
-        .update({ estado: 'pagado', fecha_pagado: now })
-        .in('id', ids)
-      if (error) throw error
-      toast.success(ids.length === 1 ? 'Pago liquidado' : 'Deuda liquidada correctamente')
-      setPagos(prev => prev.map(p => ids.includes(p.id) ? { ...p, estado: 'pagado', fecha_pagado: now } : p))
+      const { data, error } = await liquidarPagosPersonal(ids)
+      if (error || !data) throw new Error(error || 'No se confirmó la liquidación')
+      const actualizados = new Map(data.map(p => [p.id, p]))
+      setPagos(prev => prev.map(p => {
+        const actualizado = actualizados.get(p.id)
+        return actualizado ? { ...p, estado: 'pagado', fecha_pagado: actualizado.fecha_pagado } : p
+      }))
+      if (data.length !== new Set(ids).size) toast.error('Solo se liquidaron algunos pagos. Revisa los pendientes y tus permisos.')
+      else toast.success(data.length === 1 ? 'Pago liquidado' : 'Deuda liquidada correctamente')
     } catch (err: any) {
       toast.error('Error al liquidar: ' + err.message)
+    } finally {
+      operacionEnCurso.current = false
+      setSaving(false)
     }
   }
 
