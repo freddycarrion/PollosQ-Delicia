@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Search, FileText, Calendar, Building2, User, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import NuevaCompraModal from './NuevaCompraModal'
-import { toast } from 'react-hot-toast'
+import DetalleCompraModal from './DetalleCompraModal'
 
 interface Compra {
   id: string
@@ -49,6 +49,7 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filtroMes, setFiltroMes] = useState<string>('')
+  const [detalleCompraId, setDetalleCompraId] = useState<string | null>(null)
 
   const handleSuccess = (nuevaCompra: any) => {
     // Optimistic UI: agregamos la nueva compra al instante
@@ -57,9 +58,7 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
   }
 
   const handleVerDetalles = (c: Compra) => {
-    // Para simplificar, en vez de otro modal grande, mostramos un resumen rápido por toast
-    // o en una futura iteración se haría una vista detalle `/admin/inventario/compras/[id]`
-    toast('\`Detalles de compra estarán en la siguiente actualización.\`', { icon: 'ℹ️' })
+    setDetalleCompraId(c.id)
   }
 
   const filteredCompras = compras.filter(c => {
@@ -197,7 +196,8 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
                   className="btn btn-ghost" 
                   onClick={() => handleVerDetalles(compra)}
                   style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', color: 'var(--text-400)' }}
-                  title="Detalles (Próximamente)"
+                  title="Ver detalle de compra"
+                  aria-label={`Ver detalle de compra ${compra.numero_factura || 'S/N'} del ${compra.fecha_compra}`}
                 >
                   <Eye size={20} />
                 </button>
@@ -222,6 +222,7 @@ export default function ComprasClient({ initialData, sucursales, proveedores, in
         insumos={insumos}
         onSuccess={handleSuccess}
       />
+      {detalleCompraId && <DetalleCompraModal key={detalleCompraId} compraId={detalleCompraId} onClose={() => setDetalleCompraId(null)} />}
 
       <style>{`
         .search-box input:focus { border-color: var(--yellow) !important; color: var(--text-100); }
