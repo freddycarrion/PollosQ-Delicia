@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import ReportesClient from './ReportesClient'
 import { LineChart } from 'lucide-react'
+import { agruparProductosVendidos } from '@/lib/reportes-productos'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +58,7 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   // 3. Detalles de ventas del período (para top productos y por categoría)
   const { data: detallesVentas } = await supabase
     .from('detalle_ventas')
-    .select('producto_id, nombre_producto, cantidad, subtotal, ventas!inner(estado, created_at, sucursal_id)')
+    .select('producto_id, nombre_producto, cantidad, subtotal, productos(nombre), ventas!inner(estado, created_at, sucursal_id)')
     .gte('ventas.created_at', desde)
     .lte('ventas.created_at', hasta)
     .eq('ventas.estado', 'completada')
@@ -182,17 +183,7 @@ export default async function ReportesAdminPage({ searchParams }: PageProps) {
   }))
 
   // Top productos
-  const dictProd: Record<string, any> = {}
-  if (detallesVentas) {
-    for (const d of detallesVentas) {
-      if (!dictProd[d.producto_id]) {
-        dictProd[d.producto_id] = { producto_id: d.producto_id, nombre_producto: d.nombre_producto, total_unidades: 0, total_bs: 0 }
-      }
-      dictProd[d.producto_id].total_unidades += Number(d.cantidad)
-      dictProd[d.producto_id].total_bs += Number(d.subtotal)
-    }
-  }
-  const arrTopProductos = Object.values(dictProd).sort((a, b) => b.total_unidades - a.total_unidades).slice(0, 10)
+  const arrTopProductos = agruparProductosVendidos(detallesVentas || []).slice(0, 10)
 
   // Por categoría
   const dictCategoria: Record<string, any> = {}

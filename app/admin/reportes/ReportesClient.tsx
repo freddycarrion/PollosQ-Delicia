@@ -276,6 +276,7 @@ export default function ReportesClient({
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
             <div className="chart-panel" style={{ flex: '1 1 400px' }}>
               <h3 className="panel-title">Top 10 Productos Más Vendidos</h3>
+              <p style={{ color: 'var(--text-400)', fontSize: '0.8rem', marginBottom: 12 }}>Se muestra el nombre actual del producto. «Sin referencia» identifica ventas antiguas sin producto asociado. Los ingresos conservan el importe original.</p>
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={topProductsChartData} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false}/>

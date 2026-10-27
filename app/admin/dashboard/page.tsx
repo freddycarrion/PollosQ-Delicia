@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { agruparProductosVendidos } from '@/lib/reportes-productos'
 import {
   TrendingUp, ShoppingCart, Users, Package,
   AlertTriangle, Banknote, CreditCard, Smartphone, ArrowUpRight
@@ -57,24 +58,15 @@ export default async function DashboardPage() {
   // Productos vendidos hoy (agrupados)
   const { data: detallesHoyRaw } = await supabase
     .from('detalle_ventas')
-    .select('nombre_producto, cantidad, subtotal, ventas!inner(estado, created_at)')
+    .select('producto_id, nombre_producto, cantidad, subtotal, productos(nombre), ventas!inner(estado, created_at)')
     .gte('ventas.created_at', inicioDia)
     .lte('ventas.created_at', finDia)
     .eq('ventas.estado', 'completada')
 
   type ProdResumen = { nombre: string; cantidad: number; subtotal: number }
 
-  const productosAgrupados = (detallesHoyRaw || []).reduce((acc: Record<string, ProdResumen>, curr: any) => {
-    const nombre = curr.nombre_producto
-    if (!acc[nombre]) {
-      acc[nombre] = { nombre, cantidad: 0, subtotal: 0 }
-    }
-    acc[nombre].cantidad += curr.cantidad
-    acc[nombre].subtotal += Number(curr.subtotal)
-    return acc
-  }, {})
-
-  const productosVendidos: ProdResumen[] = Object.values(productosAgrupados).sort((a, b) => b.cantidad - a.cantidad)
+  const productosVendidos: ProdResumen[] = agruparProductosVendidos(detallesHoyRaw || [])
+    .map(p => ({ nombre: p.nombre_producto, cantidad: p.total_unidades, subtotal: p.total_bs }))
 
   // Top 5 para la tarjeta de la derecha
   const topProductos = productosVendidos.slice(0, 5)
