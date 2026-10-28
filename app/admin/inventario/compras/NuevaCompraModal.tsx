@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Check, ShoppingCart, Trash2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { registrarCompraAccion } from './actions'
@@ -59,7 +60,14 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
     }
   }, [isOpen, sucursales])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (!isOpen) return
+    const anterior = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = anterior }
+  }, [isOpen])
+
+  if (!isOpen || typeof document === 'undefined') return null
 
   const getFilteredInsumos = () => insumos.filter(i => i.sucursal_id === sucursalId)
 
@@ -157,15 +165,15 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
     }
   }
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-panel max-w-4xl animate-zoom-in">
+  return createPortal(
+    <div className="modal-backdrop compra-backdrop">
+      <div className="modal-panel max-w-4xl animate-zoom-in" role="dialog" aria-modal="true" aria-labelledby="nueva-compra-titulo">
         <div className="modal-header">
-          <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 id="nueva-compra-titulo" className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShoppingCart className="text-yellow" size={24} style={{ color: 'var(--yellow)' }} />
             Registrar Nueva Compra
           </h2>
-          <button className="md-close-btn" onClick={onClose} disabled={loading}><X size={20} /></button>
+          <button className="md-close-btn" aria-label="Cerrar formulario de compra" onClick={onClose} disabled={loading}><X size={20} /></button>
         </div>
 
         <div className="modal-body compra-layout" style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px' }}>
@@ -197,7 +205,7 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
             
             {/* Buscador de insumos */}
-            <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid var(--border)', padding: '16px', borderRadius: 'var(--radius-lg)', background: 'var(--bg-800)' }}>
+            <div style={{ flex: '1', minWidth: 'min(100%, 300px)', display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid var(--border)', padding: '16px', borderRadius: 'var(--radius-lg)', background: 'var(--bg-800)' }}>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Agregar Insumos</h3>
               
               <div className="form-group">
@@ -243,7 +251,7 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
             </div>
 
             {/* Carrito de comprobantes */}
-            <div style={{ flex: '2', minWidth: '350px', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: '2', minWidth: 'min(100%, 350px)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>Detalle de la Compra</h3>
                 <span className="badge badge-yellow" style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(253,216,53,0.1)', color: '#FDD835' }}>
@@ -320,25 +328,28 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
       </div>
 
       <style>{`
-        .modal-backdrop {
+        .compra-backdrop {
           position: fixed; inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
           z-index: 2000;
-          display: flex; align-items: center; justify-content: center;
-          padding: 16px;
+          display: flex; align-items: flex-start; justify-content: center;
+          padding: clamp(8px, 3dvh, 24px) 12px 12px;
+          overflow: hidden;
         }
-        .modal-panel {
+        .compra-backdrop .modal-panel {
           background: var(--bg-800);
           border: 1px solid var(--border);
           border-radius: var(--radius-xl);
           width: 100%; max-width: 900px;
-          max-height: 90vh;
+          max-height: calc(100dvh - clamp(8px, 3dvh, 24px) - 12px);
+          min-height: 0;
           display: flex; flex-direction: column;
           overflow: hidden;
           box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
-        .modal-header {
+        .compra-backdrop .modal-header {
+          flex-shrink: 0; margin-bottom: 0;
           padding: 20px 24px;
           border-bottom: 1px solid var(--border);
           display: flex; justify-content: space-between; align-items: center;
@@ -347,7 +358,8 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
         .md-close-btn { background: transparent; border: none; color: var(--text-400); cursor: pointer; }
         .md-close-btn:hover { color: var(--red); }
         
-        .modal-body { overflow-y: auto; }
+        .compra-backdrop .modal-body { overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+        .compra-backdrop .modal-actions { flex-shrink: 0; flex-wrap: wrap; }
         
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-400); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -363,6 +375,7 @@ export default function NuevaCompraModal({ isOpen, onClose, sucursales, proveedo
         .form-input:focus { border-color: var(--yellow); outline: none; }
         .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
