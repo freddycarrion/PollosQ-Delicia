@@ -1,4 +1,5 @@
 import React from 'react'
+import { anchoImprimible, type PapelTicket, type CopiasTicket } from '@/lib/impresion/config'
 
 export interface TicketData {
   sucursalNombre: string
@@ -34,11 +35,8 @@ const NEGOCIO = {
 }
 // ──────────────────────────────────────────────────────────────
 
-// Ancho fijo 72mm para impresora termica de 8cm
-// (8cm - margenes fisicos de ~4mm = ~72mm imprimibles)
-const TICKET_WIDTH = '72mm'
-
-export default function TicketVenta({ data }: { data: TicketData | null }) {
+// Se reserva el margen físico del cabezal para papel de 58 u 80 mm.
+export default function TicketVenta({ data, papel = 80, copias = 'ambos' }: { data: TicketData | null; papel?: PapelTicket; copias?: CopiasTicket }) {
   if (!data) return null
 
   const fmt  = (n: number) => 'Bs.' + n.toFixed(2)
@@ -55,7 +53,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
       {/* ════════════════════════════════════════
           TICKET 1: COCINA  (solo la orden)
           ════════════════════════════════════════ */}
-      <div className="ticket-cocina">
+      <div className="ticket-cocina" style={copias === 'cliente' ? { display: 'none' } : undefined}>
         <div className="tk-header-cocina">
           <div className="tk-num-cocina">#{data.numeroTicket}</div>
           <div className="tk-hora-cocina">{data.fecha}</div>
@@ -114,7 +112,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
       {/* ════════════════════════════════════════
           TICKET 2: CLIENTE (detalle completo)
           ════════════════════════════════════════ */}
-      <div className="ticket-cliente">
+      <div className="ticket-cliente" style={copias === 'cocina' ? { display: 'none' } : undefined}>
 
         {/* Cabecera */}
         <div className="tk-header-cli">
@@ -152,10 +150,10 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         <table className="tk-table-cli">
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', width: '22px' }}>Ct</th>
+              <th style={{ textAlign: 'left', width: '9%' }}>Ct</th>
               <th style={{ textAlign: 'left' }}>Producto</th>
-              <th style={{ textAlign: 'right', width: '44px' }}>P/U</th>
-              <th style={{ textAlign: 'right', width: '52px' }}>Total</th>
+              <th style={{ textAlign: 'right', width: '19%' }}>P/U</th>
+              <th style={{ textAlign: 'right', width: '23%' }}>Total</th>
             </tr>
           </thead>
           <tbody>
@@ -216,17 +214,18 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         /* ── RESET DE IMPRESION ─────────────── */
         @media print {
           .ticket-cocina {
-            page-break-after: always;
-            break-after: page;
+            break-after: auto;
           }
         }
 
         /* ── BASE COMPARTIDA ─────────────────── */
         .ticket-cocina,
         .ticket-cliente {
-          width: ${TICKET_WIDTH};
+          box-sizing: border-box;
+          width: ${anchoImprimible(papel)}mm;
+          max-width: 100%;
           margin: 0 auto;
-          padding: 4mm 3mm;
+          padding: 3mm 1mm;
           background: #fff;
           color: #000;
           font-family: Arial, Helvetica, sans-serif;
@@ -398,7 +397,7 @@ export default function TicketVenta({ data }: { data: TicketData | null }) {
         .tk-table-cli td {
           padding: 2px 0;
           font-size: 10px;
-          overflow: hidden;
+          overflow-wrap: anywhere;
         }
         .tk-item-notas {
           font-size: 9px;

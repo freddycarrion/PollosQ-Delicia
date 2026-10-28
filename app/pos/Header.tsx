@@ -7,6 +7,7 @@ import { LogOut, ArrowLeft, Clock, Moon, Sun } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import CerrarTurnoModal from './CerrarTurnoModal'
 import ComunicadosBell from './ComunicadosBell'
+import { BotonImpresora } from './PanelImpresora'
 
 interface Props {
   children: React.ReactNode
@@ -94,6 +95,7 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           </div>
 
           <div className="pos-actions">
+            <BotonImpresora />
             <button 
               onClick={toggleDarkMode}
               className="btn-pos-dark"
@@ -335,6 +337,13 @@ export default function PosSidebarHeader({ children, nombreUsuario, esAdmin, rol
           .pos-brand .pos-subtitle {
             display: none;
           }
+        }
+        @media (max-width: 600px) {
+          .pos-header { height: auto; min-height: 68px; padding: 8px 12px; flex-wrap: wrap; gap: 8px; }
+          .pos-header-right { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+          .pos-user { padding-left: 0; border-left: 0; }
+          .pos-user-details { display: none; }
+          .pos-actions { gap: 6px; flex-wrap: wrap; }
         }
       `}</style>
     </div>

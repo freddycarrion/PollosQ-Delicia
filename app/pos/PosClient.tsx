@@ -24,7 +24,8 @@ import { esCategoriaSnack } from '@/lib/snacks';
 import { consultarStockSnacks } from './snacks-actions';
 import { toast } from "react-hot-toast";
 import CobroModal, { ConfirmarVentaPayload, TipoVenta } from "./CobroModal";
-import TicketVenta, { TicketData } from "./TicketVenta";
+import type { TicketData } from "./TicketVenta";
+import PanelImpresora from './PanelImpresora';
 import PresasModal, { SeleccionPremiun, formatearNotas } from "./PresasModal";
 import PedidosTab from "./PedidosTab";
 
@@ -227,6 +228,7 @@ export default function PosClient({
 
   // Ticket Data (para imprimir)
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
+  const [mostrarImpresion, setMostrarImpresion] = useState(false);
 
   // Consumo Interno
   const [esConsumoInterno, setEsConsumoInterno] = useState(false);
@@ -418,9 +420,7 @@ export default function PosClient({
   // ── Reimprimir desde pestaña Pedidos ─────────────────────────────────────
   const handleReimprimir = (ticket: TicketData) => {
     setTicketData(ticket);
-    setTimeout(() => {
-      window.print();
-    }, 300);
+    setMostrarImpresion(true);
   };
 
   // ── Confirmar venta ───────────────────────────────────────────────────────
@@ -578,16 +578,12 @@ export default function PosClient({
       };
       setTicketData(ticket);
 
-      toast.success(payload.metodo === 'consumo_interno' ? '¡Consumo interno registrado!' : '¡Venta completada! Generando ticket...');
-
-      // Esperar renderizado y lanzar print
-      setTimeout(() => {
-        window.print();
-        setPedido([]);
-        setIsModalOpen(false);
-        setEsConsumoInterno(false);
-        setTabActivo('catalogo');
-      }, 500);
+      toast.success(payload.metodo === 'consumo_interno' ? '¡Consumo interno registrado!' : '¡Venta guardada! El ticket está listo para imprimir.');
+      setPedido([]);
+      setIsModalOpen(false);
+      setEsConsumoInterno(false);
+      setTabActivo('catalogo');
+      setMostrarImpresion(true);
     } catch (err: any) {
       console.error(err);
       toast.error("Error al registrar la venta: " + err.message);
@@ -1576,33 +1572,7 @@ export default function PosClient({
         `}</style>
       </div>
 
-      {/* Área de impresión */}
-      <div className="print-area">
-        <TicketVenta data={ticketData} />
-      </div>
-
-      <style>{`
-        @media screen {
-          .print-area { display: none; }
-        }
-        @media print {
-          @page {
-            size: 72mm 297mm;
-            margin: 0;
-          }
-          body, html { margin: 0; padding: 0; background: #fff; }
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area {
-            position: absolute;
-            left: 0; top: 0;
-            width: 72mm;
-            background: #fff;
-            margin: 0; padding: 0;
-          }
-          .no-print { display: none !important; }
-        }
-      `}</style>
+      {mostrarImpresion && ticketData && <PanelImpresora data={ticketData} onClose={() => setMostrarImpresion(false)} />}
     </>
   );
 }
