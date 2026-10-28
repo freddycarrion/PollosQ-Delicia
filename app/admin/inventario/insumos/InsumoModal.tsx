@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
@@ -69,7 +70,14 @@ export default function InsumoModal({ isOpen, onClose, insumoToEdit, sucursales,
     }
   }, [insumoToEdit, isOpen, sucursales])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (!isOpen) return
+    const anterior = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = anterior }
+  }, [isOpen])
+
+  if (!isOpen || typeof document === 'undefined') return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,14 +130,14 @@ export default function InsumoModal({ isOpen, onClose, insumoToEdit, sucursales,
     }
   }
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-panel animate-zoom-in">
+  return createPortal(
+    <div className="modal-backdrop insumo-backdrop">
+      <div className="modal-panel animate-zoom-in" role="dialog" aria-modal="true" aria-labelledby="insumo-modal-titulo">
         <div className="modal-header">
-          <h2 className="modal-title">
+          <h2 id="insumo-modal-titulo" className="modal-title">
             {insumoToEdit ? 'Editar Insumo' : 'Nuevo Insumo'}
           </h2>
-          <button className="md-close-btn" onClick={onClose} disabled={loading}><X size={20} /></button>
+          <button className="md-close-btn" aria-label="Cerrar formulario de insumo" onClick={onClose} disabled={loading}><X size={20} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-body">
@@ -267,23 +275,28 @@ export default function InsumoModal({ isOpen, onClose, insumoToEdit, sucursales,
       </div>
 
       <style>{`
-        .modal-backdrop {
+        .insumo-backdrop {
           position: fixed; inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
           z-index: 2000;
-          display: flex; align-items: center; justify-content: center;
-          padding: 16px;
+          display: flex; align-items: flex-start; justify-content: center;
+          padding: clamp(8px, 3dvh, 24px) 12px 12px;
+          overflow: hidden;
         }
-        .modal-panel {
+        .insumo-backdrop .modal-panel {
           background: var(--bg-800);
           border: 1px solid var(--border);
           border-radius: var(--radius-xl);
           width: 100%; max-width: 580px;
+          max-height: calc(100dvh - clamp(8px, 3dvh, 24px) - 12px);
+          min-height: 0;
+          display: flex; flex-direction: column;
           overflow: hidden;
           box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
-        .modal-header {
+        .insumo-backdrop .modal-header {
+          flex-shrink: 0; margin-bottom: 0;
           padding: 20px 24px;
           border-bottom: 1px solid var(--border);
           display: flex; justify-content: space-between; align-items: center;
@@ -291,8 +304,9 @@ export default function InsumoModal({ isOpen, onClose, insumoToEdit, sucursales,
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--text-100); }
         .md-close-btn { background: transparent; border: none; color: var(--text-400); cursor: pointer; }
         .md-close-btn:hover { color: var(--red); }
-        .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .insumo-backdrop .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+        .insumo-backdrop .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+        .insumo-backdrop .form-input { min-width: 0; max-width: 100%; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-400); text-transform: uppercase; letter-spacing: 0.05em; }
         
@@ -328,12 +342,13 @@ export default function InsumoModal({ isOpen, onClose, insumoToEdit, sucursales,
 
         .text-red { color: var(--red-light); }
         
-        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .insumo-backdrop .modal-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; }
         
         @media (max-width: 500px) {
-          .form-grid { grid-template-columns: 1fr; }
+          .insumo-backdrop .form-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }

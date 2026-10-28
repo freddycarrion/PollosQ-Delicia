@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
@@ -59,7 +60,14 @@ export default function ProveedorModal({ isOpen, onClose, proveedorToEdit, onSuc
     }
   }, [proveedorToEdit, isOpen])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (!isOpen) return
+    const anterior = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = anterior }
+  }, [isOpen])
+
+  if (!isOpen || typeof document === 'undefined') return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,14 +117,14 @@ export default function ProveedorModal({ isOpen, onClose, proveedorToEdit, onSuc
     }
   }
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-panel animate-zoom-in">
+  return createPortal(
+    <div className="modal-backdrop proveedor-backdrop">
+      <div className="modal-panel animate-zoom-in" role="dialog" aria-modal="true" aria-labelledby="proveedor-modal-titulo">
         <div className="modal-header">
-          <h2 className="modal-title">
+          <h2 id="proveedor-modal-titulo" className="modal-title">
             {proveedorToEdit ? 'Editar Proveedor' : 'Nuevo Proveedor'}
           </h2>
-          <button className="md-close-btn" onClick={onClose} disabled={loading}><X size={20} /></button>
+          <button className="md-close-btn" aria-label="Cerrar formulario de proveedor" onClick={onClose} disabled={loading}><X size={20} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-body">
@@ -217,23 +225,28 @@ export default function ProveedorModal({ isOpen, onClose, proveedorToEdit, onSuc
       </div>
 
       <style>{`
-        .modal-backdrop {
+        .proveedor-backdrop {
           position: fixed; inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
           z-index: 2000;
-          display: flex; align-items: center; justify-content: center;
-          padding: 16px;
+          display: flex; align-items: flex-start; justify-content: center;
+          padding: clamp(8px, 3dvh, 24px) 12px 12px;
+          overflow: hidden;
         }
-        .modal-panel {
+        .proveedor-backdrop .modal-panel {
           background: var(--bg-800);
           border: 1px solid var(--border);
           border-radius: var(--radius-xl);
           width: 100%; max-width: 540px;
+          max-height: calc(100dvh - clamp(8px, 3dvh, 24px) - 12px);
+          min-height: 0;
+          display: flex; flex-direction: column;
           overflow: hidden;
           box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
-        .modal-header {
+        .proveedor-backdrop .modal-header {
+          flex-shrink: 0; margin-bottom: 0;
           padding: 20px 24px;
           border-bottom: 1px solid var(--border);
           display: flex; justify-content: space-between; align-items: center;
@@ -241,18 +254,20 @@ export default function ProveedorModal({ isOpen, onClose, proveedorToEdit, onSuc
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--text-100); }
         .md-close-btn { background: transparent; border: none; color: var(--text-400); cursor: pointer; }
         .md-close-btn:hover { color: var(--red); }
-        .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .proveedor-backdrop .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+        .proveedor-backdrop .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+        .proveedor-backdrop .form-input { min-width: 0; max-width: 100%; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-400); text-transform: uppercase; letter-spacing: 0.05em; }
         .form-input { background: var(--bg-900); border: 1px solid var(--border); color: var(--text-100); padding: 10px 12px; border-radius: var(--radius-md); font-size: 0.95rem; }
         .form-input:focus { border-color: var(--yellow); outline: none; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .proveedor-backdrop .modal-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; }
         
         @media (max-width: 500px) {
-          .form-grid { grid-template-columns: 1fr; }
+          .proveedor-backdrop .form-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
