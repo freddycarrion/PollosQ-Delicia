@@ -24,8 +24,10 @@ import { esCategoriaSnack } from '@/lib/snacks';
 import { consultarStockSnacks } from './snacks-actions';
 import { toast } from "react-hot-toast";
 import CobroModal, { ConfirmarVentaPayload, TipoVenta } from "./CobroModal";
-import type { TicketData } from "./TicketVenta";
+import TicketVenta, { type TicketData } from "./TicketVenta";
 import PanelImpresora from './PanelImpresora';
+import { useConfigImpresora } from '@/lib/impresion/use-config-impresora';
+import { anchoImprimible } from '@/lib/impresion/config';
 import PresasModal, { SeleccionPremiun, formatearNotas } from "./PresasModal";
 import PedidosTab from "./PedidosTab";
 
@@ -78,6 +80,7 @@ export default function PosClient({
   sucursalId,
   sucursalNombre,
 }: Props) {
+  const { config: configImpresora } = useConfigImpresora();
   const [categoriaActiva, setCategoriaActiva] = useState<string>(
     categorias[0]?.id || "",
   );
@@ -420,7 +423,8 @@ export default function PosClient({
   // ── Reimprimir desde pestaña Pedidos ─────────────────────────────────────
   const handleReimprimir = (ticket: TicketData) => {
     setTicketData(ticket);
-    setMostrarImpresion(true);
+    if (configImpresora.modo === 'sistema') setTimeout(() => window.print(), 300);
+    else setMostrarImpresion(true);
   };
 
   // ── Confirmar venta ───────────────────────────────────────────────────────
@@ -583,7 +587,8 @@ export default function PosClient({
       setIsModalOpen(false);
       setEsConsumoInterno(false);
       setTabActivo('catalogo');
-      setMostrarImpresion(true);
+      if (configImpresora.modo === 'sistema') setTimeout(() => window.print(), 500);
+      else setMostrarImpresion(true);
     } catch (err: any) {
       console.error(err);
       toast.error("Error al registrar la venta: " + err.message);
@@ -1572,6 +1577,20 @@ export default function PosClient({
         `}</style>
       </div>
 
+      <div className="print-area" aria-hidden="true">
+        <TicketVenta data={ticketData} papel={configImpresora.papel} copias={configImpresora.copias} />
+      </div>
+      <style>{`
+        @media screen { .print-area { display: none; } }
+        @media print {
+          @page { size: ${anchoImprimible(configImpresora.papel)}mm 297mm; margin: 0; }
+          html, body { margin: 0; padding: 0; background: #fff; }
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area { position: absolute; left: 0; top: 0; width: ${anchoImprimible(configImpresora.papel)}mm; background: #fff; margin: 0; padding: 0; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
       {mostrarImpresion && ticketData && <PanelImpresora data={ticketData} onClose={() => setMostrarImpresion(false)} />}
     </>
   );

@@ -214,8 +214,20 @@ export default function TicketVenta({ data, papel = 80, copias = 'ambos' }: { da
         /* ── RESET DE IMPRESION ─────────────── */
         @media print {
           .ticket-cocina {
-            break-after: auto;
+            page-break-after: always;
+            break-after: page;
           }
+          .ticket-cocina,
+          .ticket-cliente {
+            box-sizing: content-box;
+            width: ${anchoImprimible(papel)}mm;
+            max-width: none;
+            padding: 4mm 3mm;
+          }
+          .tk-table-cli th:nth-child(1) { width: 22px !important; }
+          .tk-table-cli th:nth-child(3) { width: 44px !important; }
+          .tk-table-cli th:nth-child(4) { width: 52px !important; }
+          .tk-table-cli td { overflow: hidden; overflow-wrap: normal; }
         }
 
         /* ── BASE COMPARTIDA ─────────────────── */

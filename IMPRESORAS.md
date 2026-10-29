@@ -16,13 +16,12 @@ la conexión conserva el registro en Pedidos. No hay reintentos automáticos.
 
 ## Impresora del sistema / PDF
 
-En Windows, instalar el controlador y emparejar/conectar la impresora. En el
-panel, seleccionar este modo y pulsar **Abrir para imprimir**. Se abre el diálogo
-del navegador directamente: elegir la impresora o **Guardar como PDF**, el papel
-correcto, escala 100 %, sin encabezados ni pies. Cocina y cliente salen en una
-sola tira dimensionada al contenido; el corte entre copias depende del controlador.
-Algunos controladores pueden ignorar el tamaño de página que solicita la web:
-configurarlo también allí.
+En Windows, instalar el controlador y conectar la impresora. En el panel, dejar
+**Impresora del sistema / PDF** para usar el flujo normal de la computadora. La
+venta abre el diálogo del navegador; seleccionar XP-80C, rollo de 80 mm, escala
+100 % y desactivar encabezados y pies. Cocina y cliente se imprimen como páginas
+separadas; el controlador XP-80C debe tener activo el corte por página. También
+se puede elegir **Guardar como PDF**.
 
 Android necesita un servicio de impresión compatible con el modelo. Una
 impresora Bluetooth no aparece necesariamente en el diálogo de Android solo
