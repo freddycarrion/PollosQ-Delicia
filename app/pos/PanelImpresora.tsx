@@ -61,10 +61,14 @@ export default function PanelImpresora({ data, onClose }: { data?: TicketData; o
       return
     }
     void ejecutar(async () => {
-      const canvas = crearImagenTicket(ticket, config)
-      const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height)
-      await enviarTicket(codificarRaster(pixels.data, canvas.width, canvas.height), config.modo as 'ble' | 'serial', setProgreso)
-      setMensaje('Datos enviados a la impresora. Comprueba que el ticket salió completo.')
+      const copias = config.copias === 'ambos' ? ['cocina', 'cliente'] as const : [config.copias]
+      for (let i = 0; i < copias.length; i++) {
+        const copiaConfig = { ...config, copias: copias[i] }
+        const copiaCanvas = crearImagenTicket(ticket, copiaConfig)
+        const copiaPixels = copiaCanvas.getContext('2d')!.getImageData(0, 0, copiaCanvas.width, copiaCanvas.height)
+        await enviarTicket(codificarRaster(copiaPixels.data, copiaCanvas.width, copiaCanvas.height, config.corteAutomatico), config.modo as 'ble' | 'serial', porcentaje => setProgreso(Math.round((i * 100 + porcentaje) / copias.length)))
+      }
+      setMensaje(config.copias === 'ambos' ? 'Tickets de cocina y cliente enviados por separado.' : 'Ticket enviado a la impresora.')
     })
   }
   function descargar() {
@@ -93,14 +97,15 @@ export default function PanelImpresora({ data, onClose }: { data?: TicketData; o
         <label>Papel<select className="form-input" value={esKP1025 ? 58 : config.papel} onChange={e => guardar({ papel: Number(e.target.value) as 58 | 80 })}><option value={58}>58 mm</option>{!esKP1025 && <option value={80}>80 mm</option>}</select></label>
         <label>Tickets<select className="form-input" value={config.copias} onChange={e => guardar({ copias: e.target.value as typeof config.copias })}><option value="ambos">Cocina y cliente</option><option value="cocina">Solo cocina</option><option value="cliente">Solo cliente</option></select></label>
         <label>Conexión<select className="form-input" value={config.modo} onChange={e => { guardar({ modo: e.target.value as typeof config.modo }); setError(''); setMensaje('') }}>
-          <option value="sistema">Impresora del sistema / PDF</option><option value="ble" disabled={!compatible.ble}>Bluetooth BLE · ESC/POS{!compatible.ble ? ' (no disponible)' : ''}</option><option value="serial" disabled={!compatible.serial}>Bluetooth clásico / puerto{!compatible.serial ? ' (no disponible)' : ''}</option>
+          <option value="sistema">Impresora del sistema / PDF</option><option value="ble" disabled={!compatible.ble}>Bluetooth BLE · ESC/POS{!compatible.ble ? ' (no disponible)' : ''}</option><option value="serial" disabled={!compatible.serial}>USB por COM virtual / Bluetooth clásico{!compatible.serial ? ' (no disponible)' : ''}</option>
         </select></label>
         {config.modo === 'serial' && <label>Velocidad del puerto<select className="form-input" value={config.velocidad} onChange={e => guardar({ velocidad: Number(e.target.value) })}>{[9600, 19200, 38400, 57600, 115200].map(v => <option key={v} value={v}>{v}</option>)}</select></label>}
       </fieldset>
       <p style={{ marginTop: 14, color: 'var(--text-400)', fontSize: '0.9rem' }}>{config.modo === 'sistema'
         ? 'Windows: instala o empareja la impresora y selecciónala en el diálogo. Android: usa un servicio de impresión compatible o comparte la imagen con la aplicación del fabricante.'
         : config.modo === 'ble' ? 'Para impresoras térmicas ESC/POS con servicio BLE compatible, como algunas POS-5805, MPT-II y Xprinter. Si no aparece tu modelo, usa la impresión del sistema o la aplicación del fabricante.'
-        : 'Empareja primero la impresora en los ajustes Bluetooth del equipo. Selecciona su puerto y la velocidad indicada en el manual. Requiere navegador con acceso a puertos y una impresora ESC/POS.'}</p>
+        : 'USB: instala el controlador Virtual COM del fabricante y selecciona el puerto COM. Bluetooth clásico: empareja la impresora y elige su puerto. Requiere Chrome/Edge y una impresora ESC/POS.'}</p>
+      {config.modo !== 'sistema' && <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}><input type="checkbox" disabled={ocupado} checked={config.corteAutomatico} onChange={e => guardar({ corteAutomatico: e.target.checked })} />Cortar cada ticket al terminar (solo XP-80C u otra impresora con cuchilla)</label>}
       {nombre && <p role="status" style={{ marginTop: 12 }}>Conectada: {nombre}</p>}
       {esKP1025 && <p role="note" style={{ marginTop: 8, color: 'var(--yellow)' }}>La KP-1025 trabaja con rollo de 58 mm (48 mm de impresión). El ancho se ajustó automáticamente.</p>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '16px 0' }}>

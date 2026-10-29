@@ -6,8 +6,9 @@ export interface ConfigImpresora {
   copias: CopiasTicket
   modo: ModoImpresion
   velocidad: number
+  corteAutomatico: boolean
 }
-export const CONFIG_IMPRESORA: ConfigImpresora = { papel: 80, copias: 'ambos', modo: 'sistema', velocidad: 9600 }
+export const CONFIG_IMPRESORA: ConfigImpresora = { papel: 80, copias: 'ambos', modo: 'sistema', velocidad: 9600, corteAutomatico: false }
 export const CLAVE_IMPRESORA = 'pollos-impresora-v1'
 
 export function normalizarConfigImpresora(valor: unknown): ConfigImpresora {
@@ -17,6 +18,7 @@ export function normalizarConfigImpresora(valor: unknown): ConfigImpresora {
     copias: c.copias === 'cocina' || c.copias === 'cliente' ? c.copias : 'ambos',
     modo: c.modo === 'ble' || c.modo === 'serial' ? c.modo : 'sistema',
     velocidad: [9600, 19200, 38400, 57600, 115200].includes(Number(c.velocidad)) ? Number(c.velocidad) : 9600,
+    corteAutomatico: c.corteAutomatico === true,
   }
 }
 

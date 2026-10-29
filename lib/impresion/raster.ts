@@ -1,11 +1,12 @@
 // Formato ESC/POS GS v 0: bloques pequeños para no saturar el búfer térmico.
-export function codificarRaster(rgba: Uint8ClampedArray, ancho: number, alto: number): Uint8Array {
+export function codificarRaster(rgba: Uint8ClampedArray, ancho: number, alto: number, cortar = false): Uint8Array {
   if (!Number.isInteger(ancho) || !Number.isInteger(alto) || ancho <= 0 || alto <= 0 || ancho > 2048 || alto > 30000 || rgba.length !== ancho * alto * 4) {
     throw new Error('La imagen del ticket no tiene dimensiones válidas.')
   }
   const bytesPorFila = Math.ceil(ancho / 8)
   const bloques = Math.ceil(alto / 128)
-  const salida = new Uint8Array(2 + bloques * 8 + bytesPorFila * alto + 5)
+  const cola = cortar ? [0x1d, 0x56, 0] : [0x1b, 0x40]
+  const salida = new Uint8Array(2 + bloques * 8 + bytesPorFila * alto + (cortar ? 3 : 5))
   salida.set([0x1b, 0x40])
   let posicion = 2
   for (let y = 0; y < alto; y += 128) {
@@ -22,7 +23,9 @@ export function codificarRaster(rgba: Uint8ClampedArray, ancho: number, alto: nu
       posicion += bytesPorFila
     }
   }
-  // Avance de papel; sin corte automático porque muchas portátiles no tienen cuchilla.
-  salida.set([0x1b, 0x64, 4, 0x1b, 0x40], posicion)
+  // El controlador/mode directo puede cortar en cada copia; el sistema mantiene
+  // el avance heredado para impresoras sin cortador automático.
+  if (!cortar) salida.set([0x1b, 0x64, 4], posicion)
+  salida.set(cola, posicion + (cortar ? 0 : 3))
   return salida
 }

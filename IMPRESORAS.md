@@ -43,10 +43,15 @@ largos. El porcentaje indica datos transmitidos, no confirma la salida del papel
 
 ## Bluetooth clásico / puerto · ESC/POS
 
-Requiere navegador con `navigator.serial`. Emparejar primero en el sistema,
-seleccionar el puerto de la impresora y la velocidad indicada por su fabricante.
+Requiere navegador con `navigator.serial`. USB en XP-80C: instalar el controlador
+Virtual COM de Xprinter y seleccionar el puerto COM. Bluetooth clásico: emparejar
+primero en el sistema y seleccionar el puerto y velocidad indicados por el fabricante.
 El acceso RFCOMM/SPP depende de la versión del navegador y del sistema; la opción
 solo se habilita cuando la API está disponible. No selecciona puertos sin permiso.
+
+En el modo directo, cocina y cliente se envían como imágenes ESC/POS separadas.
+Activa **Cortar cada ticket al terminar** solo en modelos con cuchilla (por ejemplo,
+XP-80C). En la impresora del sistema, el corte entre copias depende del controlador.
 
 ## Aplicación del fabricante
 
