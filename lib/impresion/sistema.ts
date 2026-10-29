@@ -34,7 +34,9 @@ export function abrirImpresionSistema(contenido: HTMLElement, config: ConfigImpr
   // Página física adaptada a la longitud real; evita el alto A4 fijo de antes.
   void doc.fonts.ready.then(() => {
     if (ventana.closed) return
-    const mm = (elemento: Element | null) => Math.max(40, Math.ceil((elemento?.getBoundingClientRect().height ?? 0) * 25.4 / 96) + 4)
+    // Chrome trata una página cuya altura es menor que el ancho como apaisada;
+    // en rollo eso gira el ticket corto de cocina. Mantén siempre formato vertical.
+    const mm = (elemento: Element | null) => Math.max(config.papel + 5, Math.ceil((elemento?.getBoundingClientRect().height ?? 0) * 25.4 / 96) + 4)
     const pagina = doc.createElement('style')
     pagina.textContent = separarCopias
       ? `@media print{@page cocina{size:${config.papel}mm ${Math.min(mm(recibo.querySelector('.ticket-cocina')), 2000)}mm;margin:0}@page cliente{size:${config.papel}mm ${Math.min(mm(recibo.querySelector('.ticket-cliente')), 2000)}mm;margin:0}}`
