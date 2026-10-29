@@ -17,10 +17,12 @@ la conexión conserva el registro en Pedidos. No hay reintentos automáticos.
 ## Impresora del sistema / PDF
 
 En Windows, instalar el controlador y emparejar/conectar la impresora. En el
-panel, seleccionar este modo y pulsar **Abrir para imprimir**. Se abre una vista
-independiente: pulsar **Imprimir / Guardar PDF**, elegir la impresora y el papel
-correctos, escala 100 %, sin encabezados ni pies. Algunos controladores pueden
-ignorar el tamaño de página que solicita la web: configurarlo también allí.
+panel, seleccionar este modo y pulsar **Abrir para imprimir**. Se abre el diálogo
+del navegador directamente: elegir la impresora o **Guardar como PDF**, el papel
+correcto, escala 100 %, sin encabezados ni pies. Cocina y cliente salen en una
+sola tira dimensionada al contenido; el corte entre copias depende del controlador.
+Algunos controladores pueden ignorar el tamaño de página que solicita la web:
+configurarlo también allí.
 
 Android necesita un servicio de impresión compatible con el modelo. Una
 impresora Bluetooth no aparece necesariamente en el diálogo de Android solo
