@@ -27,6 +27,15 @@ export default function PanelImpresora({ data, onClose }: { data?: TicketData; o
     items: [{ nombre: 'PRUEBA SIN VENTA · Ñ á é í ó ú', cantidad: 1, precio: 1, subtotal: 1, notas: 'Texto largo de prueba para comprobar el ancho y la lectura del ticket.' }],
   }), [data])
   useEffect(() => { dialog.current?.showModal(); setCompatible(compatibilidadImpresora()) }, [])
+  const esKP1025 = /\bKP[- ]?1025\b/i.test(nombre)
+  useEffect(() => {
+    // La KP-1025 solo admite rollo de 58 mm (48 mm imprimibles). Evita enviar
+    // una imagen de 80 mm que el cabezal recortaría por el lado derecho.
+    if (esKP1025 && config.papel !== 58) {
+      guardar({ papel: 58 })
+      setMensaje('Detectamos una KP-1025: ajustamos el ticket a 58 mm para que salga completo.')
+    }
+  }, [esKP1025, config.papel, guardar])
   useEffect(() => {
     let vigente = true
     setArchivo(null)
@@ -81,7 +90,7 @@ export default function PanelImpresora({ data, onClose }: { data?: TicketData; o
     <div style={{ padding: 20, overflowY: 'auto', maxHeight: '75vh' }}>
       <p style={{ marginBottom: 16 }}>{data ? 'La venta ya está guardada. Imprimir de nuevo no registra otra venta.' : 'La prueba no registra ventas. La configuración se guarda solo en este dispositivo.'}</p>
       <fieldset disabled={ocupado} style={{ border: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-        <label>Papel<select className="form-input" value={config.papel} onChange={e => guardar({ papel: Number(e.target.value) as 58 | 80 })}><option value={58}>58 mm</option><option value={80}>80 mm</option></select></label>
+        <label>Papel<select className="form-input" value={esKP1025 ? 58 : config.papel} onChange={e => guardar({ papel: Number(e.target.value) as 58 | 80 })}><option value={58}>58 mm</option>{!esKP1025 && <option value={80}>80 mm</option>}</select></label>
         <label>Tickets<select className="form-input" value={config.copias} onChange={e => guardar({ copias: e.target.value as typeof config.copias })}><option value="ambos">Cocina y cliente</option><option value="cocina">Solo cocina</option><option value="cliente">Solo cliente</option></select></label>
         <label>Conexión<select className="form-input" value={config.modo} onChange={e => { guardar({ modo: e.target.value as typeof config.modo }); setError(''); setMensaje('') }}>
           <option value="sistema">Impresora del sistema / PDF</option><option value="ble" disabled={!compatible.ble}>Bluetooth BLE · ESC/POS{!compatible.ble ? ' (no disponible)' : ''}</option><option value="serial" disabled={!compatible.serial}>Bluetooth clásico / puerto{!compatible.serial ? ' (no disponible)' : ''}</option>
@@ -93,6 +102,7 @@ export default function PanelImpresora({ data, onClose }: { data?: TicketData; o
         : config.modo === 'ble' ? 'Para impresoras térmicas ESC/POS con servicio BLE compatible, como algunas POS-5805, MPT-II y Xprinter. Si no aparece tu modelo, usa la impresión del sistema o la aplicación del fabricante.'
         : 'Empareja primero la impresora en los ajustes Bluetooth del equipo. Selecciona su puerto y la velocidad indicada en el manual. Requiere navegador con acceso a puertos y una impresora ESC/POS.'}</p>
       {nombre && <p role="status" style={{ marginTop: 12 }}>Conectada: {nombre}</p>}
+      {esKP1025 && <p role="note" style={{ marginTop: 8, color: 'var(--yellow)' }}>La KP-1025 trabaja con rollo de 58 mm (48 mm de impresión). El ancho se ajustó automáticamente.</p>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '16px 0' }}>
         {config.modo !== 'sistema' && !nombre && <button className="btn btn-primary" disabled={ocupado} onClick={() => void ejecutar(async () => { if (config.modo === 'ble') await conectarBLE(); else await conectarSerie(config.velocidad); setMensaje('Conexión preparada. Haz una prueba antes de imprimir ventas.') })}><Bluetooth size={16} /> Conectar impresora</button>}
         {nombre && <button className="btn btn-ghost" disabled={ocupado} onClick={() => void ejecutar(desconectarImpresora)}>Desconectar</button>}
