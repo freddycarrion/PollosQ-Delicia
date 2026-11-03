@@ -26,14 +26,30 @@ export default function AdminHeader({ nombreUsuario }: Props) {
   const pathname = usePathname()
   const title = pageNames[pathname] ?? 'Panel Admin'
 
-  const now = new Date()
-  const hora = now.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })
-  const fecha = now.toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' })
-
+  const [fechaHora, setFechaHora] = useState<{ fecha: string; hora: string } | null>(null)
   const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'))
+  }, [])
+
+  useEffect(() => {
+    const actualizarFechaHora = () => {
+      const ahora = new Date()
+      const zona = 'America/La_Paz'
+      setFechaHora({
+        fecha: new Intl.DateTimeFormat('es-BO', {
+          weekday: 'long', day: 'numeric', month: 'long', timeZone: zona,
+        }).format(ahora),
+        hora: new Intl.DateTimeFormat('es-BO', {
+          hour: '2-digit', minute: '2-digit', timeZone: zona,
+        }).format(ahora),
+      })
+    }
+
+    actualizarFechaHora()
+    const intervalId = window.setInterval(actualizarFechaHora, 60_000)
+    return () => window.clearInterval(intervalId)
   }, [])
 
   const toggleTheme = () => {
@@ -64,7 +80,7 @@ export default function AdminHeader({ nombreUsuario }: Props) {
         </button>
         <div>
           <h1 className="admin-header-title">{title}</h1>
-          <span className="admin-header-date">{fecha} · {hora}</span>
+          <span className="admin-header-date">{fechaHora ? `${fechaHora.fecha} · ${fechaHora.hora}` : '\u00a0'}</span>
         </div>
       </div>
 

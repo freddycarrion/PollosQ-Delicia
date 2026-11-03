@@ -30,3 +30,13 @@ CREATE POLICY prestamos_admin_insert ON public.prestamos
     registrado_por = auth.uid()
     AND (SELECT rol FROM public.perfiles WHERE id = auth.uid()) = 'admin'
   );
+
+DROP POLICY IF EXISTS prestamos_admin_update ON public.prestamos;
+CREATE POLICY prestamos_admin_update ON public.prestamos
+  FOR UPDATE
+  USING ((SELECT rol FROM public.perfiles WHERE id = auth.uid()) = 'admin')
+  WITH CHECK ((SELECT rol FROM public.perfiles WHERE id = auth.uid()) = 'admin');
+
+DROP POLICY IF EXISTS prestamos_admin_delete ON public.prestamos;
+CREATE POLICY prestamos_admin_delete ON public.prestamos
+  FOR DELETE USING ((SELECT rol FROM public.perfiles WHERE id = auth.uid()) = 'admin');
