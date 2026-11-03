@@ -46,6 +46,7 @@ const navItems: NavItem[] = [
     ]
   },
   { label: 'Ingreso / Egreso', href: '/admin/finanzas-personales', icon: <TrendingUp size={18} /> },
+  { label: 'Préstamos', href: '/admin/prestamos', icon: <HandCoins size={18} /> },
   { label: 'Sucursales',  href: '/admin/sucursales',   icon: <Store size={18} /> },
   { label: 'Mi Perfil',   href: '/admin/perfil',       icon: <User size={18} /> },
   { label: 'Configuración', href: '/admin/configuracion', icon: <Settings size={18} /> },
@@ -125,7 +126,7 @@ export default function AdminSidebar({ nombreUsuario, rolUsuario, sucursal }: Pr
 
         {/* Nav principal */}
         <nav className="sidebar-nav">
-          {navItems.map(item => {
+          {navItems.filter(item => item.label !== 'Préstamos' || rolUsuario === 'admin').map(item => {
             const hasSubmenu = !!item.subItems
             const isActiveWrapper = item.href 
               ? pathname === item.href || pathname.startsWith(item.href + '/')
