@@ -16,6 +16,10 @@ export default async function PosPage() {
     .eq('id', user.id)
     .single()
 
+  // Solo las cuentas con rol cajero pueden abrir turnos o usar el POS.
+  if (!perfil) redirect('/login')
+  if (perfil.rol !== 'cajero') redirect('/admin/dashboard')
+
   if (!perfil?.sucursal_id) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center h-full text-gray-400">

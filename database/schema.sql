@@ -620,7 +620,7 @@ CREATE POLICY "turno_admin_ver_all"     ON turnos FOR SELECT USING (
     get_my_rol() = 'admin' OR (get_my_rol() = 'supervisor' AND sucursal_id = get_my_sucursal())
 );
 CREATE POLICY "turno_insertar"          ON turnos FOR INSERT  WITH CHECK (
-    cajero_id = auth.uid() OR get_my_rol() = 'admin' OR (get_my_rol() = 'supervisor' AND sucursal_id = get_my_sucursal())
+    cajero_id = auth.uid() AND get_my_rol() = 'cajero'
 );
 CREATE POLICY "turno_actualizar"        ON turnos FOR UPDATE  USING (
     cajero_id = auth.uid() OR get_my_rol() = 'admin' OR (get_my_rol() = 'supervisor' AND sucursal_id = get_my_sucursal())
