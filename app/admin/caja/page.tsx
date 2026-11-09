@@ -3,10 +3,16 @@ import { Clock, CheckCircle2, AlertCircle, DollarSign, Wallet } from 'lucide-rea
 import { leerTotalesTurnos } from '@/lib/supabase/turnos-totales'
 import { turnoSinVentas } from '@/lib/turnos-totales'
 import ActualizarCaja from './ActualizarCaja'
+import CerrarTurnoAdminButton from './CerrarTurnoAdminButton'
 
 export const dynamic = "force-dynamic";
 export default async function CajaAdminPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: perfilActual } = user
+    ? await supabase.from('perfiles').select('rol').eq('id', user.id).single()
+    : { data: null }
+  const esAdmin = perfilActual?.rol === 'admin'
 
   const { data: turnosGuardados, error } = await supabase
     .from('turnos')
@@ -90,6 +96,7 @@ export default async function CajaAdminPage() {
               <th className="text-right">Ventas Efectivo</th>
               <th className="text-right">Ventas QR</th>
               <th className="text-right">Efectivo esperado al cierre</th>
+              {esAdmin && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -158,13 +165,17 @@ export default async function CajaAdminPage() {
                       <span style={{ color: 'var(--green)' }}>Bs. {fmt(montoCierre)}</span>
                     )}
                   </td>
+                  {esAdmin && <td>{isAbierto
+                    ? <CerrarTurnoAdminButton turnoId={turno.id} empleado={nombre} montoEsperado={montoCierre} />
+                    : <span style={{ color: 'var(--text-500)' }}>—</span>}
+                  </td>}
                 </tr>
               )
             })}
             
             {turnos?.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center" style={{ padding: '40px', color: 'var(--text-500)' }}>
+                <td colSpan={esAdmin ? 9 : 8} className="text-center" style={{ padding: '40px', color: 'var(--text-500)' }}>
                   No hay turnos registrados en el sistema.
                 </td>
               </tr>
